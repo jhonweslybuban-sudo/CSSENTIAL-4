@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  /* Default Palette 1 */
+  --app-bg: #D1E8E2;
+  --app-surface: #FFFFFF;
+  --app-surface-alt: #E4F1EE;
+  --app-border: #B7DBD2;
+  --app-primary: #116466;
+  --app-primary-hover: #0D4E50;
+  --app-primary-text: #FFFFFF;
+  --app-secondary: #2C3531;
+  --app-accent: #D9B08C;
+  --app-highlight: #FFCB9A;
+  --app-text-title: #2C3531;
+  --app-text-body: #2C3531;
+  --app-text-muted: #566661;
+  --app-badge-bg: #FFCB9A;
+  --app-badge-text: #2C3531;
+  --app-card-border: #B7DBD2;
+  --app-nav-active: #116466;
+  --app-nav-active-text: #FFFFFF;
+  --app-button-bg: #116466;
+  --app-button-text: #FFFFFF;
+  --app-accent-btn: #D9B08C;
+  --app-accent-btn-text: #2C3531;
+}
+
+/* Dynamic theme classes for custom GUI styling */
+.theme-container {
+  background-color: var(--app-bg);
+  color: var(--app-text-body);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.theme-card {
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.theme-card-alt {
+  background-color: var(--app-surface-alt);
+  border: 1px solid var(--app-border);
+}
+
+.theme-btn-primary {
+  background-color: var(--app-button-bg);
+  color: var(--app-button-text);
+  transition: all 0.15s ease;
+}
+
+.theme-btn-primary:hover {
+  filter: brightness(0.92);
+}
+
+.theme-btn-accent {
+  background-color: var(--app-accent-btn);
+  color: var(--app-accent-btn-text);
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.theme-btn-accent:hover {
+  filter: brightness(0.95);
+}
+
+.theme-badge-accent {
+  background-color: var(--app-badge-bg);
+  color: var(--app-badge-text);
+  font-weight: 700;
+}
+
+.theme-text-title {
+  color: var(--app-text-title);
+}
+
+.theme-text-primary {
+  color: var(--app-primary);
+}
+
+.theme-text-accent {
+  color: var(--app-accent);
+}
+
+.theme-border {
+  border-color: var(--app-border);
+}
