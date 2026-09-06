@@ -16,6 +16,9 @@ import {
   ChevronRight,
   ExternalLink,
   Eye,
+  EyeOff,
+  Lock,
+  KeyRound,
   FileJson,
   Upload,
   RotateCcw,
@@ -25,10 +28,16 @@ import {
   HelpCircle,
   ShieldCheck,
   GraduationCap,
-  X
+  ListOrdered,
+  X,
+  Trash2,
+  Film,
+  ShieldAlert
 } from 'lucide-react';
 import { api } from '../services/api';
-import { ResearcherStats, StudentProfile, ActivityAttempt, QuizResult, GameResult } from '../types';
+import { ResearcherStats, StudentProfile, ActivityAttempt, QuizResult, GameResult, ActivityLog } from '../types';
+import { ResearcherVideoManager } from './ResearcherVideoManager';
+import { ResearcherRecordManager } from './ResearcherRecordManager';
 
 interface ResearcherDashboardProps {
   onBackToHome: () => void;
@@ -39,8 +48,34 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
 }) => {
   const [stats, setStats] = useState<ResearcherStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS'>('OVERVIEW');
   
+  // Password Protection Gate (Password: CSSENTIAL2026)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('cssential_researcher_auth') === 'true';
+  });
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = passwordInput.trim();
+    if (clean === 'CSSENTIAL2026') {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('cssential_researcher_auth', 'true');
+      setPasswordError('');
+    } else {
+      setPasswordError('Invalid authorization password. Please enter the authorized researcher password.');
+    }
+  };
+
+  const handleLock = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('cssential_researcher_auth');
+    setPasswordInput('');
+  };
+
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [sectionFilter, setSectionFilter] = useState('ALL');
@@ -62,9 +97,46 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
     }
   };
 
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (window.confirm(`Permanently delete student "${studentName}" (${studentId}) and all their associated attempts?`)) {
+      await api.deleteStudent(studentId);
+      loadData();
+    }
+  };
+
+  const handleDeleteActivityAttempt = async (attemptId: string) => {
+    if (window.confirm('Delete this activity attempt record?')) {
+      await api.deleteActivityAttempt(attemptId);
+      loadData();
+    }
+  };
+
+  const handleDeleteQuizResult = async (quizId: string) => {
+    if (window.confirm('Delete this quiz result record?')) {
+      await api.deleteQuizResult(quizId);
+      loadData();
+    }
+  };
+
+  const handleDeleteGameResult = async (gameId: string) => {
+    if (window.confirm('Delete this game result record?')) {
+      await api.deleteGameResult(gameId);
+      loadData();
+    }
+  };
+
+  const handleDeleteLog = async (logId: string) => {
+    if (window.confirm('Delete this action audit log entry?')) {
+      await api.deleteLog(logId);
+      loadData();
+    }
+  };
+
   useEffect(() => {
-    loadData();
-  }, []);
+    if (isAuthenticated) {
+      loadData();
+    }
+  }, [isAuthenticated]);
 
   // Format seconds into minutes and seconds
   const formatDuration = (seconds: number): string => {
@@ -96,11 +168,11 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
 
   // Student helper lookup
   const getStudentInfo = (studentId: string) => {
-    if (!stats) return { name: studentId, section: '3rd-Year BTLED-ICT' };
+    if (!stats) return { name: studentId, section: 'General Section' };
     const found = stats.students.find(s => s.student_id === studentId);
     return {
       name: found ? found.name : studentId,
-      section: found ? found.year_section : '3rd-Year BTLED-ICT'
+      section: found ? found.year_section : 'General Section'
     };
   };
 
@@ -221,21 +293,21 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
   const handleExportCSV = () => {
     if (!stats) return;
 
-    let csv = 'data:text/csv;charset=utf-8,';
+    let csv = '';
 
     // 1. Title
-    csv += 'CSSENTIAL: BTLED-ICT STUDENT INTERVENTION TELEMETRY REPORT\n';
+    csv += 'CSSENTIAL: COMPREHENSIVE STUDENT TELEMETRY & INTERVENTION REPORT\n';
     csv += `Exported On,"${new Date().toLocaleString()}"\n\n`;
 
     // 2. Students Summary Table
-    csv += 'STUDENTS DIRECTORY & SUMMARY\n';
-    csv += 'Student ID,Full Name,Year & Section,Total Activities,Total Quizzes,Total Games,Avg Score %,Total Time Spent (Seconds),Last Active\n';
+    csv += 'SECTION 1: REGISTERED STUDENTS DIRECTORY & PROGRESS\n';
+    csv += 'Student ID,Full Name,Year & Section,Total Activities Completed,Total Quizzes Taken,Total Games Played,Avg Score (%),Total Answering Time (Seconds),Total Time (Formatted),Last Active Timestamp\n';
     studentMetrics.forEach(s => {
-      csv += `"${s.student_id}","${s.name}","${s.year_section}",${s.totalActivities},${s.totalQuizzes},${s.totalGames},${s.combinedScore}%,${s.totalDurationSecs},"${s.last_active || s.created_at}"\n`;
+      csv += `"${s.student_id}","${s.name}","${s.year_section}",${s.totalActivities},${s.totalQuizzes},${s.totalGames},${s.combinedScore}%,${s.totalDurationSecs},"${formatDuration(s.totalDurationSecs)}","${s.last_active || s.created_at}"\n`;
     });
 
     // 3. Activity Attempts Detailed
-    csv += '\nACTIVITY ATTEMPTS (DURATION & SCORES)\n';
+    csv += '\nSECTION 2: ACTIVITY ATTEMPTS (SCORES & TIME SPENT ANSWERING)\n';
     csv += 'Student ID,Student Name,Year & Section,Activity Name,Activity Type,Score,Total Items,Percentage,Time Spent Answering (Seconds),Time Spent (Formatted),When Completed\n';
     stats.activityAttempts.forEach(a => {
       const s = getStudentInfo(a.student_id);
@@ -243,7 +315,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
     });
 
     // 4. Quizzes
-    csv += '\nQUIZ SUBMISSIONS\n';
+    csv += '\nSECTION 3: QUIZ SUBMISSIONS (DIAGNOSTIC SCORES & DURATIONS)\n';
     csv += 'Student ID,Student Name,Quiz Name,Score,Total Questions,Percentage,Duration (Seconds),Duration (Formatted),When Completed\n';
     stats.quizResults.forEach(q => {
       const s = getStudentInfo(q.student_id);
@@ -251,20 +323,51 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
     });
 
     // 5. Game Results
-    csv += '\nEDUCATIONAL GAMES TELEMETRY\n';
+    csv += '\nSECTION 4: EDUCATIONAL GAMES TELEMETRY\n';
     csv += 'Student ID,Student Name,Game Name,Score,Level,Duration (Seconds),When Completed\n';
     stats.gameResults.forEach(g => {
       const s = getStudentInfo(g.student_id);
       csv += `"${g.student_id}","${s.name}","${g.game_name}",${g.score},${g.level},${g.duration_seconds},"${g.end_time}"\n`;
     });
 
-    const encodedUri = encodeURI(csv);
+    // 6. Student Actions Audit Log (Crucial requested fix!)
+    csv += '\nSECTION 5: DETAILED STUDENT ACTIONS AUDIT LOG (ALL EVENTS & ACTIONS RECORDED)\n';
+    csv += 'Timestamp,Student ID,Student Name,Year & Section,Session ID,Action / Event Description\n';
+    if (stats.activityLogs && stats.activityLogs.length > 0) {
+      stats.activityLogs.forEach(l => {
+        const s = getStudentInfo(l.student_id);
+        const cleanText = (l.action_text || '').replace(/"/g, '""');
+        csv += `"${l.timestamp}","${l.student_id}","${s.name}","${s.section}","${l.session_id || 'N/A'}","${cleanText}"\n`;
+      });
+    } else {
+      csv += '"No student actions logged yet"\n';
+    }
+
+    // 7. Resource Downloads & Lesson Views
+    csv += '\nSECTION 6: LESSON PRESENTATION VIEWS & RESOURCE DOWNLOADS\n';
+    csv += 'Interaction Type,Timestamp,Student ID,Student Name,Year & Section,Item Title / Details\n';
+    if (stats.lessonViews && stats.lessonViews.length > 0) {
+      stats.lessonViews.forEach(v => {
+        const s = getStudentInfo(v.student_id);
+        csv += `"Lesson Presentation","${v.finished_at}","${v.student_id}","${s.name}","${s.section}","${v.lesson_title} (${v.duration_seconds}s)"\n`;
+      });
+    }
+    if (stats.downloads && stats.downloads.length > 0) {
+      stats.downloads.forEach(d => {
+        const s = getStudentInfo(d.student_id);
+        csv += `"Resource Download","${d.timestamp}","${d.student_id}","${s.name}","${s.section}","${d.resource_name} (${d.file_type})"\n`;
+      });
+    }
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CSSENTIAL_Student_Telemetry_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `CSSENTIAL_Student_Telemetry_Report_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Export JSON Database
@@ -316,6 +419,83 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
     }
   };
 
+  // Password Protection Gate Check (Password: CSSENTIAL2026)
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-6 sm:p-8 bg-white border border-gray-200 rounded-2xl shadow-xl space-y-6 animate-in zoom-in-95 duration-200 text-center">
+        <div className="w-16 h-16 mx-auto bg-blue-100 text-blue-800 rounded-2xl flex items-center justify-center border border-blue-200 shadow-xs">
+          <Lock className="w-8 h-8 text-blue-700" />
+        </div>
+
+        <div>
+          <span className="px-3 py-1 text-[11px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+            Authorized Personnel Only
+          </span>
+          <h2 className="text-2xl font-black text-gray-900 mt-2.5 tracking-tight">
+            Telemetry Dashboard
+          </h2>
+          <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+            Restricted access. Please enter the authorized password to access student activity tracking, answering durations, quiz scores, and telemetry exports.
+          </p>
+        </div>
+
+        <form onSubmit={handleUnlock} className="space-y-4 text-left">
+          <div className="space-y-1.5">
+            <label htmlFor="dashboard-password-input" className="block text-xs font-black uppercase tracking-wider text-gray-700">
+              Researcher Password
+            </label>
+            <div className="relative">
+              <input
+                id="dashboard-password-input"
+                type={showPassword ? 'text' : 'password'}
+                autoFocus
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  if (passwordError) setPasswordError('');
+                }}
+                placeholder="Enter password..."
+                className="w-full pl-3.5 pr-10 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-hidden transition-all text-gray-900 font-medium"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {passwordError && (
+              <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs font-bold text-red-700 flex items-center gap-1.5 mt-1.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{passwordError}</span>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            id="unlock-dashboard-btn"
+            className="w-full py-3 px-4 bg-blue-700 hover:bg-blue-800 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+          >
+            <KeyRound className="w-4 h-4" />
+            <span>Unlock Telemetry Dashboard</span>
+          </button>
+        </form>
+
+        <div className="pt-2 border-t border-gray-100">
+          <button
+            onClick={onBackToHome}
+            className="text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+          >
+            ← Return to Learning Hub
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       
@@ -325,7 +505,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 rounded-full">
-                BTLED-ICT 3RD-YEAR INTERVENTION TELEMETRY
+                RESEARCH TELEMETRY &amp; LEARNER ANALYTICS PLATFORM
               </span>
               <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 rounded-full flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" />
@@ -388,6 +568,15 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
               className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={handleLock}
+              title="Lock Researcher Dashboard"
+              className="flex items-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-colors cursor-pointer border border-red-200"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Lock</span>
             </button>
           </div>
         </div>
@@ -494,9 +683,12 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
           {[
             { id: 'OVERVIEW', label: 'Overview' },
             { id: 'STUDENTS', label: `Students (${stats?.students.length || 0})` },
-            { id: 'ACTIVITIES', label: `Activity Logs (${stats?.activityAttempts.length || 0})` },
+            { id: 'ACTIVITIES', label: `Activity Attempts (${stats?.activityAttempts.length || 0})` },
             { id: 'QUIZZES', label: `Quizzes (${stats?.quizResults.length || 0})` },
-            { id: 'GAMES', label: `Games Telemetry (${stats?.gameResults.length || 0})` }
+            { id: 'GAMES', label: `Games Telemetry (${stats?.gameResults.length || 0})` },
+            { id: 'LOGS', label: `Student Actions Log (${stats?.activityLogs?.length || 0})` },
+            { id: 'MANAGE_VIDEOS', label: 'Demonstration Videos' },
+            { id: 'MANAGE_RECORDS', label: 'Data Retention & Cleanup' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -560,10 +752,10 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
               {/* Summary Card */}
               <div className="p-5 bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl">
                 <h3 className="text-base font-black text-blue-950">
-                  Research Telemetry Summary for BTLED-ICT Intervention
+                  Research Telemetry Summary for Computer System Configuration &amp; Diagnostic Interventions
                 </h3>
                 <p className="text-xs text-blue-800/80 mt-1 max-w-3xl leading-relaxed">
-                  The dashboard captures empirical evidence regarding the effectiveness of multi-intervention scaffolding (step-by-step videos, interactive troubleshooting simulations, flashcards, diagnostic games, and AI assistance) on 3rd-Year BTLED-ICT students&apos; mastery of Computer System Installation &amp; Configuration.
+                  The dashboard captures empirical evidence regarding the effectiveness of multi-intervention scaffolding (step-by-step videos, interactive troubleshooting simulations, flashcards, diagnostic games, and AI assistance) on students&apos; mastery of Computer System Installation &amp; Configuration.
                 </p>
               </div>
 
@@ -726,12 +918,21 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                         {student.lastActiveFormatted}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => setSelectedStudentId(student.student_id)}
-                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-black rounded-lg transition-colors cursor-pointer text-xs"
-                        >
-                          View Transcript
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedStudentId(student.student_id)}
+                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg transition-colors cursor-pointer text-xs"
+                          >
+                            Transcript
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStudent(student.student_id, student.name)}
+                            className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 rounded-lg transition-colors cursor-pointer"
+                            title={`Delete ${student.name} and associated records`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -760,6 +961,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                     <th className="py-3.5 px-4 text-center">Percentage</th>
                     <th className="py-3.5 px-4 text-center">Answering Duration</th>
                     <th className="py-3.5 px-4">When Completed</th>
+                    <th className="py-3.5 px-4 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -800,11 +1002,20 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                       <td className="py-3.5 px-4 font-mono text-gray-500 text-[11px]">
                         {formatDateTime(attempt.end_time)}
                       </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => handleDeleteActivityAttempt(attempt.id || attempt.attempt_id || '')}
+                          className="p-1.5 text-gray-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete this attempt record"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {filteredActivities.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-gray-400">
+                      <td colSpan={8} className="py-8 text-center text-gray-400">
                         No activity attempts recorded.
                       </td>
                     </tr>
@@ -826,6 +1037,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                     <th className="py-3.5 px-4 text-center">Percentage</th>
                     <th className="py-3.5 px-4 text-center">Answering Duration</th>
                     <th className="py-3.5 px-4">Date &amp; Time Completed</th>
+                    <th className="py-3.5 px-4 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -854,12 +1066,21 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                         <td className="py-3.5 px-4 font-mono text-gray-500 text-[11px]">
                           {formatDateTime(q.end_time)}
                         </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() => handleDeleteQuizResult(q.id || q.quiz_id || '')}
+                            className="p-1.5 text-gray-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete this quiz result"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
                   {stats.quizResults.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-gray-400">
+                      <td colSpan={7} className="py-8 text-center text-gray-400">
                         No quiz submissions recorded.
                       </td>
                     </tr>
@@ -881,6 +1102,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                     <th className="py-3.5 px-4 text-center">Level / Stage</th>
                     <th className="py-3.5 px-4 text-center">Duration</th>
                     <th className="py-3.5 px-4">When Played</th>
+                    <th className="py-3.5 px-4 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -907,18 +1129,119 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                         <td className="py-3.5 px-4 font-mono text-gray-500 text-[11px]">
                           {formatDateTime(g.end_time)}
                         </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={() => handleDeleteGameResult(g.id || g.game_result_id || '')}
+                            className="p-1.5 text-gray-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete this game round"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
                   {stats.gameResults.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-gray-400">
+                      <td colSpan={7} className="py-8 text-center text-gray-400">
                         No educational game rounds recorded.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* TAB 6: STUDENT ACTIONS AUDIT TRAIL */}
+          {activeTab === 'LOGS' && (
+            <div className="overflow-x-auto">
+              <div className="p-4 bg-slate-50 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                <div>
+                  <span className="font-black text-gray-900">Real-Time Student Activity &amp; Action Audit Trail</span>
+                  <p className="text-gray-500 text-[11px] mt-0.5">Captures student logins, question responses, quiz submissions, game rounds, and resource downloads.</p>
+                </div>
+                <div className="font-mono text-gray-600 font-bold text-xs bg-white px-2.5 py-1 rounded-md border border-gray-200">
+                  Total Entries: {stats?.activityLogs?.length || 0}
+                </div>
+              </div>
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase font-bold text-[11px]">
+                  <tr>
+                    <th className="py-3.5 px-4">Timestamp</th>
+                    <th className="py-3.5 px-4">Student</th>
+                    <th className="py-3.5 px-4">Year &amp; Section</th>
+                    <th className="py-3.5 px-4">Recorded Action / Event</th>
+                    <th className="py-3.5 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {stats?.activityLogs && stats.activityLogs.length > 0 ? (
+                    stats.activityLogs
+                      .filter(log => {
+                        if (!searchQuery) return true;
+                        const s = getStudentInfo(log.student_id);
+                        const q = searchQuery.toLowerCase();
+                        return (
+                          log.action_text?.toLowerCase().includes(q) ||
+                          s.name.toLowerCase().includes(q) ||
+                          log.student_id.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((log, idx) => {
+                        const s = getStudentInfo(log.student_id);
+                        return (
+                          <tr key={log.log_id || idx} className="hover:bg-blue-50/50 transition-colors">
+                            <td className="py-3 px-4 text-gray-500 text-[11px] font-mono whitespace-nowrap">
+                              {formatDateTime(log.timestamp)}
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="font-bold text-gray-900">{s.name}</div>
+                              <div className="text-[10px] text-gray-400 font-mono">{log.student_id}</div>
+                            </td>
+                            <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
+                              {s.section}
+                            </td>
+                            <td className="py-3 px-4 text-gray-800 text-xs">
+                              <span className="inline-block px-2.5 py-1 rounded-md bg-gray-100 text-gray-800 border border-gray-200 text-[11px] font-medium font-sans">
+                                {log.action_text}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <button
+                                onClick={() => handleDeleteLog(log.id || log.log_id || '')}
+                                className="p-1.5 text-gray-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                title="Delete this action log"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-gray-400">
+                        No student actions logged yet. Student interactions across activities, games, and quizzes are automatically recorded here.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* TAB 7: DEMONSTRATION VIDEOS MANAGEMENT */}
+          {activeTab === 'MANAGE_VIDEOS' && (
+            <div className="p-6">
+              <ResearcherVideoManager />
+            </div>
+          )}
+
+          {/* TAB 8: DATA RETENTION & CLEANUP */}
+          {activeTab === 'MANAGE_RECORDS' && (
+            <div className="p-6">
+              <ResearcherRecordManager stats={stats} onDataChanged={loadData} />
             </div>
           )}
 
@@ -1084,7 +1407,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             {/* Modal Footer */}
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
               <span className="text-xs text-gray-400">
-                BTLED-ICT Research Telemetry System
+                CSSENTIAL Student Telemetry &amp; Research Platform
               </span>
               <button
                 onClick={() => setSelectedStudentId(null)}

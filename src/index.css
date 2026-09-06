@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  /* Default Palette 1 */
+  /* Default Palette 1: Forest Emerald & Warm Amber */
   --app-bg: #D1E8E2;
   --app-surface: #FFFFFF;
   --app-surface-alt: #E4F1EE;
-  --app-border: #B7DBD2;
+  --app-border: #8ABCB0;
   --app-primary: #116466;
   --app-primary-hover: #0D4E50;
   --app-primary-text: #FFFFFF;
@@ -14,10 +14,10 @@
   --app-highlight: #FFCB9A;
   --app-text-title: #2C3531;
   --app-text-body: #2C3531;
-  --app-text-muted: #566661;
+  --app-text-muted: #4D5E57;
   --app-badge-bg: #FFCB9A;
   --app-badge-text: #2C3531;
-  --app-card-border: #B7DBD2;
+  --app-card-border: #8ABCB0;
   --app-nav-active: #116466;
   --app-nav-active-text: #FFFFFF;
   --app-button-bg: #116466;
@@ -26,11 +26,126 @@
   --app-accent-btn-text: #2C3531;
 }
 
-/* Dynamic theme classes for custom GUI styling */
+/* Base Body & App Container Theming */
+html,
+body,
+#root,
 .theme-container {
-  background-color: var(--app-bg);
+  background-color: var(--app-bg) !important;
   color: var(--app-text-body);
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Header dynamic palette */
+header,
+header.bg-white {
+  background-color: var(--app-surface) !important;
+  border-bottom: 2px solid var(--app-border) !important;
+}
+
+header h1,
+header .text-blue-900 {
+  color: var(--app-primary) !important;
+}
+
+header .bg-blue-700,
+header .bg-blue-600 {
+  background-color: var(--app-primary) !important;
+  color: var(--app-primary-text) !important;
+}
+
+header .bg-blue-100,
+header .bg-blue-50 {
+  background-color: var(--app-surface-alt) !important;
+  color: var(--app-primary) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* Navigation bar */
+nav,
+nav.bg-white {
+  background-color: var(--app-surface) !important;
+  border-bottom: 2px solid var(--app-border) !important;
+}
+
+nav button.bg-blue-700,
+nav button.ring-blue-700,
+nav button[class*="bg-blue-700"] {
+  background-color: var(--app-primary) !important;
+  color: var(--app-primary-text) !important;
+  border-color: var(--app-primary) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.25) !important;
+}
+
+nav button.bg-white,
+nav button:not([class*="bg-blue-700"]):not(.bg-blue-700) {
+  background-color: var(--app-surface) !important;
+  color: var(--app-text-body) !important;
+  border-color: var(--app-border) !important;
+}
+
+nav button.bg-white:hover,
+nav button:not([class*="bg-blue-700"]):hover {
+  background-color: var(--app-surface-alt) !important;
+  color: var(--app-primary) !important;
+  border-color: var(--app-primary) !important;
+}
+
+/* Primary Action Buttons across all views */
+button.bg-blue-700,
+button.bg-blue-600,
+button.bg-blue-800,
+a.bg-blue-700,
+a.bg-blue-600,
+.btn-primary {
+  background-color: var(--app-primary) !important;
+  color: var(--app-primary-text) !important;
+  border-color: var(--app-primary) !important;
+}
+
+button.bg-blue-700:hover,
+button.bg-blue-600:hover,
+button.bg-blue-800:hover,
+a.bg-blue-700:hover,
+a.bg-blue-600:hover {
+  background-color: var(--app-primary-hover) !important;
+  filter: brightness(0.95);
+}
+
+/* Primary headings & text */
+.text-blue-900,
+.text-blue-800,
+.text-blue-700 {
+  color: var(--app-primary) !important;
+}
+
+/* Badges, tags & accents */
+.bg-blue-100 {
+  background-color: var(--app-surface-alt) !important;
+  color: var(--app-primary) !important;
+  border-color: var(--app-border) !important;
+}
+
+.bg-blue-50,
+.bg-blue-50\/60,
+.bg-blue-50\/40 {
+  background-color: var(--app-surface-alt) !important;
+}
+
+.border-blue-200,
+.border-blue-100,
+.border-blue-300 {
+  border-color: var(--app-border) !important;
+}
+
+/* Themed Cards & Containers */
+.theme-container .bg-white {
+  background-color: var(--app-surface);
+  border-color: var(--app-border);
+}
+
+.theme-container .bg-gray-50 {
+  background-color: var(--app-surface-alt);
 }
 
 .theme-card {
@@ -85,4 +200,37 @@
 
 .theme-border {
   border-color: var(--app-border);
+}
+
+/* Footer Theming */
+footer,
+.theme-container footer {
+  background-color: var(--app-surface) !important;
+  border-top: 2px solid var(--app-border) !important;
+}
+
+/* Media Print Styling for Academic Laboratory Handouts */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #academic-document-print-area,
+  #academic-document-print-area * {
+    visibility: visible;
+  }
+  #academic-document-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20mm;
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+  .no-print {
+    display: none !important;
+  }
 }

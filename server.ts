@@ -593,6 +593,98 @@ app.post('/api/logs', (req, res) => {
   res.json(log);
 });
 
+// Deletion Endpoints
+app.delete('/api/students/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  db.students = db.students.filter(s => s.student_id !== id);
+  db.sessions = db.sessions.filter(s => s.student_id !== id);
+  db.activity_attempts = db.activity_attempts.filter(a => a.student_id !== id);
+  db.quiz_results = db.quiz_results.filter(q => q.student_id !== id);
+  db.game_results = db.game_results.filter(g => g.student_id !== id);
+  db.lesson_views = db.lesson_views.filter(l => l.student_id !== id);
+  db.activity_logs = db.activity_logs.filter(l => l.student_id !== id);
+  saveDatabase(db);
+  res.json({ success: true, deletedStudentId: id });
+});
+
+app.delete('/api/activity-attempts/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  db.activity_attempts = db.activity_attempts.filter(a => a.attempt_id !== id && a.id !== id);
+  saveDatabase(db);
+  res.json({ success: true, deletedAttemptId: id });
+});
+
+app.delete('/api/quiz-results/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  db.quiz_results = db.quiz_results.filter(q => q.quiz_id !== id && q.id !== id);
+  saveDatabase(db);
+  res.json({ success: true, deletedQuizId: id });
+});
+
+app.delete('/api/game-results/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  db.game_results = db.game_results.filter(g => g.game_result_id !== id && g.id !== id);
+  saveDatabase(db);
+  res.json({ success: true, deletedGameId: id });
+});
+
+app.delete('/api/logs/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  db.activity_logs = db.activity_logs.filter(l => l.log_id !== id && l.id !== id);
+  saveDatabase(db);
+  res.json({ success: true, deletedLogId: id });
+});
+
+app.post('/api/researcher/purge', (req, res) => {
+  const { olderThanDays, type } = req.body;
+  const db = loadDatabase();
+  if (type === 'wipe') {
+    db.students = [];
+    db.sessions = [];
+    db.activity_attempts = [];
+    db.quiz_results = [];
+    db.game_results = [];
+    db.lesson_views = [];
+    db.activity_logs = [];
+    db.ai_usage = [];
+    saveDatabase(db);
+    return res.json({ success: true, message: 'Database wiped' });
+  }
+
+  if (type === 'all') {
+    db.activity_attempts = [];
+    db.quiz_results = [];
+    db.game_results = [];
+    db.activity_logs = [];
+    db.lesson_views = [];
+    db.ai_usage = [];
+    saveDatabase(db);
+    return res.json({ success: true, message: 'All telemetry purged' });
+  }
+
+  if (olderThanDays && typeof olderThanDays === 'number') {
+    const cutoff = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
+    const filterFn = (iso?: string) => {
+      if (!iso) return true;
+      return new Date(iso).getTime() >= cutoff;
+    };
+    db.activity_attempts = db.activity_attempts.filter(a => filterFn(a.created_at || a.end_time));
+    db.quiz_results = db.quiz_results.filter(q => filterFn(q.created_at || q.end_time));
+    db.game_results = db.game_results.filter(g => filterFn(g.created_at || g.end_time));
+    db.activity_logs = db.activity_logs.filter(l => filterFn(l.timestamp));
+    db.lesson_views = db.lesson_views.filter(l => filterFn(l.started_at));
+    saveDatabase(db);
+    return res.json({ success: true, message: `Purged records older than ${olderThanDays} days` });
+  }
+
+  res.status(400).json({ error: 'Invalid purge request' });
+});
+
 // RESEARCHER / ADMIN DASHBOARD ENDPOINTS
 app.get('/api/researcher/overview', (req, res) => {
   const db = loadDatabase();
@@ -771,12 +863,12 @@ function getGeminiClient(): GoogleGenAI | null {
   return geminiClient;
 }
 
-// Comprehensive local knowledge engine for BTLED-ICT Computer System Installation & Configuration
+// Comprehensive local knowledge engine for Computer System Installation & Configuration
 function getLocalKnowledgeReply(message: string, currentPage: string = 'HOME', currentContext: string = ''): string {
   const lower = message.toLowerCase();
 
   if (lower.includes('what is cssential') || lower.includes('about cssential')) {
-    return 'CSSENTIAL is a One-Click Multi-Intervention Learning Platform for Troubleshooting Computer System Installation and Configuration, specifically created for 3rd-Year BTLED-ICT students. It brings together learning modules, step-by-step demonstrations, interactive activities, troubleshooting exercises, quizzes, 9 educational games, and this AI assistant in one platform.';
+    return 'CSSENTIAL is a One-Click Multi-Intervention Learning Platform for Troubleshooting Computer System Installation and Configuration, designed for students, educators, and technicians. It brings together learning modules, step-by-step demonstrations, interactive activities, troubleshooting exercises, quizzes, 9 educational games, and this AI assistant in one platform.';
   }
   
   if (lower.includes('beep') || lower.includes('post code')) {
@@ -832,11 +924,11 @@ function getLocalKnowledgeReply(message: string, currentPage: string = 'HOME', c
   }
 
   if (lower.includes('collection') || lower.includes('download') || lower.includes('presentation')) {
-    return 'The Collection section contains comprehensive curriculum learning units for 3rd-Year BTLED-ICT students. You can click 🖥 PRESENT to launch full interactive visual presentations, download complete lesson handouts in PDF or Word DOCX formats, or click ▶ WATCH to view demonstration video lessons.';
+    return 'The Collection section contains comprehensive curriculum learning units for Computer System Installation and Configuration. You can click 🖥 PRESENT to launch full interactive visual presentations, download complete lesson handouts in PDF or Word DOCX formats, or click ▶ WATCH to view demonstration video lessons.';
   }
 
   if (lower.includes('author') || lower.includes('researcher') || lower.includes('who made') || lower.includes('developer')) {
-    return 'CSSENTIAL was researched and developed by 3rd-Year BTLED-ICT students:\n• Jhon Wesly T. Buban (Lead Developer & System Architect)\n• Juliana Marizh B. Calaputpu (Curriculum Researcher)\n• Charlotte Mae H. Colon (Content Researcher)\n• Precious Lara M. Timoteo (Evaluation & Testing Researcher)';
+    return 'CSSENTIAL was researched and developed by:\n• Jhon Wesly T. Buban (Lead Developer & System Architect)\n• Juliana Marizh B. Calaputpu (Curriculum Researcher)\n• Charlotte Mae H. Colon (Content Researcher)\n• Precious Lara M. Timoteo (Evaluation & Testing Researcher)';
   }
 
   if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower.includes('good morning') || lower.includes('good afternoon')) {
@@ -852,7 +944,7 @@ app.post('/api/gemini/chat', async (req, res) => {
     return res.status(400).json({ error: 'Message is required' });
   }
 
-  const systemInstruction = `You are CSSENTIAL AI, the official AI Learning Assistant for CSSENTIAL (A One-Click Multi-Intervention Platform for Troubleshooting Computer System Installation and Configuration for 3rd-Year BTLED-ICT students).
+  const systemInstruction = `You are CSSENTIAL AI, the official AI Learning Assistant for CSSENTIAL (A One-Click Multi-Intervention Platform for Troubleshooting Computer System Installation and Configuration).
 The platform covers:
 1. Preparing for Installation: OHS standards, ESD prevention, tools (multimeter, screwdrivers, wrist straps), workshop preparation.
 2. Installing Computer Systems: Motherboard mounting, brass standoffs, CPU socket installation, thermal paste application, dual-channel RAM (A2/B2), PSU cabling (24-pin ATX, 8-pin EPS CPU, PCIe), front panel connectors (PWR_SW, RESET_SW, LEDs).

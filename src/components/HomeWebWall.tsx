@@ -42,7 +42,7 @@ export const HomeWebWall: React.FC<HomeWebWallProps> = ({
               <span>FEATURED TOPICS</span>
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Core curriculum units for BTLED-ICT 3rd Year
+              Core curriculum units in Computer System Installation &amp; Configuration
             </p>
           </div>
 
@@ -377,7 +377,7 @@ export const HomeWebWall: React.FC<HomeWebWallProps> = ({
 
           <div className="mt-4 pt-3 border-t border-gray-100 text-center">
             <span className="text-[11px] text-gray-400 font-medium">
-              3rd-Year BTLED-ICT Platform
+              Interactive Hardware Learning Platform
             </span>
           </div>
         </div>

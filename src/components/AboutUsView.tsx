@@ -26,7 +26,7 @@ export const AboutUsView: React.FC = () => {
       name: 'Charlotte Mae H. Colon',
       role: 'Researcher',
       tag: 'Intervention Activities & Assessment',
-      bio: 'Formulated diagnostic troubleshooting scenarios, technical laboratory rubrics, and comprehensive evaluation quizzes for 3rd-Year BTLED-ICT students.',
+      bio: 'Formulated diagnostic troubleshooting scenarios, technical laboratory rubrics, and comprehensive evaluation quizzes for computer hardware students and technicians.',
       initials: 'CC',
       color: 'bg-cyan-600'
     },
@@ -81,7 +81,7 @@ export const AboutUsView: React.FC = () => {
                   {person.name}
                 </h3>
                 <span className="inline-block text-xs font-semibold text-gray-500 mt-0.5">
-                  3rd-Year BTLED-ICT
+                  Computer Systems &amp; Technology Education
                 </span>
               </div>
 
@@ -104,9 +104,9 @@ export const AboutUsView: React.FC = () => {
           <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
             <GraduationCap className="w-5 h-5" />
           </div>
-          <h4 className="text-base font-black text-gray-900">Program Focus</h4>
+          <h4 className="text-base font-black text-gray-900">Universal Access</h4>
           <p className="text-xs text-gray-600 leading-relaxed">
-            Engineered specifically for <strong>Bachelor of Technology and Livelihood Education (BTLED)</strong> students majoring in <strong>Information and Communications Technology (ICT)</strong>, bridging laboratory theory with interactive digital execution.
+            Engineered as an open platform for <strong>all students, technicians, and technology learners</strong> studying <strong>Computer System Installation &amp; Configuration</strong>, bridging laboratory theory with interactive digital execution.
           </p>
         </div>
 
@@ -141,7 +141,7 @@ export const AboutUsView: React.FC = () => {
           CSSENTIAL: One-Click Multi-Intervention Learning Platform
         </h3>
         <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          Designed and developed in fulfillment of research requirements for 3rd-Year BTLED-ICT. Dedicated to advancing computer hardware diagnostics, safety compliance, and technician competence.
+          Designed and developed as an open educational research platform for all learners. Dedicated to advancing computer hardware diagnostics, safety compliance, and technician competence.
         </p>
       </div>
 

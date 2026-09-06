@@ -240,6 +240,8 @@ export default function App() {
           <CollectionView
             studentId={student?.student_id || 'STU-GUEST'}
             sessionId={sessionId || 'SESS-TEMP'}
+            studentName={student?.name}
+            yearSection={student?.year_section}
             initialTopicId={selectedTopicId}
             onClearInitialTopic={() => setSelectedTopicId(null)}
           />
@@ -305,7 +307,7 @@ export default function App() {
             CSSENTIAL: One-Click Multi-Intervention Learning Platform for Computer System Installation and Configuration
           </p>
           <p className="text-[11px] text-gray-400">
-            Designed for 3rd-Year BTLED-ICT Students. Developed by Jhon Wesly T. Buban, Juliana Marizh B. Calaputpu, Charlotte Mae H. Colon, and Precious Lara M. Timoteo.
+            Designed for all students, technicians, and educators. Developed by Jhon Wesly T. Buban, Juliana Marizh B. Calaputpu, Charlotte Mae H. Colon, and Precious Lara M. Timoteo.
           </p>
         </div>
       </footer>
@@ -324,14 +326,6 @@ export default function App() {
         initialStudent={student}
         onClose={student ? () => setShowEntryModal(false) : undefined}
         onRegister={handleStudentRegistered}
-        onSubmit={(registeredName) => {
-          handleStudentRegistered({
-            student_id: `BTLED-${Date.now().toString().slice(-6)}`,
-            name: registeredName,
-            year_section: '3rd-Year BTLED-ICT 3-A',
-            created_at: new Date().toISOString()
-          });
-        }}
       />
 
       {/* Theme Palette Switcher Modal */}

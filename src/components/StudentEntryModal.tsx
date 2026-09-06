@@ -19,14 +19,14 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
   onClose
 }) => {
   const [name, setName] = useState('');
-  const [section, setSection] = useState('3rd-Year BTLED-ICT 3-A');
+  const [section, setSection] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (initialStudent) {
       setName(initialStudent.name || '');
-      setSection(initialStudent.year_section || '3rd-Year BTLED-ICT 3-A');
+      setSection(initialStudent.year_section || '');
     }
   }, [initialStudent]);
 
@@ -40,13 +40,19 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
       return;
     }
 
+    const trimmedSection = section.trim() || 'General Section';
+
     setIsSubmitting(true);
     try {
-      const studentProfile = await api.registerStudent(trimmedName, section);
+      const studentProfile = await api.registerStudent(trimmedName, trimmedSection);
+      await api.logAction(
+        studentProfile.student_id,
+        'sess_initial',
+        `Student signed in: ${studentProfile.name} (${studentProfile.year_section})`
+      );
       if (onRegister) {
         onRegister(studentProfile);
-      }
-      if (onSubmit) {
+      } else if (onSubmit) {
         onSubmit(trimmedName);
       }
       if (onClose) {
@@ -55,15 +61,19 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
     } catch (err) {
       console.warn('Student registration fallback:', err);
       const fallback: StudentProfile = {
-        student_id: `BTLED-${Date.now().toString().slice(-6)}`,
+        student_id: `CSS-${Date.now().toString().slice(-6)}`,
         name: trimmedName,
-        year_section: section,
+        year_section: trimmedSection,
         created_at: new Date().toISOString()
       };
+      await api.logAction(
+        fallback.student_id,
+        'sess_initial',
+        `Student signed in (offline): ${fallback.name} (${fallback.year_section})`
+      );
       if (onRegister) {
         onRegister(fallback);
-      }
-      if (onSubmit) {
+      } else if (onSubmit) {
         onSubmit(trimmedName);
       }
       if (onClose) {
@@ -98,7 +108,7 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
             One-Click Multi-Intervention Learning Platform for Computer System Installation &amp; Configuration
           </p>
           <div className="mt-2.5 inline-block px-3 py-1 bg-white/10 backdrop-blur-xs rounded-full text-xs font-semibold text-blue-100">
-            Target Audience: 3rd-Year BTLED-ICT Students
+            Open Learning Platform for All Students, Technicians &amp; Learners
           </div>
         </div>
 
@@ -126,19 +136,20 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="student-section-select" className="block text-xs font-black uppercase tracking-wider text-gray-700">
-              Year &amp; Section
+            <label htmlFor="student-section-input" className="block text-xs font-black uppercase tracking-wider text-gray-700">
+              Year &amp; Section / Course <span className="text-gray-400 font-normal">(Type your section)</span>
             </label>
-            <select
-              id="student-section-select"
+            <input
+              id="student-section-input"
+              type="text"
               value={section}
               onChange={(e) => setSection(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-hidden transition-all text-gray-900 font-medium cursor-pointer"
-            >
-              <option value="3rd-Year BTLED-ICT 3-A">3rd-Year BTLED-ICT 3-A</option>
-              <option value="3rd-Year BTLED-ICT 3-B">3rd-Year BTLED-ICT 3-B</option>
-              <option value="3rd-Year BTLED-ICT General">3rd-Year BTLED-ICT General</option>
-            </select>
+              placeholder="e.g., 3rd Year - Section A, Grade 12 - TVL, BSIT 3-B"
+              className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-hidden transition-all text-gray-900 placeholder:text-gray-400 font-medium"
+            />
+            <p className="text-[11px] text-gray-500">
+              Type your exact grade level, college year, or class section to organize your records.
+            </p>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-950 flex items-start gap-2.5">

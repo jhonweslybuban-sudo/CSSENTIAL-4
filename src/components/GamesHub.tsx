@@ -129,7 +129,7 @@ export const GamesHub: React.FC<GamesHubProps> = ({
               <span>CSSENTIAL INTERACTIVE GAMES HUB</span>
             </h2>
             <p className="text-xs text-gray-500">
-              9 Educational Games &amp; Diagnostic Exercises for 3rd-Year BTLED-ICT Students
+              9 Educational Games &amp; Diagnostic Exercises for Computer Hardware &amp; System Configuration
             </p>
           </div>
         </div>

@@ -37,7 +37,15 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
 
-  // Timer
+  // Timer & initial start log
+  useEffect(() => {
+    api.logAction(
+      studentId,
+      sessionId,
+      `Started Activity: "${activity.name}" (1 to ${activity.items.length} questions)`
+    );
+  }, [activity.name, activity.items.length, sessionId, studentId]);
+
   useEffect(() => {
     if (isCompleted) return;
     const interval = setInterval(() => {
@@ -60,6 +68,12 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
 
     const newAnswers = [...answersState, { isCorrect, selected: selectedOption }];
     setAnswersState(newAnswers);
+
+    api.logAction(
+      studentId,
+      sessionId,
+      `Answered Question ${currentIndex + 1}/${activity.items.length} in "${activity.name}": ${isCorrect ? 'CORRECT' : 'INCORRECT'}`
+    );
   };
 
   const handleNext = async () => {
@@ -304,19 +318,23 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
       ) : (
         /* Completion Results Screen */
         <div className="bg-white border border-gray-200 rounded-xl shadow-xs p-8 text-center space-y-6">
-          <div className="w-16 h-16 bg-blue-100 text-blue-700 rounded-full mx-auto flex items-center justify-center">
-            <Award className="w-9 h-9" />
+          <div className="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full mx-auto flex items-center justify-center">
+            <CheckCircle className="w-10 h-10 text-emerald-600" />
           </div>
 
           <div>
-            <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">
-              Activity Completed
-            </span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-black tracking-wider uppercase mb-2">
+              <CheckCircle className="w-3.5 h-3.5" />
+              ACTIVITY COMPLETE!
+            </div>
             <h2 className="text-2xl font-black text-gray-900 mt-1">
               {activity.name}
             </h2>
-            <p className="text-xs text-gray-600 mt-1">
-              Your performance score has been securely saved in the research database.
+            <p className="text-sm font-semibold text-gray-700 mt-1">
+              All {activity.items.length} of {activity.items.length} Questions Finished!
+            </p>
+            <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
+              Your completion record, answering duration, question responses, and final score have been permanently recorded in the researcher telemetry database.
             </p>
           </div>
 

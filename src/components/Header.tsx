@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
                   CSSENTIAL
                 </h1>
                 <span className="hidden md:inline-block px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">
-                  BTLED-ICT 3rd Year
+                  Learning Platform
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-gray-600 font-medium line-clamp-1 mt-0.5">

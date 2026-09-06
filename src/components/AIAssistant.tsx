@@ -24,7 +24,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     {
       id: 'welcome',
       sender: 'ai',
-      text: 'Hello 3rd-Year BTLED-ICT Technician! I am your **CSSENTIAL AI Learning Assistant**. Ask me anything regarding computer assembly, ESD safety precautions, BIOS/UEFI configuration, Windows installation, or hardware fault diagnosis.',
+      text: 'Hello Student Technician! I am your **CSSENTIAL AI Learning Assistant**. Ask me anything regarding computer assembly, ESD safety precautions, BIOS/UEFI configuration, Windows installation, or hardware fault diagnosis.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -64,7 +64,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await api.askAI(query, 'BTLED-ICT Computer System Installation and Configuration');
+      const response = await api.askAI(query, 'Computer System Installation and Configuration');
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
         sender: 'ai',

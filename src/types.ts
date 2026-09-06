@@ -138,6 +138,8 @@ export interface ResearcherStats {
   quizResults: QuizResult[];
   gameResults: GameResult[];
   downloads?: DownloadRecord[];
+  activityLogs?: ActivityLog[];
+  lessonViews?: LessonView[];
 }
 
 export interface LessonContent {
