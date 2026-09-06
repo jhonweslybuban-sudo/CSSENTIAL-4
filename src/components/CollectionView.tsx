@@ -6,6 +6,7 @@ import { LessonViewerModal } from './LessonViewerModal';
 import { VideoModal } from './VideoModal';
 import { AcademicPrintModal } from './AcademicPrintModal';
 import { generateDocxBlob } from '../services/academicDocument';
+import { downloadPresentationDeck } from '../services/presentationService';
 import { api } from '../services/api';
 
 interface CollectionViewProps {
@@ -65,6 +66,16 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
       setTimeout(() => setDownloadNotice(null), 3500);
     } catch (err) {
       console.error('Download error:', err);
+    }
+  };
+
+  const handleDownloadSlides = async (lesson: LessonContent) => {
+    try {
+      await downloadPresentationDeck(lesson, studentId, sessionId, studentName);
+      setDownloadNotice(`Downloaded Standalone Presentation Slides (.html) for Topic ${lesson.topicNumber}: "${lesson.title}"`);
+      setTimeout(() => setDownloadNotice(null), 3500);
+    } catch (err) {
+      console.error('Slide download error:', err);
     }
   };
 
@@ -151,14 +162,26 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
 
                   {/* Presentation Button */}
                   <td className="py-4 px-4 text-center">
-                    <button
-                      id={`present-btn-${lesson.id}`}
-                      onClick={() => setSelectedLessonForPresentation(lesson)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
-                    >
-                      <Monitor className="w-3.5 h-3.5" />
-                      <span>PRESENT</span>
-                    </button>
+                    <div className="flex flex-col items-center">
+                      <button
+                        id={`present-btn-${lesson.id}`}
+                        onClick={() => setSelectedLessonForPresentation(lesson)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
+                        title="Launch Interactive Slide Deck Presentation"
+                      >
+                        <Monitor className="w-3.5 h-3.5" />
+                        <span>PRESENT</span>
+                      </button>
+                      <button
+                        id={`download-slides-${lesson.id}`}
+                        onClick={() => handleDownloadSlides(lesson)}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 hover:text-blue-900 transition-colors cursor-pointer mt-1.5"
+                        title="Directly Download Standalone Slide Deck (.html)"
+                      >
+                        <Download className="w-3 h-3 text-blue-600" />
+                        <span>Slides (.html)</span>
+                      </button>
+                    </div>
                   </td>
 
                   {/* Download Options (PDF & DOCX) - Academically Engaging Design */}
@@ -210,6 +233,8 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
         onClose={() => setSelectedLessonForPresentation(null)}
         studentId={studentId}
         sessionId={sessionId}
+        studentName={studentName}
+        yearSection={yearSection}
       />
 
       <VideoModal
