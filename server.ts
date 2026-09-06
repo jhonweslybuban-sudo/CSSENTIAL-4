@@ -32,169 +32,41 @@ interface DatabaseSchema {
   activity_logs: any[];
 }
 
+function cleanDummyData(data: DatabaseSchema): DatabaseSchema {
+  const dummyIds = new Set(['std_demo_1', 'std_demo_2', 'CSS-2024-001', 'CSS-2024-002', 'CSS-2024-003', 'CSS-2024-004', 'CSS-2024-005']);
+  const dummyNames = new Set(['Aldren Santos', 'Kaye Andrea Reyes', 'Mark Jayson Del Rosario', 'Patricia Mae Alcantara', 'Christian Dave Bautista']);
+  
+  const realStudents = (data.students || []).filter(s => {
+    if (dummyIds.has(s.student_id)) return false;
+    if (s.student_name && s.student_name.includes('(Sample)')) return false;
+    if (s.student_name && dummyNames.has(s.student_name.trim())) return false;
+    return true;
+  });
+  const realIds = new Set(realStudents.map(s => s.student_id));
+
+  return {
+    students: realStudents,
+    sessions: (data.sessions || []).filter(s => realIds.has(s.student_id)),
+    activity_attempts: (data.activity_attempts || []).filter(a => realIds.has(a.student_id)),
+    quiz_results: (data.quiz_results || []).filter(q => realIds.has(q.student_id)),
+    game_results: (data.game_results || []).filter(g => realIds.has(g.student_id)),
+    lesson_views: (data.lesson_views || []).filter(l => realIds.has(l.student_id)),
+    ai_usage: (data.ai_usage || []).filter(u => realIds.has(u.student_id)),
+    activity_logs: (data.activity_logs || []).filter(l => realIds.has(l.student_id))
+  };
+}
+
 function loadDatabase(): DatabaseSchema {
   if (!fs.existsSync(DB_FILE)) {
     const initialData: DatabaseSchema = {
-      students: [
-        {
-          student_id: 'std_demo_1',
-          student_name: 'Aldren Santos (Sample)',
-          created_at: '2026-09-04T08:00:00.000Z',
-          last_active: '2026-09-05T06:15:00.000Z'
-        },
-        {
-          student_id: 'std_demo_2',
-          student_name: 'Kaye Andrea Reyes (Sample)',
-          created_at: '2026-09-04T09:30:00.000Z',
-          last_active: '2026-09-05T05:40:00.000Z'
-        }
-      ],
-      sessions: [
-        {
-          session_id: 'sess_demo_1',
-          student_id: 'std_demo_1',
-          session_start: '2026-09-05T05:00:00.000Z',
-          session_end: '2026-09-05T06:15:00.000Z',
-          total_session_time: 4500
-        }
-      ],
-      activity_attempts: [
-        {
-          attempt_id: 'att_1',
-          student_id: 'std_demo_1',
-          session_id: 'sess_demo_1',
-          activity_name: 'Troubleshooting Scenarios',
-          activity_type: 'Scenario Analysis',
-          start_time: '2026-09-05T05:05:00.000Z',
-          end_time: '2026-09-05T05:11:00.000Z',
-          duration_seconds: 360,
-          score: 4,
-          total_items: 4,
-          percentage: 100,
-          completed: true,
-          created_at: '2026-09-05T05:11:00.000Z'
-        },
-        {
-          attempt_id: 'att_2',
-          student_id: 'std_demo_1',
-          session_id: 'sess_demo_1',
-          activity_name: 'Installation Practice',
-          activity_type: 'Step Ordering',
-          start_time: '2026-09-05T05:15:00.000Z',
-          end_time: '2026-09-05T05:22:30.000Z',
-          duration_seconds: 450,
-          score: 3,
-          total_items: 3,
-          percentage: 100,
-          completed: true,
-          created_at: '2026-09-05T05:22:30.000Z'
-        }
-      ],
-      quiz_results: [
-        {
-          quiz_id: 'qz_1',
-          student_id: 'std_demo_1',
-          session_id: 'sess_demo_1',
-          quiz_name: 'Computer System Quiz',
-          start_time: '2026-09-05T05:25:00.000Z',
-          end_time: '2026-09-05T05:32:00.000Z',
-          duration_seconds: 420,
-          score: 18,
-          total_questions: 20,
-          percentage: 90,
-          completed: true,
-          created_at: '2026-09-05T05:32:00.000Z'
-        }
-      ],
-      game_results: [
-        {
-          game_result_id: 'gm_1',
-          student_id: 'std_demo_1',
-          session_id: 'sess_demo_1',
-          game_name: 'Sort & Configure',
-          start_time: '2026-09-05T05:35:00.000Z',
-          end_time: '2026-09-05T05:40:00.000Z',
-          duration_seconds: 300,
-          score: 140,
-          level: 2,
-          attempts: 1,
-          completed: true,
-          created_at: '2026-09-05T05:40:00.000Z'
-        },
-        {
-          game_result_id: 'gm_2',
-          student_id: 'std_demo_1',
-          session_id: 'sess_demo_1',
-          game_name: 'Memory Match',
-          start_time: '2026-09-05T05:45:00.000Z',
-          end_time: '2026-09-05T05:48:30.000Z',
-          duration_seconds: 210,
-          score: 6,
-          level: 1,
-          attempts: 1,
-          completed: true,
-          created_at: '2026-09-05T05:48:30.000Z'
-        }
-      ],
-      lesson_views: [
-        {
-          view_id: 'lv_1',
-          student_id: 'std_demo_1',
-          session_id: 'sess_demo_1',
-          lesson_title: 'Preparing for Installation',
-          started_at: '2026-09-05T05:01:00.000Z',
-          finished_at: '2026-09-05T05:04:30.000Z',
-          duration_seconds: 210,
-          completed: true
-        }
-      ],
-      ai_usage: [
-        {
-          usage_id: 'ai_1',
-          student_id: 'std_demo_1',
-          session_id: 'sess_demo_1',
-          current_page: 'ACTIVITIES',
-          activity_game: 'Troubleshooting Scenarios',
-          question_count: 2,
-          first_time: '2026-09-05T05:06:00.000Z',
-          last_time: '2026-09-05T05:08:00.000Z',
-          last_question: 'What should I check when monitor shows no signal?'
-        }
-      ],
-      activity_logs: [
-        {
-          log_id: 'log_1',
-          student_id: 'std_demo_1',
-          student_name: 'Aldren Santos (Sample)',
-          session_id: 'sess_demo_1',
-          timestamp: '2026-09-05T05:00:00.000Z',
-          action_text: 'Started session'
-        },
-        {
-          log_id: 'log_2',
-          student_id: 'std_demo_1',
-          student_name: 'Aldren Santos (Sample)',
-          session_id: 'sess_demo_1',
-          timestamp: '2026-09-05T05:01:00.000Z',
-          action_text: 'Opened Collection - Preparing for Installation'
-        },
-        {
-          log_id: 'log_3',
-          student_id: 'std_demo_1',
-          student_name: 'Aldren Santos (Sample)',
-          session_id: 'sess_demo_1',
-          timestamp: '2026-09-05T05:05:00.000Z',
-          action_text: 'Started Troubleshooting Scenarios'
-        },
-        {
-          log_id: 'log_4',
-          student_id: 'std_demo_1',
-          student_name: 'Aldren Santos (Sample)',
-          session_id: 'sess_demo_1',
-          timestamp: '2026-09-05T05:11:00.000Z',
-          action_text: 'Completed Troubleshooting Scenarios with score 4/4 (100%)'
-        }
-      ]
+      students: [],
+      sessions: [],
+      activity_attempts: [],
+      quiz_results: [],
+      game_results: [],
+      lesson_views: [],
+      ai_usage: [],
+      activity_logs: []
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
     return initialData;
@@ -202,7 +74,12 @@ function loadDatabase(): DatabaseSchema {
 
   try {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    const cleaned = cleanDummyData(parsed);
+    if (cleaned.students.length !== (parsed.students || []).length) {
+      saveDatabase(cleaned);
+    }
+    return cleaned;
   } catch (err) {
     console.error('Failed to read database, initializing new:', err);
     return {
@@ -233,7 +110,7 @@ app.get('/api/health', (req, res) => {
 
 // Students: Create or retrieve
 app.post('/api/students', (req, res) => {
-  const { name } = req.body;
+  const { name, year_section, student_id, referral_source, is_github_referral } = req.body;
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ error: 'Name is required' });
   }
@@ -241,21 +118,28 @@ app.post('/api/students', (req, res) => {
   const cleanName = name.trim();
   const db = loadDatabase();
   let student = db.students.find(
-    s => s.student_name.toLowerCase() === cleanName.toLowerCase()
+    s => (s.student_name && s.student_name.toLowerCase() === cleanName.toLowerCase()) ||
+         (student_id && s.student_id === student_id)
   );
 
   const now = new Date().toISOString();
 
   if (!student) {
     student = {
-      student_id: `std_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      student_id: student_id || `std_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       student_name: cleanName,
+      year_section: year_section || 'General Section',
       created_at: now,
-      last_active: now
+      last_active: now,
+      referral_source: referral_source || 'Direct',
+      is_github_referral: Boolean(is_github_referral)
     };
     db.students.push(student);
   } else {
     student.last_active = now;
+    if (year_section) student.year_section = year_section;
+    if (referral_source) student.referral_source = referral_source;
+    if (is_github_referral !== undefined) student.is_github_referral = Boolean(is_github_referral);
   }
 
   saveDatabase(db);
@@ -265,6 +149,34 @@ app.post('/api/students', (req, res) => {
 app.get('/api/students', (req, res) => {
   const db = loadDatabase();
   res.json(db.students);
+});
+
+// Real-time active status heartbeat
+app.post('/api/heartbeat', (req, res) => {
+  const { student_id, session_id } = req.body;
+  if (!student_id && !session_id) {
+    return res.status(400).json({ error: 'student_id or session_id required' });
+  }
+
+  const db = loadDatabase();
+  const now = new Date().toISOString();
+
+  if (student_id) {
+    const student = db.students.find(s => s.student_id === student_id);
+    if (student) {
+      student.last_active = now;
+    }
+  }
+
+  if (session_id) {
+    const session = db.sessions.find(s => s.session_id === session_id);
+    if (session) {
+      session.session_end = now;
+    }
+  }
+
+  saveDatabase(db);
+  res.json({ success: true, timestamp: now });
 });
 
 // Sessions: Start & Heartbeat

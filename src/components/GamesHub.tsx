@@ -11,7 +11,8 @@ import {
   Move,
   HelpCircle,
   Type,
-  Play
+  Play,
+  Cable
 } from 'lucide-react';
 
 export type GameType =
@@ -23,7 +24,8 @@ export type GameType =
   | 'MEMORY_MATCH'
   | 'DRAG_DROP'
   | 'SYSTEM_QUIZ'
-  | 'WORD_SCRAMBLE';
+  | 'WORD_SCRAMBLE'
+  | 'CABLE_PINOUT_MASTER';
 
 interface GamesHubProps {
   onSelectGame: (game: GameType) => void;
@@ -106,6 +108,14 @@ export const GamesHub: React.FC<GamesHubProps> = ({
       desc: 'Unscramble letters and complete technical sentences covering vital computer system installation terminology.',
       icon: <Type className="w-6 h-6 text-orange-700" />,
       badge: 'Vocabulary'
+    },
+    {
+      id: 'CABLE_PINOUT_MASTER' as GameType,
+      title: 'Cable & Pinout Master',
+      category: 'Hardware Connectivity',
+      desc: 'Match 24-pin ATX, EPS, PCIe 8-pin, SATA, Front Panel PWR/LEDs, and high-speed display cables to their motherboard sockets and pinout orientations.',
+      icon: <Cable className="w-6 h-6 text-emerald-700" />,
+      badge: '10th Game • Hardware Lab'
     }
   ];
 
@@ -129,14 +139,14 @@ export const GamesHub: React.FC<GamesHubProps> = ({
               <span>CSSENTIAL INTERACTIVE GAMES HUB</span>
             </h2>
             <p className="text-xs text-gray-500">
-              9 Educational Games &amp; Diagnostic Exercises for Computer Hardware &amp; System Configuration
+              10 Educational Games &amp; Diagnostic Exercises for Computer Hardware &amp; System Configuration
             </p>
           </div>
         </div>
       </div>
 
-      {/* 9 Games Grid (3x3 on desktop) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* 10 Games Balanced Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
         {gamesList.map((game, index) => (
           <div
             key={game.id}
@@ -148,7 +158,7 @@ export const GamesHub: React.FC<GamesHubProps> = ({
                 <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center group-hover:scale-105 transition-transform">
                   {game.icon}
                 </div>
-                <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-700 border border-gray-200">
                   {game.badge}
                 </span>
               </div>

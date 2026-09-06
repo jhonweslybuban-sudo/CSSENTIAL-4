@@ -419,14 +419,33 @@ CSSENTIAL is organized into clear, purposeful sections:
       };
     }
 
-    // General guide for all 9 games
+    if (
+      lower.includes('cable') ||
+      lower.includes('pinout') ||
+      lower.includes('pinout master') ||
+      lower.includes('10th game')
+    ) {
+      return {
+        source: 'game-guide-cable-pinout',
+        reply: `🎮 **How to Play: Cable & Pinout Master (10th Game)**
+
+• **Objective**: Audit motherboard sockets and seat the exact physical power harnesses, high-speed data cables, and front panel pinouts with correct polarity orientation.
+• **Key Mechanics**:
+  1. **Examine Target Port**: Review the motherboard socket scenario (e.g., 24-Pin ATX Main Power, 8-Pin EPS CPU 12V, PCIe 8-pin GPU, SATA 6Gb/s, Front Panel Power Switch, or HDD Activity LED).
+  2. **Filter & Select Cable**: Use category filters (Power, Data, Front Panel, Display) to pick the matching connector from your toolbag.
+  3. **Check Polarity**: For LED headers (HDD LED), toggle between Standard (+/-) and Reversed (-/+) orientation to ensure the diode lights up.
+  4. **Plug In & Test**: Click "PLUG IN & TEST CONNECTOR" to verify physical keying and electrical alignment!`
+      };
+    }
+
+    // General guide for all 10 games
     return {
       source: 'games-hub-overview',
-      reply: `🎮 **Guide: How to Play the 9 Educational Games**
+      reply: `🎮 **Guide: How to Play the 10 Educational Games**
 
 To access the games, go to **Activities** and click the **🎮 PLAY Games** button.
 
-Here is what you can play:
+Here are the 10 balanced educational games:
 1. **Sort & Configure**: Classify parts into Input, Output, Storage, Processing, and Safety bins.
 2. **Code Cracker**: Answer diagnostic questions to decrypt the terminal passcode.
 3. **Troubleshooting Search**: Inspect a motherboard schematic and click the fault area.
@@ -434,10 +453,11 @@ Here is what you can play:
 5. **Technical Flashcards**: Flip cards to master hardware acronyms, port bandwidths, and specs.
 6. **Memory Match**: Flip cards to pair hardware components with their functions.
 7. **Drag & Drop PC Parts**: Drag components from the bench into their chassis sockets.
-8. **Computer System Quiz**: 10-question timed technical speed test.
-9. **Tech Word Scramble**: Unscramble letter tiles to reveal computer terms.
+8. **Computer System Quiz**: Comprehensive assessment covering hardware & diagnostics.
+9. **Tech Word Scramble**: Unscramble letter tiles to reveal vital computer terms.
+10. **Cable & Pinout Master**: Hardware lab matching power harnesses, SATA, and front-panel pinouts.
 
-Ask me about any specific game (e.g. *"How to play Code Cracker"*) for detailed tips!`
+Ask me about any specific game (e.g. *"How to play Cable & Pinout Master"*) for detailed step-by-step tips!`
     };
   }
 

@@ -21,6 +21,7 @@ import { MemoryMatchGame } from './components/games/MemoryMatchGame';
 import { DragDropPartsGame } from './components/games/DragDropPartsGame';
 import { ComputerSystemQuizGame } from './components/games/ComputerSystemQuizGame';
 import { TechWordScrambleGame } from './components/games/TechWordScrambleGame';
+import { CablePinoutMasterGame } from './components/games/CablePinoutMasterGame';
 
 import { PageView, StudentProfile } from './types';
 import { ActivityDefinition, ACTIVITIES_DATA } from './data/curriculum';
@@ -70,6 +71,16 @@ export default function App() {
     setShowEntryModal(false);
     api.createSession(registeredStudent.student_id).then(s => setSessionId(s.id));
   };
+
+  // Real-time student heartbeat every 20 seconds
+  useEffect(() => {
+    if (!student?.student_id) return;
+    api.heartbeat(student.student_id, sessionId);
+    const interval = setInterval(() => {
+      api.heartbeat(student.student_id, sessionId);
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [student?.student_id, sessionId]);
 
   const navigateTo = (page: PageView) => {
     setPageHistory(prev => [...prev, page]);
@@ -143,6 +154,7 @@ export default function App() {
         {/* VIEW 2: ACTIVITIES LIST */}
         {currentPage === 'ACTIVITIES' && (
           <ActivitiesView
+            studentId={student?.student_id}
             onSelectActivity={handleSelectActivity}
             onOpenGames={() => navigateTo('GAMES_HUB')}
           />
@@ -227,6 +239,13 @@ export default function App() {
             )}
             {selectedGame === 'WORD_SCRAMBLE' && (
               <TechWordScrambleGame
+                studentId={student?.student_id || 'STU-GUEST'}
+                sessionId={sessionId || 'SESS-TEMP'}
+                onBack={() => navigateTo('GAMES_HUB')}
+              />
+            )}
+            {selectedGame === 'CABLE_PINOUT_MASTER' && (
+              <CablePinoutMasterGame
                 studentId={student?.student_id || 'STU-GUEST'}
                 sessionId={sessionId || 'SESS-TEMP'}
                 onBack={() => navigateTo('GAMES_HUB')}

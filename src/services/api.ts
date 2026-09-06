@@ -18,375 +18,66 @@ export interface LocalDatabaseSchema {
   quiz_results: QuizResult[];
   game_results: GameResult[];
   lesson_views: LessonView[];
+  ai_usage?: any[];
   downloads: DownloadRecord[];
   activity_logs: any[];
 }
 
 const LOCAL_DB_KEY = 'cssential_local_db_v2';
 
-function getInitialSeedDatabase(): LocalDatabaseSchema {
-  const now = new Date();
-  const d = (hoursAgo: number, minutesAgo: number = 0) => {
-    const date = new Date(now.getTime() - (hoursAgo * 3600 + minutesAgo * 60) * 1000);
-    return date.toISOString();
-  };
+const DUMMY_STUDENT_IDS = new Set([
+  "CSS-2024-001",
+  "CSS-2024-002",
+  "CSS-2024-003",
+  "CSS-2024-004",
+  "CSS-2024-005",
+  "std_demo_1",
+  "std_demo_2"
+]);
 
+const DUMMY_STUDENT_NAMES = new Set([
+  "Aldren Santos",
+  "Kaye Andrea Reyes",
+  "Mark Jayson Del Rosario",
+  "Patricia Mae Alcantara",
+  "Christian Dave Bautista"
+]);
+
+export function isDummyStudent(s: any): boolean {
+  if (!s) return true;
+  if (DUMMY_STUDENT_IDS.has(s.student_id)) return true;
+  if (s.name && DUMMY_STUDENT_NAMES.has(s.name.trim())) return true;
+  if (s.name && s.name.includes("(Sample)")) return true;
+  return false;
+}
+
+function cleanLocalDatabase(db: LocalDatabaseSchema): LocalDatabaseSchema {
+  const realStudents = (db.students || []).filter(s => !isDummyStudent(s));
+  const realIds = new Set(realStudents.map(s => s.student_id));
   return {
-    students: [
-      {
-        student_id: 'CSS-2024-001',
-        name: 'Aldren Santos',
-        year_section: 'Section 3-A',
-        created_at: d(48),
-        last_active: d(1, 15)
-      },
-      {
-        student_id: 'CSS-2024-002',
-        name: 'Kaye Andrea Reyes',
-        year_section: 'Section 3-A',
-        created_at: d(46),
-        last_active: d(2, 30)
-      },
-      {
-        student_id: 'CSS-2024-003',
-        name: 'Mark Jayson Del Rosario',
-        year_section: 'Section 3-B',
-        created_at: d(40),
-        last_active: d(3, 45)
-      },
-      {
-        student_id: 'CSS-2024-004',
-        name: 'Patricia Mae Alcantara',
-        year_section: 'Section 3-B',
-        created_at: d(36),
-        last_active: d(5, 10)
-      },
-      {
-        student_id: 'CSS-2024-005',
-        name: 'Christian Dave Bautista',
-        year_section: 'Section 3-A',
-        created_at: d(24),
-        last_active: d(8, 20)
-      }
-    ],
-    sessions: [
-      {
-        id: 'sess_1',
-        session_id: 'sess_1',
-        student_id: 'CSS-2024-001',
-        session_start: d(2),
-        session_end: d(1, 15),
-        total_session_time: 2700
-      },
-      {
-        id: 'sess_2',
-        session_id: 'sess_2',
-        student_id: 'CSS-2024-002',
-        session_start: d(3),
-        session_end: d(2, 30),
-        total_session_time: 1800
-      }
-    ],
-    activity_attempts: [
-      {
-        id: 'att_101',
-        attempt_id: 'att_101',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        activity_name: 'Troubleshooting Scenarios',
-        activity_type: 'Scenario Analysis',
-        start_time: d(1, 55),
-        end_time: d(1, 49),
-        duration_seconds: 360,
-        score: 4,
-        total_items: 4,
-        percentage: 100,
-        completed: true,
-        created_at: d(1, 49)
-      },
-      {
-        id: 'att_102',
-        attempt_id: 'att_102',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        activity_name: 'Installation Practice',
-        activity_type: 'Step Ordering',
-        start_time: d(1, 45),
-        end_time: d(1, 38),
-        duration_seconds: 420,
-        score: 3,
-        total_items: 3,
-        percentage: 100,
-        completed: true,
-        created_at: d(1, 38)
-      },
-      {
-        id: 'att_103',
-        attempt_id: 'att_103',
-        student_id: 'CSS-2024-002',
-        session_id: 'sess_2',
-        activity_name: 'Fault Diagnosis Exercises',
-        activity_type: 'Diagnostic Matrix',
-        start_time: d(2, 50),
-        end_time: d(2, 42),
-        duration_seconds: 480,
-        score: 4,
-        total_items: 5,
-        percentage: 80,
-        completed: true,
-        created_at: d(2, 42)
-      },
-      {
-        id: 'att_104',
-        attempt_id: 'att_104',
-        student_id: 'CSS-2024-003',
-        session_id: 'sess_3',
-        activity_name: 'Configuration Activities',
-        activity_type: 'BIOS Setup',
-        start_time: d(3, 40),
-        end_time: d(3, 34),
-        duration_seconds: 360,
-        score: 3,
-        total_items: 4,
-        percentage: 75,
-        completed: true,
-        created_at: d(3, 34)
-      },
-      {
-        id: 'att_105',
-        attempt_id: 'att_105',
-        student_id: 'CSS-2024-004',
-        session_id: 'sess_4',
-        activity_name: 'Problem Identification',
-        activity_type: 'Symptom Matching',
-        start_time: d(5, 0),
-        end_time: d(4, 52),
-        duration_seconds: 480,
-        score: 5,
-        total_items: 5,
-        percentage: 100,
-        completed: true,
-        created_at: d(4, 52)
-      },
-      {
-        id: 'att_106',
-        attempt_id: 'att_106',
-        student_id: 'CSS-2024-005',
-        session_id: 'sess_5',
-        activity_name: 'System Testing',
-        activity_type: 'Benchmark Check',
-        start_time: d(8, 10),
-        end_time: d(8, 4),
-        duration_seconds: 360,
-        score: 3,
-        total_items: 4,
-        percentage: 75,
-        completed: true,
-        created_at: d(8, 4)
-      }
-    ],
-    quiz_results: [
-      {
-        id: 'qz_101',
-        quiz_id: 'qz_101',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        quiz_name: 'Computer System Quiz (20 Items)',
-        start_time: d(1, 35),
-        end_time: d(1, 26),
-        duration_seconds: 540,
-        score: 19,
-        total_questions: 20,
-        percentage: 95,
-        completed: true,
-        created_at: d(1, 26)
-      },
-      {
-        id: 'qz_102',
-        quiz_id: 'qz_102',
-        student_id: 'CSS-2024-002',
-        session_id: 'sess_2',
-        quiz_name: 'Computer System Quiz (20 Items)',
-        start_time: d(2, 40),
-        end_time: d(2, 31),
-        duration_seconds: 540,
-        score: 17,
-        total_questions: 20,
-        percentage: 85,
-        completed: true,
-        created_at: d(2, 31)
-      },
-      {
-        id: 'qz_103',
-        quiz_id: 'qz_103',
-        student_id: 'CSS-2024-003',
-        session_id: 'sess_3',
-        quiz_name: 'Computer System Quiz (20 Items)',
-        start_time: d(3, 30),
-        end_time: d(3, 22),
-        duration_seconds: 480,
-        score: 18,
-        total_questions: 20,
-        percentage: 90,
-        completed: true,
-        created_at: d(3, 22)
-      },
-      {
-        id: 'qz_104',
-        quiz_id: 'qz_104',
-        student_id: 'CSS-2024-004',
-        session_id: 'sess_4',
-        quiz_name: 'Computer System Quiz (20 Items)',
-        start_time: d(4, 50),
-        end_time: d(4, 40),
-        duration_seconds: 600,
-        score: 16,
-        total_questions: 20,
-        percentage: 80,
-        completed: true,
-        created_at: d(4, 40)
-      }
-    ],
-    game_results: [
-      {
-        id: 'gm_101',
-        game_result_id: 'gm_101',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        game_name: 'Sort & Configure',
-        start_time: d(1, 25),
-        end_time: d(1, 20),
-        duration_seconds: 300,
-        score: 180,
-        level: 3,
-        completed: true,
-        created_at: d(1, 20)
-      },
-      {
-        id: 'gm_102',
-        game_result_id: 'gm_102',
-        student_id: 'CSS-2024-002',
-        session_id: 'sess_2',
-        game_name: 'Code Cracker',
-        start_time: d(2, 30),
-        end_time: d(2, 26),
-        duration_seconds: 240,
-        score: 120,
-        level: 2,
-        completed: true,
-        created_at: d(2, 26)
-      },
-      {
-        id: 'gm_103',
-        game_result_id: 'gm_103',
-        student_id: 'CSS-2024-003',
-        session_id: 'sess_3',
-        game_name: 'Installation Sequence',
-        start_time: d(3, 20),
-        end_time: d(3, 17),
-        duration_seconds: 180,
-        score: 150,
-        level: 2,
-        completed: true,
-        created_at: d(3, 17)
-      },
-      {
-        id: 'gm_104',
-        game_result_id: 'gm_104',
-        student_id: 'CSS-2024-004',
-        session_id: 'sess_4',
-        game_name: 'Memory Match',
-        start_time: d(4, 38),
-        end_time: d(4, 35),
-        duration_seconds: 180,
-        score: 100,
-        level: 1,
-        completed: true,
-        created_at: d(4, 35)
-      }
-    ],
-    lesson_views: [
-      {
-        id: 'lv_101',
-        view_id: 'lv_101',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        lesson_title: 'Preparing for Installation',
-        started_at: d(2),
-        finished_at: d(1, 56),
-        duration_seconds: 240,
-        completed: true
-      }
-    ],
-    downloads: [
-      {
-        id: 'dl_101',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        resource_name: 'Preparing for Installation - Handout',
-        file_type: 'PDF',
-        timestamp: d(1, 55)
-      },
-      {
-        id: 'dl_102',
-        student_id: 'CSS-2024-002',
-        session_id: 'sess_2',
-        resource_name: 'Hardware Assembly & Mounting Guide',
-        file_type: 'DOCX',
-        timestamp: d(2, 45)
-      }
-    ],
-    activity_logs: [
-      {
-        log_id: 'log_seed_1',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        timestamp: d(2),
-        action_text: 'Student logged in to CSSENTIAL learning session'
-      },
-      {
-        log_id: 'log_seed_2',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        timestamp: d(1, 58),
-        action_text: 'Opened interactive presentation: Topic 1 - Preparing for Installation'
-      },
-      {
-        log_id: 'log_seed_3',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        timestamp: d(1, 55),
-        action_text: 'Downloaded: Preparing for Installation - Handout (PDF)'
-      },
-      {
-        log_id: 'log_seed_4',
-        student_id: 'CSS-2024-001',
-        session_id: 'sess_1',
-        timestamp: d(1, 49),
-        action_text: 'Completed Lesson 1 Activity Quiz: Score 10/10 (100%) in 6m 0s'
-      },
-      {
-        log_id: 'log_seed_5',
-        student_id: 'CSS-2024-002',
-        session_id: 'sess_2',
-        timestamp: d(3),
-        action_text: 'Student logged in to CSSENTIAL learning session'
-      },
-      {
-        log_id: 'log_seed_6',
-        student_id: 'CSS-2024-002',
-        session_id: 'sess_2',
-        timestamp: d(2, 42),
-        action_text: 'Completed Lesson 5 Activity Quiz: Score 8/10 (80%) in 8m 0s'
-      },
-      {
-        log_id: 'log_seed_7',
-        student_id: 'CSS-2024-002',
-        session_id: 'sess_2',
-        timestamp: d(2, 8),
-        action_text: 'Completed Installation Sequence Challenge: Score 85 (Level 2)'
-      }
-    ]
+    students: realStudents,
+    sessions: (db.sessions || []).filter(s => realIds.has(s.student_id)),
+    activity_attempts: (db.activity_attempts || []).filter(a => realIds.has(a.student_id)),
+    quiz_results: (db.quiz_results || []).filter(q => realIds.has(q.student_id)),
+    game_results: (db.game_results || []).filter(g => realIds.has(g.student_id)),
+    lesson_views: (db.lesson_views || []).filter(l => realIds.has(l.student_id)),
+    ai_usage: (db.ai_usage || []).filter(u => realIds.has(u.student_id)),
+    downloads: (db.downloads || []).filter(d => realIds.has(d.student_id)),
+    activity_logs: (db.activity_logs || []).filter(l => realIds.has(l.student_id))
+  };
+}
+
+function getInitialSeedDatabase(): LocalDatabaseSchema {
+  return {
+    students: [],
+    sessions: [],
+    activity_attempts: [],
+    quiz_results: [],
+    game_results: [],
+    lesson_views: [],
+    ai_usage: [],
+    downloads: [],
+    activity_logs: []
   };
 }
 
@@ -396,7 +87,11 @@ function loadLocalDatabase(): LocalDatabaseSchema {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.students)) {
-        return parsed;
+        const cleaned = cleanLocalDatabase(parsed);
+        if (cleaned.students.length !== parsed.students.length) {
+          saveLocalDatabase(cleaned);
+        }
+        return cleaned;
       }
     }
   } catch (err) {
@@ -420,10 +115,48 @@ export const api = {
   getSavedStudent(): StudentProfile | null {
     try {
       const data = localStorage.getItem('cssential_student');
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+      const student = JSON.parse(data);
+      if (isDummyStudent(student)) {
+        localStorage.removeItem('cssential_student');
+        return null;
+      }
+      return student;
     } catch {
       return null;
     }
+  },
+
+  async heartbeat(studentId: string, sessionId?: string): Promise<void> {
+    if (!studentId) return;
+    const db = loadLocalDatabase();
+    const student = db.students.find(s => s.student_id === studentId);
+    const now = new Date().toISOString();
+    if (student) {
+      student.last_active = now;
+      saveLocalDatabase(db);
+    }
+    try {
+      await fetch('/api/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: studentId, session_id: sessionId })
+      });
+    } catch {
+      // Offline fallback
+    }
+  },
+
+  getCompletedActivities(studentId?: string): string[] {
+    const db = loadLocalDatabase();
+    let attempts = db.activity_attempts || [];
+    if (studentId) {
+      attempts = attempts.filter(a => a.student_id === studentId);
+    }
+    const completedNames = attempts
+      .filter(a => a.completed)
+      .map(a => a.activity_name);
+    return Array.from(new Set(completedNames));
   },
 
   saveStudent(student: StudentProfile): void {
@@ -444,12 +177,34 @@ export const api = {
 
   async registerStudent(name: string, year_section: string = 'General Section'): Promise<StudentProfile> {
     const studentId = `CSS-${Date.now().toString().slice(-6)}`;
+    
+    // Detect referral source
+    let referralSource = 'Direct';
+    let isGitHub = false;
+    if (typeof window !== 'undefined') {
+      const ref = (document.referrer || '').toLowerCase();
+      const search = (window.location.search || '').toLowerCase();
+      const host = (window.location.hostname || '').toLowerCase();
+      if (ref.includes('github.com') || ref.includes('github.io') || search.includes('github') || search.includes('ref=gh') || host.includes('github.io')) {
+        referralSource = 'GitHub Link';
+        isGitHub = true;
+      } else if (ref) {
+        try {
+          referralSource = new URL(ref).hostname;
+        } catch {
+          referralSource = ref.slice(0, 30);
+        }
+      }
+    }
+
     const newStudent: StudentProfile = {
       student_id: studentId,
       name,
       year_section,
       created_at: new Date().toISOString(),
-      last_active: new Date().toISOString()
+      last_active: new Date().toISOString(),
+      referral_source: referralSource,
+      is_github_referral: isGitHub
     };
 
     // Save to local database first
@@ -458,8 +213,29 @@ export const api = {
     if (existingIndex >= 0) {
       db.students[existingIndex].last_active = new Date().toISOString();
       db.students[existingIndex].year_section = year_section;
+      if (isGitHub) {
+        db.students[existingIndex].is_github_referral = true;
+        db.students[existingIndex].referral_source = referralSource;
+      }
       saveLocalDatabase(db);
       this.saveStudent(db.students[existingIndex]);
+      
+      try {
+        await fetch('/api/students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            year_section,
+            student_id: db.students[existingIndex].student_id,
+            referral_source: db.students[existingIndex].referral_source || referralSource,
+            is_github_referral: db.students[existingIndex].is_github_referral ?? isGitHub
+          })
+        });
+      } catch {
+        // Offline / fallback
+      }
+
       return db.students[existingIndex];
     } else {
       db.students.unshift(newStudent);
@@ -472,7 +248,13 @@ export const api = {
       await fetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, year_section })
+        body: JSON.stringify({
+          name,
+          year_section,
+          student_id: newStudent.student_id,
+          referral_source: referralSource,
+          is_github_referral: isGitHub
+        })
       });
     } catch (err) {
       // Offline / GitHub Pages fallback is active

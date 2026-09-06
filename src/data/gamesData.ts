@@ -66,20 +66,103 @@ export interface SearchTarget {
   id: string;
   name: string;
   description: string;
+  category: string;
+  visualClue: string;
+  keyFeatures: string[];
   bbox: { x: number; y: number; width: number; height: number }; // percentage coords
 }
 
 export const WORKSPACE_OBJECTS: SearchTarget[] = [
-  { id: 'ram', name: 'RAM Sticks', description: 'Dual DDR4 memory modules with gold contacts', bbox: { x: 12, y: 18, width: 14, height: 22 } },
-  { id: 'cpu', name: 'CPU Processor', description: 'Square processor with integrated heat spreader', bbox: { x: 38, y: 22, width: 12, height: 16 } },
-  { id: 'motherboard', name: 'Motherboard PCB', description: 'Main printed circuit board with chipset & sockets', bbox: { x: 28, y: 15, width: 44, height: 50 } },
-  { id: 'sata', name: 'SATA Data Cable', description: 'Red flat 7-pin data transmission cable', bbox: { x: 74, y: 28, width: 14, height: 18 } },
-  { id: 'power_cable', name: '24-Pin ATX Power Cable', description: 'Thick bundled power harness with 24 colored wires', bbox: { x: 70, y: 55, width: 16, height: 20 } },
-  { id: 'screwdriver', name: 'Magnetic Screwdriver', description: 'Phillips head insulated assembly tool', bbox: { x: 8, y: 68, width: 18, height: 16 } },
-  { id: 'ssd', name: '2.5" Solid State Drive', description: 'SATA SSD enclosure with serial port', bbox: { x: 32, y: 72, width: 15, height: 18 } },
-  { id: 'hdd', name: '3.5" Mechanical Hard Disk', description: 'Heavy metal HDD with platter spindle', bbox: { x: 50, y: 72, width: 18, height: 20 } },
-  { id: 'cooling_fan', name: 'CPU Cooler / Fan', description: 'Heatsink with radial fan blades', bbox: { x: 40, y: 38, width: 14, height: 18 } },
-  { id: 'network_cable', name: 'RJ-45 Network Cable', description: 'Blue twisted-pair Ethernet patch cord', bbox: { x: 78, y: 78, width: 16, height: 16 } },
+  {
+    id: 'ram',
+    name: 'RAM Memory Sticks',
+    description: 'Dual DDR4 memory modules with blue heatspreaders & gold contact pins',
+    category: 'System Memory',
+    visualClue: 'Look for two parallel blue rectangular sticks with cooling ridges & a notch along the golden edge pins.',
+    keyFeatures: ['Two parallel dual-channel sticks', 'Blue aluminum heatsink fins', 'Gold contact edge with notch'],
+    bbox: { x: 10, y: 16, width: 16, height: 26 }
+  },
+  {
+    id: 'cpu',
+    name: 'CPU Processor',
+    description: 'Square central processor with metallic nickel heat spreader & silicon PCB',
+    category: 'Processing Unit',
+    visualClue: 'Look for a square chip with a shiny silver metallic top (IHS) and gold corner triangle marker.',
+    keyFeatures: ['Nickel-plated heatspreader', 'Laser-etched speed markings', 'Gold pin-1 orientation triangle'],
+    bbox: { x: 38, y: 22, width: 14, height: 16 }
+  },
+  {
+    id: 'motherboard',
+    name: 'Motherboard PCB',
+    description: 'Main printed circuit board with copper trace buses, capacitors, and sockets',
+    category: 'System Board',
+    visualClue: 'Look for the large dark-green ATX board with intricate gold/copper circuit traces and round capacitor cans.',
+    keyFeatures: ['Deep green printed circuit board', 'Interconnecting copper traces', 'Silver VRM heatsink fins & silver CMOS battery'],
+    bbox: { x: 28, y: 14, width: 44, height: 52 }
+  },
+  {
+    id: 'sata',
+    name: 'SATA Data Cable',
+    description: 'Flat red 7-pin storage data transmission cable with metal locking clips',
+    category: 'Storage Data Cable',
+    visualClue: 'Look for a flexible, bright red ribbon cable ending in black L-shaped connectors with silver metal spring clips.',
+    keyFeatures: ['Bright red flat ribbon body', 'Black 7-pin L-keyed connector', 'Silver metal locking latch clip'],
+    bbox: { x: 73, y: 26, width: 16, height: 20 }
+  },
+  {
+    id: 'power_cable',
+    name: '24-Pin ATX Power Harness',
+    description: 'Main multi-wire power supply bundle with dual-row keyed connector block',
+    category: 'Power Delivery',
+    visualClue: 'Look for a thick bundle of yellow (+12V), red (+5V), and orange (+3.3V) wires entering a white dual-row 24-pin socket.',
+    keyFeatures: ['24 multi-color colored insulated wires', 'Dual-row 2x12 pin keyed block', 'Plastic retention latch clip'],
+    bbox: { x: 68, y: 53, width: 18, height: 22 }
+  },
+  {
+    id: 'screwdriver',
+    name: 'Magnetic Technician Screwdriver',
+    description: 'Phillips cross-head insulated assembly tool with magnetized steel tip',
+    category: 'Technician Tool',
+    visualClue: 'Look for a hand tool with a red ribbed rubber handle, chrome shaft, and darkened magnetic cross-shaped tip.',
+    keyFeatures: ['Ergonomic ribbed red rubber grip', 'Chrome vanadium steel shaft', 'Darkened magnetic #2 Phillips tip'],
+    bbox: { x: 6, y: 66, width: 20, height: 18 }
+  },
+  {
+    id: 'ssd',
+    name: '2.5" Solid State Drive (SSD)',
+    description: 'High-speed flash storage drive in a brushed aluminum casing with SATA ports',
+    category: 'Solid State Storage',
+    visualClue: 'Look for a thin, dark rectangular drive with a bright label ("SSD FLASH") and L-shaped SATA data/power pins.',
+    keyFeatures: ['Brushed matte metal enclosure', 'Compact 2.5-inch form factor', 'SATA data & power notch connectors'],
+    bbox: { x: 30, y: 70, width: 17, height: 20 }
+  },
+  {
+    id: 'hdd',
+    name: '3.5" Mechanical Hard Disk (HDD)',
+    description: 'Cast metal hard drive with visible circular platter spindle hub & breather hole',
+    category: 'Magnetic Storage',
+    visualClue: 'Look for a heavy metal drive with a prominent circular platter spindle in the center and green logic PCB.',
+    keyFeatures: ['Heavy cast metal alloy frame', 'Circular magnetic platter spindle', 'Green exposed controller PCB'],
+    bbox: { x: 49, y: 70, width: 19, height: 22 }
+  },
+  {
+    id: 'cooling_fan',
+    name: 'CPU Cooling Fan & Heatsink',
+    description: 'Radial axial cooling fan mounted atop an aluminum finned heatsink',
+    category: 'Thermal Management',
+    visualClue: 'Look for a circular blue cooling fan with curved aerodynamic blades and a multi-pin power wire lead.',
+    keyFeatures: ['Radial 9-blade axial fan hub', 'Aluminum cooling fin block', '4-pin PWM braided fan header cable'],
+    bbox: { x: 38, y: 38, width: 16, height: 18 }
+  },
+  {
+    id: 'network_cable',
+    name: 'RJ-45 Ethernet Network Cable',
+    description: 'Blue twisted-pair patch cord with clear 8P8C modular connector plug',
+    category: 'Network Connectivity',
+    visualClue: 'Look for a flexible royal-blue cord ending in a clear crystal plastic plug showing 8 tiny gold pins.',
+    keyFeatures: ['Royal blue insulated jacket', 'Clear 8P8C plastic modular plug', '8 visible internal gold-plated pins'],
+    bbox: { x: 76, y: 75, width: 18, height: 18 }
+  }
 ];
 
 export const INSTALLATION_LEVELS = [
@@ -184,15 +267,116 @@ export const MEMORY_CARDS = [
   { id: 'm12', pairId: 'sata', content: 'Storage Drive Data Interconnect', isConcept: false }
 ];
 
-export const DRAG_DROP_PARTS = [
-  { id: 'cpu', label: 'CPU Socket', targetX: 42, targetY: 28, radius: 10 },
-  { id: 'ram', label: 'RAM DIMM Slots', targetX: 68, targetY: 28, radius: 12 },
-  { id: 'motherboard', label: 'Motherboard PCB', targetX: 50, targetY: 50, radius: 25 },
-  { id: 'psu', label: 'Power Supply Unit', targetX: 20, targetY: 82, radius: 14 },
-  { id: 'storage', label: 'Storage Drive Bay', targetX: 80, targetY: 75, radius: 14 },
-  { id: 'cooler', label: 'CPU Cooling Fan', targetX: 42, targetY: 42, radius: 12 },
-  { id: 'pcie', label: 'PCIe Expansion Slot', targetX: 45, targetY: 62, radius: 12 },
-  { id: 'sata_port', label: 'SATA Ports', targetX: 78, targetY: 52, radius: 10 }
+export interface DragDropPart {
+  id: string;
+  label: string;
+  category: string;
+  visualCue: string;
+  socketDescription: string;
+  keyIndicators: string[];
+  targetX: number;
+  targetY: number;
+  radius: number;
+  accentColor: string;
+}
+
+export const DRAG_DROP_PARTS: DragDropPart[] = [
+  {
+    id: 'cpu',
+    label: 'CPU Socket',
+    category: 'Processor Interface',
+    visualCue: 'Square socket with dense gold pin contact grid and chrome retention load lever.',
+    socketDescription: 'Located in the upper-center area of the motherboard, directly between the VRM heatsinks and RAM slots.',
+    keyIndicators: ['Square grid of pins/pads', 'Metal locking load arm', 'Alignment triangle notch'],
+    targetX: 48,
+    targetY: 30,
+    radius: 9,
+    accentColor: '#f59e0b'
+  },
+  {
+    id: 'ram',
+    label: 'RAM DIMM Slots',
+    category: 'Memory Interface',
+    visualCue: 'Long vertical dual-channel slots equipped with snap-lock clips on the ends and an off-center key notch.',
+    socketDescription: 'Positioned vertically to the right of the CPU socket for high-speed direct trace routing to memory channels.',
+    keyIndicators: ['Dual or quad parallel slots', 'White/black dual-channel coloring', 'Snap-in retention latches'],
+    targetX: 67,
+    targetY: 30,
+    radius: 9,
+    accentColor: '#3b82f6'
+  },
+  {
+    id: 'cooler',
+    label: 'CPU Cooling Fan',
+    category: 'Thermal Solution',
+    visualCue: 'Circular 9-blade axial fan mounted directly over an aluminum cooling fin heatsink with 4 copper heatpipes.',
+    socketDescription: 'Mounts squarely on top of the CPU socket brackets to draw heat away from the processor heat spreader.',
+    keyIndicators: ['Radial fan blade blades', 'Aluminum cooling fin stack', '4-pin PWM motherboard header wire'],
+    targetX: 48,
+    targetY: 46,
+    radius: 9,
+    accentColor: '#06b6d4'
+  },
+  {
+    id: 'pcie',
+    label: 'PCIe Expansion Slot',
+    category: 'Expansion Bus',
+    visualCue: 'Long horizontal PCIe x16 slot with reinforced metal shielding and a plastic locking hook at the right rear.',
+    socketDescription: 'Runs horizontally across the lower motherboard, aligning directly with rear chassis I/O expansion bracket cutouts.',
+    keyIndicators: ['Long PCIe x16 connector channel', 'Rear retention latch lever', 'Aligns with case expansion slots'],
+    targetX: 48,
+    targetY: 64,
+    radius: 9,
+    accentColor: '#8b5cf6'
+  },
+  {
+    id: 'motherboard',
+    label: 'Motherboard PCB',
+    category: 'Main System Board',
+    visualCue: 'Large emerald-green printed circuit board secured to chassis standoffs, carrying copper trace buses and chipset.',
+    socketDescription: 'Fastened into the chassis backplate tray via brass standoffs to prevent electrical contact with the case frame.',
+    keyIndicators: ['Full ATX PCB form factor', 'Copper ground plane traces', 'Rear I/O port shield block'],
+    targetX: 32,
+    targetY: 17,
+    radius: 10,
+    accentColor: '#10b981'
+  },
+  {
+    id: 'sata_port',
+    label: 'SATA Storage Ports',
+    category: 'Storage Data Bus',
+    visualCue: 'Dual stacked 7-pin L-shaped keyed SATA data headers with metallic locking latch catches.',
+    socketDescription: 'Clustered along the lower-right perimeter edge of the motherboard for tidy right-angle SATA cable routing.',
+    keyIndicators: ['L-shaped 7-pin interior notch', 'Right-angle header shroud', 'SATA 6Gb/s bus label'],
+    targetX: 71,
+    targetY: 54,
+    radius: 8,
+    accentColor: '#ef4444'
+  },
+  {
+    id: 'psu',
+    label: 'Power Supply Unit (PSU)',
+    category: 'Main Power Source',
+    visualCue: 'Heavy metallic chassis box with hexagonal honeycomb ventilation mesh, AC power receptacle, and power switch.',
+    socketDescription: 'Housed in the isolated bottom chassis basement shroud to isolate thermal exhaust and hide thick cable bundles.',
+    keyIndicators: ['Honeycomb fan exhaust grill', 'AC power inlet & toggle switch', 'Bottom basement mounting bay'],
+    targetX: 18,
+    targetY: 84,
+    radius: 11,
+    accentColor: '#eab308'
+  },
+  {
+    id: 'storage',
+    label: 'Storage Drive Bay',
+    category: 'Drive Enclosure',
+    visualCue: 'Chassis drive cage fitted with slide-out drive caddies for 2.5" solid-state drives and 3.5" mechanical hard drives.',
+    socketDescription: 'Located in the front lower compartment of the desktop chassis behind the front intake fans for cool airflow.',
+    keyIndicators: ['Slide-out drive sled caddies', 'Dual 2.5" / 3.5" drive bays', 'Tool-less retention clip rails'],
+    targetX: 84,
+    targetY: 80,
+    radius: 10,
+    accentColor: '#64748b'
+  }
 ];
 
 export const COMPREHENSIVE_QUIZ_QUESTIONS = [
@@ -322,7 +506,7 @@ export const SCRAMBLE_WORDS = [
   { scrambled: 'PUC', word: 'CPU', hint: 'Central Processing Unit', isFillBlank: false },
   { scrambled: 'MAR', word: 'RAM', hint: 'Volatile system memory', isFillBlank: false },
   { scrambled: 'DSS', word: 'SSD', hint: 'Fast solid state storage', isFillBlank: false },
-  { scrambled: 'DRIVAR', word: 'DRIVER', hint: 'Software that allows OS to talk to hardware', isFillBlank: false },
+  { scrambled: 'REVIDR', word: 'DRIVER', hint: 'Software that allows OS to talk to hardware', isFillBlank: false },
   { scrambled: 'NITOORM', word: 'MONITOR', hint: 'Visual display output device', isFillBlank: false },
   { scrambled: 'DROAMTHBEO', word: 'MOTHERBOARD', hint: 'Main circuit board connecting all parts', isFillBlank: false },
   { scrambled: 'ATAS', word: 'SATA', hint: 'Serial Advanced Technology Attachment', isFillBlank: false },
@@ -348,5 +532,202 @@ export const SCRAMBLE_WORDS = [
     hint: 'Heat conducting compound',
     isFillBlank: true,
     sentence: '______ paste fills microscopic air gaps between the processor and heatsink.'
+  }
+];
+
+export interface CableChallenge {
+  id: string;
+  scenario: string;
+  socketName: string;
+  socketDescription: string;
+  correctCableId: string;
+  polaritySensitive: boolean;
+  technicalNote: string;
+  clue: string;
+}
+
+export interface CableOption {
+  id: string;
+  name: string;
+  pinCount: string;
+  voltageOrSpeed: string;
+  formFactor: string;
+  category: 'Power' | 'Data' | 'Front Panel' | 'Display';
+  visualColor: string;
+}
+
+export const CABLE_OPTIONS: CableOption[] = [
+  {
+    id: 'atx-24',
+    name: '24-Pin ATX Main Power',
+    pinCount: '24 Pins (20+4)',
+    voltageOrSpeed: '+3.3V, +5V, +12V, -12V, +5VSB',
+    formFactor: 'Dual-row keyed latching block',
+    category: 'Power',
+    visualColor: 'bg-amber-600'
+  },
+  {
+    id: 'eps-8',
+    name: '8-Pin (4+4) EPS / CPU 12V Power',
+    pinCount: '8 Pins (Splits into 4+4)',
+    voltageOrSpeed: '+12V DC (Yellow/Black wires)',
+    formFactor: 'Square/curved keyed connector near CPU VRM',
+    category: 'Power',
+    visualColor: 'bg-blue-600'
+  },
+  {
+    id: 'pcie-8',
+    name: '8-Pin (6+2) PCIe GPU Power',
+    pinCount: '8 Pins (Splits into 6+2)',
+    voltageOrSpeed: '+12V DC (Up to 150W per cable)',
+    formFactor: 'Graphics card auxiliary power socket',
+    category: 'Power',
+    visualColor: 'bg-indigo-600'
+  },
+  {
+    id: 'sata-power',
+    name: '15-Pin SATA Power Connector',
+    pinCount: '15 Pins Flat',
+    voltageOrSpeed: '+3.3V, +5V, +12V rails',
+    formFactor: 'L-shaped flat connector from PSU',
+    category: 'Power',
+    visualColor: 'bg-slate-700'
+  },
+  {
+    id: 'sata-data',
+    name: '7-Pin SATA III Data Cable',
+    pinCount: '7 Pins Flat with L-key',
+    voltageOrSpeed: '6 Gbps high-speed differential',
+    formFactor: 'Slim flexible cable with metal retention latch',
+    category: 'Data',
+    visualColor: 'bg-red-600'
+  },
+  {
+    id: 'front-pwr-sw',
+    name: 'Front Panel Power Switch (PWR_SW)',
+    pinCount: '2 Pins Female',
+    voltageOrSpeed: 'Momentary 3.3V logic pull-down',
+    formFactor: 'No polarity; shorts power pins to boot',
+    category: 'Front Panel',
+    visualColor: 'bg-emerald-600'
+  },
+  {
+    id: 'front-hdd-led',
+    name: 'Front Panel HDD LED (+ / -)',
+    pinCount: '2 Pins Female (Polarity Sensitive)',
+    voltageOrSpeed: '+3.3V / Ground cathode',
+    formFactor: 'Anode must align with Pin + for activity light',
+    category: 'Front Panel',
+    visualColor: 'bg-amber-500'
+  },
+  {
+    id: 'usb3-header',
+    name: 'USB 3.0 (19-Pin / 20-Pin) Internal Header',
+    pinCount: '19 Active Pins (1 blocked key hole)',
+    voltageOrSpeed: '5 Gbps SuperSpeed dual-channel',
+    formFactor: 'Thick blue cable with center polarization tab',
+    category: 'Data',
+    visualColor: 'bg-cyan-700'
+  },
+  {
+    id: 'displayport',
+    name: 'DisplayPort 1.4 / 2.1 Cable',
+    pinCount: '20 Pins',
+    voltageOrSpeed: '32.4 Gbps / 80 Gbps video bandwidth',
+    formFactor: 'One rectangular corner, one angled corner with lock button',
+    category: 'Display',
+    visualColor: 'bg-purple-600'
+  },
+  {
+    id: 'hdmi-cable',
+    name: 'HDMI 2.1 Ultra High Speed Cable',
+    pinCount: '19 Pins Trapezoidal',
+    voltageOrSpeed: '48 Gbps uncompressed 4K 120Hz / 8K',
+    formFactor: 'Symmetrical angled sides, friction fit',
+    category: 'Display',
+    visualColor: 'bg-rose-600'
+  }
+];
+
+export const CABLE_CHALLENGES: CableChallenge[] = [
+  {
+    id: 'ch-1',
+    scenario: 'You are completing the primary motherboard electrical connection. The ATX power supply has a wide harness with 24 colored wires.',
+    socketName: 'Motherboard 24-Pin ATX_PWR1 Socket',
+    socketDescription: 'Right edge of motherboard next to RAM slots. Supplies system standby power and primary motherboard bus voltages.',
+    correctCableId: 'atx-24',
+    polaritySensitive: false,
+    technicalNote: 'Always verify the clip snaps over the retention tab securely to prevent loose 12V high-resistance contacts.',
+    clue: 'Look for the widest dual-row connector (20+4 pins) designed to power the whole motherboard.'
+  },
+  {
+    id: 'ch-2',
+    scenario: 'A high-end dedicated NVIDIA RTX 4070 graphics card is seated in PCIe Slot 1. The GPU cooling fans require dedicated 12V auxiliary power.',
+    socketName: 'Graphics Card PCIe Auxiliary 8-Pin Input',
+    socketDescription: 'Top edge of the graphics card PCB requiring auxiliary 12V power (up to 150 Watts).',
+    correctCableId: 'pcie-8',
+    polaritySensitive: false,
+    technicalNote: 'Never force an 8-pin CPU EPS cable into a GPU socket. PCIe 8-pin splits as 6+2 pins; CPU EPS splits as 4+4 pins!',
+    clue: 'Choose the (6+2) pin cable labeled PCIe, engineered specifically for graphics expansion cards.'
+  },
+  {
+    id: 'ch-3',
+    scenario: 'A student pushes the front chassis power button, but the PC fails to respond at all. You inspect the F_PANEL header at the bottom right of the motherboard.',
+    socketName: 'Motherboard F_PANEL Pins 6 & 8 (PWR_BTN# / GND)',
+    socketDescription: 'Two horizontal pins designated for the momentary tactile front power switch.',
+    correctCableId: 'front-pwr-sw',
+    polaritySensitive: false,
+    technicalNote: 'Push-button switches close a momentary circuit to ground. They do NOT have positive/negative polarity.',
+    clue: 'The 2-pin connector labeled PWR SW that triggers the motherboard startup circuit.'
+  },
+  {
+    id: 'ch-4',
+    scenario: 'You are connecting a 2.5-inch Crucial MX500 SATA SSD to transmit OS and game files at 600 MB/s to the Intel B660 chipset.',
+    socketName: 'SATA3_1 (6 Gbps) Port on Motherboard Edge',
+    socketDescription: '7-pin keyed L-notch socket for high-speed serial storage communication.',
+    correctCableId: 'sata-data',
+    polaritySensitive: false,
+    technicalNote: 'The 7-pin data cable only carries signal. The drive also requires a 15-pin flat SATA cable from the PSU for power.',
+    clue: 'Select the 7-pin narrow cable with metal retention clips for drive data transfer.'
+  },
+  {
+    id: 'ch-5',
+    scenario: 'The computer case features two high-speed blue USB 3.0 ports on the front top panel. You need to connect them to the motherboard.',
+    socketName: 'USB 3.2 Gen 1 Internal Header (F_USB30)',
+    socketDescription: '20-pin dual row shroud with one pin omitted (Pin 20) and a center notch on one side.',
+    correctCableId: 'usb3-header',
+    polaritySensitive: false,
+    technicalNote: 'Take extreme care when aligning this header! Thin pins bend easily if pushed at an angle.',
+    clue: 'The 19-pin thick keyed cable that powers two front SuperSpeed ports simultaneously.'
+  },
+  {
+    id: 'ch-6',
+    scenario: 'The computer case has a front drive activity blinking light. If connected backward, the light will not flash when disk reads happen.',
+    socketName: 'Motherboard F_PANEL Pins 1 & 3 (HDLED+ / HDLED-)',
+    socketDescription: '2-pin header for storage read/write diode indicator with explicit polarity requirement.',
+    correctCableId: 'front-hdd-led',
+    polaritySensitive: true,
+    technicalNote: 'LEDs are light-emitting diodes that only allow current in one direction. The colored wire is positive (+), white is ground (-).',
+    clue: 'The 2-pin connector for hard disk activity that must respect positive (+) and negative (-) orientation.'
+  },
+  {
+    id: 'ch-7',
+    scenario: 'The Intel Core i7 13700K CPU requires up to 253 Watts of VRM power located at the top-left corner of the motherboard.',
+    socketName: 'CPU_PWR1 (8-Pin EPS 12V) Socket',
+    socketDescription: 'Located near the VRM heatsinks above the CPU socket. Dedicated solely to processor power delivery.',
+    correctCableId: 'eps-8',
+    polaritySensitive: false,
+    technicalNote: 'EPS cables split into 4+4 pins so they can also fit older 4-pin ATX12V motherboard headers.',
+    clue: 'The 8-pin (4+4) cable engineered to power the processor VRM.'
+  },
+  {
+    id: 'ch-8',
+    scenario: 'Connecting a high refresh rate 240Hz 1440p gaming monitor to the dedicated graphics card with physical retention locking teeth.',
+    socketName: 'GPU DisplayPort 1.4 Output Port',
+    socketDescription: 'Rectangular port with one beveled corner and dual mechanical retention latches.',
+    correctCableId: 'displayport',
+    polaritySensitive: false,
+    technicalNote: 'Always press the push-button latch before pulling a DisplayPort cable to avoid ripping out the GPU port!',
+    clue: 'The latching 20-pin digital video standard featuring a release push button.'
   }
 ];

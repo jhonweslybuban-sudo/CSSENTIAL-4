@@ -10,7 +10,7 @@ import {
   RotateCcw,
   ShieldAlert
 } from 'lucide-react';
-import { ActivityDefinition } from '../data/curriculum';
+import { ActivityDefinition, ActivityItem } from '../data/curriculum';
 import { api } from '../services/api';
 
 interface ActivityPlayerProps {
@@ -21,6 +21,32 @@ interface ActivityPlayerProps {
   onOpenAI?: (context: string) => void;
 }
 
+interface RandomizedItem extends ActivityItem {
+  shuffledOptions: string[];
+  shuffledCorrectIndex: number;
+}
+
+function randomizeActivityItems(items: ActivityItem[]): RandomizedItem[] {
+  return items.map(item => {
+    const pairs = item.options.map((opt, idx) => ({
+      text: opt,
+      isCorrect: idx === item.correctIndex
+    }));
+
+    // Fisher-Yates shuffle
+    for (let i = pairs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+    }
+
+    return {
+      ...item,
+      shuffledOptions: pairs.map(p => p.text),
+      shuffledCorrectIndex: pairs.findIndex(p => p.isCorrect)
+    };
+  });
+}
+
 export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
   activity,
   studentId,
@@ -28,6 +54,7 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
   onBack,
   onOpenAI
 }) => {
+  const [randomizedItems, setRandomizedItems] = useState<RandomizedItem[]>(() => randomizeActivityItems(activity.items));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
@@ -37,12 +64,23 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
 
+  // Re-randomize if activity prop changes
+  useEffect(() => {
+    setRandomizedItems(randomizeActivityItems(activity.items));
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setIsAnswerChecked(false);
+    setAnswersState([]);
+    setShowHint(false);
+    setIsCompleted(false);
+  }, [activity]);
+
   // Timer & initial start log
   useEffect(() => {
     api.logAction(
       studentId,
       sessionId,
-      `Started Activity: "${activity.name}" (1 to ${activity.items.length} questions)`
+      `Started Activity: "${activity.name}" (1 to ${activity.items.length} questions, randomized options)`
     );
   }, [activity.name, activity.items.length, sessionId, studentId]);
 
@@ -54,7 +92,7 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
     return () => clearInterval(interval);
   }, [startTime, isCompleted]);
 
-  const currentItem = activity.items[currentIndex];
+  const currentItem = randomizedItems[currentIndex] || randomizedItems[0];
 
   const handleSelectOption = (index: number) => {
     if (isAnswerChecked) return;
@@ -62,8 +100,8 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
   };
 
   const handleCheckAnswer = () => {
-    if (selectedOption === null) return;
-    const isCorrect = selectedOption === currentItem.correctIndex;
+    if (selectedOption === null || !currentItem) return;
+    const isCorrect = selectedOption === currentItem.shuffledCorrectIndex;
     setIsAnswerChecked(true);
 
     const newAnswers = [...answersState, { isCorrect, selected: selectedOption }];
@@ -72,12 +110,12 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
     api.logAction(
       studentId,
       sessionId,
-      `Answered Question ${currentIndex + 1}/${activity.items.length} in "${activity.name}": ${isCorrect ? 'CORRECT' : 'INCORRECT'}`
+      `Answered Question ${currentIndex + 1}/${randomizedItems.length} in "${activity.name}": ${isCorrect ? 'CORRECT' : 'INCORRECT'}`
     );
   };
 
   const handleNext = async () => {
-    if (currentIndex < activity.items.length - 1) {
+    if (currentIndex < randomizedItems.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setSelectedOption(null);
       setIsAnswerChecked(false);
@@ -85,8 +123,8 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
     } else {
       // Completed!
       setIsCompleted(true);
-      const correctCount = answersState.filter(a => a.isCorrect).length + (selectedOption === currentItem.correctIndex ? 0 : 0);
-      const total = activity.items.length;
+      const correctCount = answersState.filter(a => a.isCorrect).length;
+      const total = randomizedItems.length;
       const pct = Math.round((correctCount / total) * 100);
 
       await api.recordActivityAttempt({
@@ -106,6 +144,7 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
   };
 
   const handleRestart = () => {
+    setRandomizedItems(randomizeActivityItems(activity.items));
     setCurrentIndex(0);
     setSelectedOption(null);
     setIsAnswerChecked(false);
@@ -121,6 +160,10 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
   };
 
   const totalScore = answersState.filter(a => a.isCorrect).length;
+
+  if (!currentItem) {
+    return null;
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-5 animate-in fade-in duration-200">
@@ -190,13 +233,13 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
                 Select the appropriate diagnostic action / answer:
               </span>
               <div className="space-y-2.5">
-                {currentItem.options.map((option, idx) => {
+                {currentItem.shuffledOptions.map((option, idx) => {
                   let optionClass = 'border-gray-200 hover:border-blue-300 bg-white text-gray-800';
 
                   if (selectedOption === idx && !isAnswerChecked) {
                     optionClass = 'border-blue-600 bg-blue-50/70 text-blue-950 ring-1 ring-blue-600';
                   } else if (isAnswerChecked) {
-                    if (idx === currentItem.correctIndex) {
+                    if (idx === currentItem.shuffledCorrectIndex) {
                       optionClass = 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold';
                     } else if (selectedOption === idx) {
                       optionClass = 'border-red-500 bg-red-50 text-red-900 line-through';
@@ -217,10 +260,10 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
                         {String.fromCharCode(65 + idx)}
                       </span>
                       <span className="flex-1 leading-snug">{option}</span>
-                      {isAnswerChecked && idx === currentItem.correctIndex && (
+                      {isAnswerChecked && idx === currentItem.shuffledCorrectIndex && (
                         <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                       )}
-                      {isAnswerChecked && selectedOption === idx && idx !== currentItem.correctIndex && (
+                      {isAnswerChecked && selectedOption === idx && idx !== currentItem.shuffledCorrectIndex && (
                         <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                       )}
                     </button>
@@ -255,13 +298,13 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
             {isAnswerChecked && (
               <div
                 className={`p-4 rounded-lg border text-xs leading-relaxed animate-in fade-in duration-200 ${
-                  selectedOption === currentItem.correctIndex
+                  selectedOption === currentItem.shuffledCorrectIndex
                     ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
                     : 'bg-red-50 border-red-300 text-red-950'
                 }`}
               >
                 <div className="flex items-center gap-2 font-bold mb-1 text-sm">
-                  {selectedOption === currentItem.correctIndex ? (
+                  {selectedOption === currentItem.shuffledCorrectIndex ? (
                     <>
                       <CheckCircle className="w-4 h-4 text-emerald-700" />
                       <span>CORRECT ACTION!</span>

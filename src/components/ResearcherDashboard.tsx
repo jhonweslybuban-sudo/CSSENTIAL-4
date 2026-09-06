@@ -79,6 +79,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [sectionFilter, setSectionFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE_ONLY' | 'GITHUB_ONLY'>('ALL');
   const [sortOrder, setSortOrder] = useState<'NEWEST' | 'OLDEST' | 'SCORE_HIGH' | 'DURATION_HIGH'>('NEWEST');
 
   // Selected student for detailed drill-down modal
@@ -209,6 +210,14 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
           )
         : 0;
 
+      const lastActiveTime = student.last_active ? new Date(student.last_active).getTime() : 0;
+      // Active within the last 3 minutes (180,000 ms)
+      const isCurrentlyActive = lastActiveTime > 0 && (Date.now() - lastActiveTime < 180000);
+      const isGitHub = Boolean(
+        student.is_github_referral || 
+        (student.referral_source && student.referral_source.toLowerCase().includes('github'))
+      );
+
       return {
         ...student,
         totalActivities,
@@ -219,6 +228,8 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
         avgAttemptScore,
         avgQuizScore,
         combinedScore,
+        isCurrentlyActive,
+        isGitHub,
         lastActiveFormatted: student.last_active ? formatDateTime(student.last_active) : 'Recently'
       };
     });
@@ -231,9 +242,13 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.student_id.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesSection = sectionFilter === 'ALL' || s.year_section.includes(sectionFilter);
-      return matchesSearch && matchesSection;
+      const matchesStatus = 
+        statusFilter === 'ALL' ||
+        (statusFilter === 'ACTIVE_ONLY' && s.isCurrentlyActive) ||
+        (statusFilter === 'GITHUB_ONLY' && s.isGitHub);
+      return matchesSearch && matchesSection && matchesStatus;
     });
-  }, [studentMetrics, searchQuery, sectionFilter]);
+  }, [studentMetrics, searchQuery, sectionFilter, statusFilter]);
 
   // Filtered & Sorted Activities
   const filteredActivities = useMemo(() => {
@@ -301,9 +316,11 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
 
     // 2. Students Summary Table
     csv += 'SECTION 1: REGISTERED STUDENTS DIRECTORY & PROGRESS\n';
-    csv += 'Student ID,Full Name,Year & Section,Total Activities Completed,Total Quizzes Taken,Total Games Played,Avg Score (%),Total Answering Time (Seconds),Total Time (Formatted),Last Active Timestamp\n';
+    csv += 'Student ID,Full Name,Year & Section,Online Status,Referral Source,Total Activities Completed,Total Quizzes Taken,Total Games Played,Avg Score (%),Total Answering Time (Seconds),Total Time (Formatted),Last Active Timestamp\n';
     studentMetrics.forEach(s => {
-      csv += `"${s.student_id}","${s.name}","${s.year_section}",${s.totalActivities},${s.totalQuizzes},${s.totalGames},${s.combinedScore}%,${s.totalDurationSecs},"${formatDuration(s.totalDurationSecs)}","${s.last_active || s.created_at}"\n`;
+      const statusText = s.isCurrentlyActive ? 'ACTIVE NOW' : 'Offline';
+      const refSource = s.isGitHub ? 'GitHub Referral' : (s.referral_source || 'Direct');
+      csv += `"${s.student_id}","${s.name}","${s.year_section}","${statusText}","${refSource}",${s.totalActivities},${s.totalQuizzes},${s.totalGames},${s.combinedScore}%,${s.totalDurationSecs},"${formatDuration(s.totalDurationSecs)}","${s.last_active || s.created_at}"\n`;
     });
 
     // 3. Activity Attempts Detailed
@@ -590,9 +607,61 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
         )}
       </div>
 
-      {/* 2. TELEMETRY KPI METRICS GRID */}
+      {/* 2. TELEMETRY KPI METRICS GRID & LIVE MONITOR */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        <div className="space-y-3.5">
+          {/* Real-time Status & GitHub Referral Monitor Banner */}
+          <div className="bg-linear-to-r from-emerald-600 via-teal-700 to-cyan-800 rounded-2xl p-4 shadow-sm text-white flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-xs">
+                <span className="relative flex h-3.5 w-3.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-200"></span>
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-100 flex items-center gap-2">
+                  <span>Live Student Telemetry Monitor</span>
+                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase">Real-Time</span>
+                </div>
+                <div className="text-base sm:text-lg font-black mt-0.5 flex items-center gap-2">
+                  <span>{studentMetrics.filter(s => s.isCurrentlyActive).length} Currently Active</span>
+                  <span className="text-xs font-normal text-emerald-100">
+                    ({studentMetrics.length} total enrolled across all sections)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="px-3.5 py-1.5 rounded-xl bg-white/15 border border-white/20 text-xs font-bold flex items-center gap-2">
+                <span className="text-base">🐙</span>
+                <span>GitHub Link Visitors: <strong className="text-white text-sm">{studentMetrics.filter(s => s.isGitHub).length}</strong></span>
+              </div>
+              <button
+                onClick={() => setStatusFilter(prev => prev === 'ACTIVE_ONLY' ? 'ALL' : 'ACTIVE_ONLY')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  statusFilter === 'ACTIVE_ONLY'
+                    ? 'bg-white text-emerald-800 shadow-md'
+                    : 'bg-emerald-800/60 hover:bg-emerald-800 text-white'
+                }`}
+              >
+                {statusFilter === 'ACTIVE_ONLY' ? 'Showing Active Only ✓' : 'Filter Active Only'}
+              </button>
+              <button
+                onClick={() => setStatusFilter(prev => prev === 'GITHUB_ONLY' ? 'ALL' : 'GITHUB_ONLY')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  statusFilter === 'GITHUB_ONLY'
+                    ? 'bg-white text-cyan-900 shadow-md'
+                    : 'bg-emerald-800/60 hover:bg-emerald-800 text-white'
+                }`}
+              >
+                {statusFilter === 'GITHUB_ONLY' ? 'GitHub Only ✓' : 'Filter GitHub Only'}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
           
           <div className="bg-white border border-gray-200 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-blue-600 mb-2">
@@ -673,6 +742,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
           </div>
 
         </div>
+      </div>
       )}
 
       {/* 3. FILTERS, SEARCH & NAVIGATION BAR */}
@@ -725,6 +795,16 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             <option value="ALL">All Sections</option>
             <option value="3-A">Section 3-A</option>
             <option value="3-B">Section 3-B</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 cursor-pointer"
+          >
+            <option value="ALL">All Statuses ({studentMetrics.length})</option>
+            <option value="ACTIVE_ONLY">🟢 Active Now ({studentMetrics.filter(s => s.isCurrentlyActive).length})</option>
+            <option value="GITHUB_ONLY">🐙 GitHub Referrals ({studentMetrics.filter(s => s.isGitHub).length})</option>
           </select>
 
           <select
@@ -875,6 +955,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                   <tr>
                     <th className="py-3.5 px-4">Student ID</th>
                     <th className="py-3.5 px-4">Student Full Name</th>
+                    <th className="py-3.5 px-4">Status & Source</th>
                     <th className="py-3.5 px-4">Section</th>
                     <th className="py-3.5 px-4 text-center">Activities Completed</th>
                     <th className="py-3.5 px-4 text-center">Average Score</th>
@@ -891,6 +972,30 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                       </td>
                       <td className="py-3.5 px-4 font-black text-gray-900">
                         {student.name}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col gap-1 items-start">
+                          {student.isCurrentlyActive ? (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                              ACTIVE NOW
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-gray-500 bg-gray-100">
+                              Offline
+                            </span>
+                          )}
+                          {student.isGitHub ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              GitHub Referral
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-gray-400 font-mono">
+                              {student.referral_source || 'Direct'}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 text-gray-600 font-medium">
                         {student.year_section}

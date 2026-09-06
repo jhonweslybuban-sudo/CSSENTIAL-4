@@ -27,7 +27,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     {
       id: 'welcome',
       sender: 'ai',
-      text: `👋 **Welcome! Need assistance with CSSENTIAL?**\n\nI am your official **"Ask for Assistance" Platform Guide & Learning Tutor**. You can ask me almost anything about:\n\n• 🧭 **Website Navigation**: How to navigate Home, Activities, Collection, Games Hub, About Us, and the Researcher Dashboard.\n• 🎮 **How to Play the 9 Games**: Rules and walkthroughs for Sort & Configure, Code Cracker, Sequence, Flashcards, Memory Match, and more.\n• 🎥 **Videos & Manuals**: How to watch demonstration videos, upload your own videos, and print/download academic lab manuals (PDF/Word DOCX).\n• 🛠 **Computer Technician Concepts**: Hardware assembly, POST beep codes, EZ Debug LEDs, RAM dual-channel setup, BIOS/UEFI options, and black-screen troubleshooting.\n\n⚠️ *Academic Integrity Policy: Direct quiz or test answers are restricted so you can genuinely master the skills. I will happily explain the underlying concepts, diagnostic logic, and hints!*`,
+      text: `👋 **Welcome! Need assistance with CSSENTIAL?**\n\nI am your official **"Asks for Assistance" Platform Guide & Learning Tutor**. You can ask me almost anything about:\n\n• 🧭 **Website Navigation**: How to navigate Home, Activities, Collection, Games Hub, About Us, and the Researcher Dashboard.\n• 🎮 **How to Play the 10 Games**: Rules and walkthroughs for Sort & Configure, Code Cracker, Sequence, Flashcards, Memory Match, Cable & Pinout Master, and more.\n• 🎥 **Videos & Manuals**: How to watch demonstration videos, upload your own videos, and print/download academic lab manuals (PDF/Word DOCX).\n• 🛠 **Computer Technician Concepts**: Hardware assembly, POST beep codes, EZ Debug LEDs, RAM dual-channel setup, BIOS/UEFI options, and black-screen troubleshooting.\n\n⚠️ *Academic Integrity Policy: Direct quiz or test answers are restricted so you can genuinely master the skills. I will happily explain the underlying concepts, diagnostic logic, and hints!*`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       source: 'CSSENTIAL Knowledge Engine'
     }
@@ -114,7 +114,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
   const quickPrompts = [
     { label: '🧭 How to navigate the website?', query: 'How do I navigate and use the different pages of this website?' },
-    { label: '🎮 How to play the 9 games?', query: 'How do I play the games in the Games Hub? Explain the rules.' },
+    { label: '🎮 How to play the 10 games?', query: 'How do I play the 10 games in the Games Hub, including Cable & Pinout Master?' },
     { label: '📚 What is in Collection?', query: 'What is inside the Collection page and how do I use it?' },
     { label: '🎥 How to watch or upload videos?', query: 'How do I watch or upload demonstration videos on the website?' },
     { label: '📄 How to download lab manuals?', query: 'How do I print or download academic lab manuals in PDF or Word DOCX format?' },

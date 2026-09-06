@@ -4,13 +4,18 @@ export interface StudentProfile {
   year_section: string;
   created_at: string;
   last_active?: string;
+  referral_source?: string;
+  is_github_referral?: boolean;
 }
 
 export interface Student {
   student_id: string;
   student_name: string;
+  year_section?: string;
   created_at: string;
   last_active: string;
+  referral_source?: string;
+  is_github_referral?: boolean;
 }
 
 export interface Session {
