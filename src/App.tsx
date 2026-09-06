@@ -312,13 +312,12 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Floating AI Assistant (Disabled during quizzes and games to preserve assessment integrity) */}
-      {currentPage !== 'ACTIVITY_PLAYER' && currentPage !== 'ACTIVE_GAME' && currentPage !== 'GAMES_HUB' && (
-        <AIAssistant
-          initialPrompt={aiInitialPrompt}
-          onClearInitialPrompt={() => setAiInitialPrompt(null)}
-        />
-      )}
+      {/* Floating "Ask for Assistance" Platform Guide & Learning Tutor */}
+      <AIAssistant
+        initialPrompt={aiInitialPrompt}
+        onClearInitialPrompt={() => setAiInitialPrompt(null)}
+        currentPage={currentPage}
+      />
 
       {/* Student Entry / Registration Modal */}
       <StudentEntryModal

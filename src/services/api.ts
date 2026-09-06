@@ -9,6 +9,7 @@ import {
   ResearcherStats,
   DownloadRecord
 } from '../types';
+import { getPlatformAssistanceResponse } from './aiKnowledge';
 
 export interface LocalDatabaseSchema {
   students: StudentProfile[];
@@ -795,9 +796,10 @@ export const api = {
       return await res.json();
     } catch (err) {
       console.warn('AI call network fallback:', err);
+      const localResponse = getPlatformAssistanceResponse(message, currentPage, currentContext);
       return {
-        reply: 'I am your CSSENTIAL AI Assistant. I can help guide you through troubleshooting Computer System Installation and Configuration issues, diagnosing POST codes, motherboard LEDs, RAM dual-channel placement, and BIOS options.',
-        source: 'client-fallback'
+        reply: localResponse.reply,
+        source: localResponse.source || 'client-knowledge-engine'
       };
     }
   },
