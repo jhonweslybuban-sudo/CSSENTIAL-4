@@ -31,7 +31,8 @@ html,
 body,
 #root,
 .theme-container {
-  background-color: var(--app-bg) !important;
+  background: var(--app-bg-image, var(--app-bg)) !important;
+  background-attachment: fixed !important;
   color: var(--app-text-body);
   transition: background-color 0.2s ease, color 0.2s ease;
 }

@@ -38,6 +38,7 @@ import { api } from '../services/api';
 import { ResearcherStats, StudentProfile, ActivityAttempt, QuizResult, GameResult, ActivityLog } from '../types';
 import { ResearcherVideoManager } from './ResearcherVideoManager';
 import { ResearcherRecordManager } from './ResearcherRecordManager';
+import { ResearcherAnnouncementManager } from './ResearcherAnnouncementManager';
 
 interface ResearcherDashboardProps {
   onBackToHome: () => void;
@@ -48,7 +49,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
 }) => {
   const [stats, setStats] = useState<ResearcherStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'ANNOUNCEMENTS' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS'>('OVERVIEW');
   
   // Password Protection Gate (Password: CSSENTIAL2026)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -757,6 +758,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             { id: 'QUIZZES', label: `Quizzes (${stats?.quizResults.length || 0})` },
             { id: 'GAMES', label: `Games Telemetry (${stats?.gameResults.length || 0})` },
             { id: 'LOGS', label: `Student Actions Log (${stats?.activityLogs?.length || 0})` },
+            { id: 'ANNOUNCEMENTS', label: '📢 Announcements & Notices' },
             { id: 'MANAGE_VIDEOS', label: 'Demonstration Videos' },
             { id: 'MANAGE_RECORDS', label: 'Data Retention & Cleanup' }
           ].map(tab => (
@@ -917,7 +919,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                     {stats.activityAttempts.slice(0, 5).map((attempt, idx) => {
                       const student = getStudentInfo(attempt.student_id);
                       return (
-                        <div key={idx} className="py-2.5 flex items-center justify-between">
+                        <div key={attempt.id || attempt.attempt_id || `att_recent_${idx}`} className="py-2.5 flex items-center justify-between">
                           <div>
                             <div className="text-xs font-black text-gray-900">
                               {attempt.activity_name}
@@ -965,8 +967,8 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredStudents.map((student) => (
-                    <tr key={student.student_id} className="hover:bg-gray-50 transition-colors">
+                  {filteredStudents.map((student, idx) => (
+                    <tr key={student.student_id || `std_${idx}`} className="hover:bg-gray-50 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-bold text-blue-700">
                         {student.student_id}
                       </td>
@@ -1070,8 +1072,8 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredActivities.map((attempt) => (
-                    <tr key={attempt.id} className="hover:bg-gray-50 transition-colors">
+                  {filteredActivities.map((attempt, idx) => (
+                    <tr key={attempt.id || attempt.attempt_id || `act_${idx}`} className="hover:bg-gray-50 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="font-bold text-gray-900">{attempt.studentName}</div>
                         <div className="font-mono text-[10px] text-gray-400">
@@ -1146,10 +1148,10 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {stats.quizResults.map((q) => {
+                  {stats.quizResults.map((q, idx) => {
                     const student = getStudentInfo(q.student_id);
                     return (
-                      <tr key={q.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={q.id || q.quiz_id || `qz_${idx}`} className="hover:bg-gray-50 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-gray-900">{student.name}</div>
                           <div className="font-mono text-[10px] text-gray-400">{q.student_id}</div>
@@ -1211,10 +1213,10 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {stats.gameResults.map((g) => {
+                  {stats.gameResults.map((g, idx) => {
                     const student = getStudentInfo(g.student_id);
                     return (
-                      <tr key={g.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={g.id || g.game_result_id || `gm_${idx}`} className="hover:bg-gray-50 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-gray-900">{student.name}</div>
                           <div className="font-mono text-[10px] text-gray-400">{g.student_id}</div>
@@ -1296,7 +1298,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                       .map((log, idx) => {
                         const s = getStudentInfo(log.student_id);
                         return (
-                          <tr key={log.log_id || idx} className="hover:bg-blue-50/50 transition-colors">
+                          <tr key={`${log.log_id || log.id || 'log'}-${idx}`} className="hover:bg-blue-50/50 transition-colors">
                             <td className="py-3 px-4 text-gray-500 text-[11px] font-mono whitespace-nowrap">
                               {formatDateTime(log.timestamp)}
                             </td>
@@ -1336,7 +1338,14 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 7: DEMONSTRATION VIDEOS MANAGEMENT */}
+          {/* TAB 7: ANNOUNCEMENTS MANAGEMENT */}
+          {activeTab === 'ANNOUNCEMENTS' && (
+            <div className="p-6">
+              <ResearcherAnnouncementManager />
+            </div>
+          )}
+
+          {/* TAB 8: DEMONSTRATION VIDEOS MANAGEMENT */}
           {activeTab === 'MANAGE_VIDEOS' && (
             <div className="p-6">
               <ResearcherVideoManager />
@@ -1424,7 +1433,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                 </h4>
                 <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden text-xs">
                   {selectedStudentDossier.attempts.map((attempt, i) => (
-                    <div key={i} className="p-3 flex items-center justify-between hover:bg-gray-50">
+                    <div key={attempt.id || attempt.attempt_id || `dossier_att_${i}`} className="p-3 flex items-center justify-between hover:bg-gray-50">
                       <div>
                         <div className="font-black text-gray-900">{attempt.activity_name}</div>
                         <div className="text-[10px] text-gray-500">
@@ -1454,7 +1463,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                 </h4>
                 <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden text-xs">
                   {selectedStudentDossier.quizzes.map((quiz, i) => (
-                    <div key={i} className="p-3 flex items-center justify-between hover:bg-gray-50">
+                    <div key={quiz.id || quiz.quiz_id || `dossier_qz_${i}`} className="p-3 flex items-center justify-between hover:bg-gray-50">
                       <div>
                         <div className="font-black text-gray-900">{quiz.quiz_name}</div>
                         <div className="text-[10px] text-gray-500 font-mono">
@@ -1484,7 +1493,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                 </h4>
                 <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden text-xs">
                   {selectedStudentDossier.games.map((game, i) => (
-                    <div key={i} className="p-3 flex items-center justify-between hover:bg-gray-50">
+                    <div key={game.id || game.game_result_id || `dossier_gm_${i}`} className="p-3 flex items-center justify-between hover:bg-gray-50">
                       <div>
                         <div className="font-black text-gray-900">{game.game_name}</div>
                         <div className="text-[10px] text-gray-500 font-mono">

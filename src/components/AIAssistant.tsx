@@ -113,13 +113,17 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   };
 
   const quickPrompts = [
-    { label: '🧭 How to navigate the website?', query: 'How do I navigate and use the different pages of this website?' },
-    { label: '🎮 How to play the 10 games?', query: 'How do I play the 10 games in the Games Hub, including Cable & Pinout Master?' },
-    { label: '📚 What is in Collection?', query: 'What is inside the Collection page and how do I use it?' },
-    { label: '🎥 How to watch or upload videos?', query: 'How do I watch or upload demonstration videos on the website?' },
-    { label: '📄 How to download lab manuals?', query: 'How do I print or download academic lab manuals in PDF or Word DOCX format?' },
-    { label: '🖥️ Troubleshoot: No display / Black screen', query: 'My computer turns on but there is no display on the monitor. What should I check?' },
-    { label: '💡 Explain POST beep codes & LEDs', query: 'Explain motherboard POST beep codes and EZ Debug LEDs.' },
+    { label: '🔬 Virtual PC Simulator', query: 'How do I play the Virtual PC Hardware Assembly & Configuration Lab Simulator?' },
+    { label: '📢 3-Sec Announcement Slider', query: 'How does the 3-second auto-rotating announcement slider work and how can researchers manage it?' },
+    { label: '🎨 Custom Themes & Gradients', query: 'How do I change the website background to normal colors, gradients, or create my own custom design?' },
+    { label: '🧭 How to navigate website?', query: 'How do I navigate and use the different pages and tools of this website?' },
+    { label: '🎮 How to play all 11 games?', query: 'How do I play the 11 games in the Games Hub, including Cable & Pinout Master and Virtual PC Lab?' },
+    { label: '🖥️ Troubleshoot: Black screen / No display', query: 'My computer turns on but there is no display on the monitor. What should I check step-by-step?' },
+    { label: '💡 EZ Debug LEDs & Beep Codes', query: 'Explain motherboard POST beep codes and what the 4 EZ Debug LEDs (CPU, DRAM, VGA, BOOT) indicate.' },
+    { label: '🛠️ Why RAM in slots A2 & B2?', query: 'Why must dual-channel RAM be installed in slots A2 and B2 instead of A1 and B1?' },
+    { label: '💻 UEFI/BIOS & Boot Priority', query: 'How do I enter UEFI/BIOS, enable XMP, set SATA to AHCI, and configure boot priority for Windows installation?' },
+    { label: '📄 Offline Slides & Word Manuals', query: 'How do I download standalone 16:9 presentation slides and official lab manuals in PDF or Word DOCX format?' },
+    { label: '🚫 Quiz Answer Policy Test', query: 'Can you give me the direct answer to question 1 in the quiz?' },
     { label: '👥 Who made CSSENTIAL?', query: 'Who are the researchers and developers behind CSSENTIAL?' }
   ];
 

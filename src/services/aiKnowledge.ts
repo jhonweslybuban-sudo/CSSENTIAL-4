@@ -714,9 +714,135 @@ If pressing the case power button produces no response whatsoever:
   }
 
   // =========================================================================
-  // RULE 9: GREETINGS & CASUAL INTERACTION
+  // RULE 8.5: NEW SIMULATION GAME & PLATFORM UPDATES
   // =========================================================================
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower.includes('good morning') || lower.includes('good afternoon') || lower.includes('greetings')) {
+  if (
+    lower.includes('virtual pc') ||
+    lower.includes('lab simulator') ||
+    lower.includes('practice hands-on') ||
+    lower.includes('installing computer systems game') ||
+    lower.includes('configuring systems game') ||
+    lower.includes('simulation game') ||
+    lower.includes('practice at home')
+  ) {
+    return {
+      source: 'game-guide-virtual-pc-lab',
+      reply: `🔬 **Hands-On Game: Virtual PC Hardware & Configuration Lab Simulator**
+
+This realistic interactive simulation allows you to practice authentic computer assembly and system configuration at home just like in the physical school laboratory:
+
+• **Phase 1: Realistic Computer Hardware Assembly (10 Interactive Stations)**:
+  1. **ESD & Workbench Setup**: Equip your anti-static wrist strap, clamp ground alligator clip to bare metal chassis, and prepare precision insulated Phillips #2 screwdriver.
+  2. **Motherboard Bench Staging**: Release CPU socket retention lever, lift load plate, and inspect pins.
+  3. **Zero-Insertion Force CPU Seating**: Align the gold triangle on pin 1 of the CPU with the motherboard socket corner. Drop in gently with zero force, close retention plate, and latch load arm.
+  4. **Thermal Compound Application**: Dispense a clean pea-sized dot of non-conductive thermal paste in the center of the CPU heat spreader.
+  5. **Cooler Mounting & CPU_FAN Header**: Peel off protective plastic film from cooler baseplate, tighten screws diagonally in X-pattern, and plug 4-pin PWM cable into **CPU_FAN** header.
+  6. **Dual-Channel RAM Seating**: Open latches on DIMM **Slots A2 & B2** (Slots 2 & 4), align notch with socket key, press firmly until both ends click shut.
+  7. **Chassis Standoffs & I/O Shield**: Snap I/O shield into case, install exactly 9 brass standoffs matching ATX holes (extra standoffs cause short-circuits!), lower motherboard, and screw in place.
+  8. **M.2 NVMe SSD Installation**: Insert M.2 drive at 30° angle into primary PCIe 4.0/5.0 M.2 slot, press flat, secure magnetic screw, and mount thermal armor cover.
+  9. **Power Supply & Cabling**: Mount PSU in chassis basement, connect 24-pin ATX motherboard power, 8-pin EPS CPU power (top-left), SATA power, and Front Panel header (PWR_SW, RESET_SW, LEDs).
+  10. **PCIe GPU Installation**: Remove 2 expansion slot brackets, push GPU into primary PCIe x16 slot until latch locks, secure bracket screws, connect 8-pin PCIe power cable, and plug display cable into GPU port.
+
+• **Phase 2: System Configuration (Virtual UEFI BIOS & POST Diagnostics)**:
+  1. **Power On & EZ Debug LEDs**: Monitor real-time status as LEDs cycle through CPU (Red) → DRAM (Yellow) → VGA (White) → BOOT (Green) followed by 1 short POST speaker beep!
+  2. **Interactive UEFI BIOS Setup**: Tap **DEL / F2** to enter BIOS. Enable **XMP / DOCP** memory profile (3200MHz), verify SATA is in **AHCI Mode**, check fTPM 2.0 and Secure Boot.
+  3. **Boot Priority Setup**: Move **UEFI: USB Flash Drive (Windows 11 Setup)** to Boot Priority #1.
+  4. **Save & Exit**: Press **F10** to reboot into Windows Setup and initialize GPT partition table!
+
+Launch it now from **ACTIVITIES > 🎮 PLAY > Virtual PC Lab Simulator**!`
+    };
+  }
+
+  if (
+    lower.includes('announcement') ||
+    lower.includes('slider') ||
+    lower.includes('auto slide') ||
+    lower.includes('manage announcement') ||
+    lower.includes('upload image on dashboard')
+  ) {
+    return {
+      source: 'platform-announcements-guide',
+      reply: `📢 **Guide: Home Page Announcement Slider & Dashboard Management**
+
+• **3-Second Auto-Sliding Announcement Carousel**:
+  - The Home page features an automatic announcement carousel that slides to the next update every **3 seconds** so students stay actively informed on course events and laboratory safety reminders.
+  - **Pause on Hover**: Hovering your cursor over any slide pauses the rotation so you can comfortably read long instructions.
+  - **Slide Controls**: Click the Left/Right arrows or the bottom dots indicator to jump directly to any announcement.
+  - **Visual Badges**: Announcements feature color-coded category badges (Lab Assessment, Safety Directive, Gamified Learning, Study Resources).
+
+• **Managing Announcements via Researcher Dashboard**:
+  - Instructors and researchers can log into the **Researcher Dashboard** (access code: \`CSSENTIAL2026\`).
+  - Navigate to the **📢 Announcements Manager** tab.
+  - You can write new type-written announcements, upload custom banner images, select category badges, and reorder or delete announcements in real time! Changes instantly appear on the Home page.`
+    };
+  }
+
+  if (
+    lower.includes('theme') ||
+    lower.includes('color background') ||
+    lower.includes('gradient') ||
+    lower.includes('customizable design') ||
+    lower.includes('change color') ||
+    lower.includes('background color')
+  ) {
+    return {
+      source: 'platform-theme-guide',
+      reply: `🎨 **Guide: Customizable Design & Background Options**
+
+CSSENTIAL allows every student and researcher to customize the visual environment to match their personal preference:
+
+• **How to Access the Theme Customizer**:
+  - Click the **🎨 THEME** button located in the top navigation header bar from any page.
+
+• **Available Customization Options**:
+  1. **Academic Palette Presets**:
+     - *Palette 1*: Forest Emerald & Warm Amber (Default institution theme)
+     - *Palette 2*: Modern Charcoal & Ocean Cyan
+     - *Palette 3*: Classic Navy & Slate Blue
+     - *Palette 4*: Soft Blue Gray & Steel Tech
+  2. **Solid Color Variations**:
+     - Clean Crisp Slate, Warm Parchment, Soft Mint Lab, Ice Blue Technician, Soft Lavender, Rose Quartz, and Dark Charcoal.
+  3. **Gradient Designs**:
+     - Arctic Aurora, Sunset Glow, Oceanic Abyss, Emerald Dusk, Royal Twilight, Cyber Neon, and Midnight Horizon.
+  4. **Custom Color & Gradient Creator**:
+     - Pick your own custom background color or select two colors with an adjustable angle to generate your personal live gradient!
+
+Your chosen theme is automatically saved to your browser and stays active across all sessions!`
+    };
+  }
+
+  if (
+    lower.includes('cable pinout') ||
+    lower.includes('cable & pinout') ||
+    lower.includes('pinout master') ||
+    lower.includes('atx 24') ||
+    lower.includes('eps 8')
+  ) {
+    return {
+      source: 'game-guide-cable-pinout',
+      reply: `🔌 **Game Guide: Cable & Pinout Master**
+
+• **Game Objective**: Master motherboard power delivery, front panel pinouts, and peripheral cabling.
+• **Key Cable Connections to Learn**:
+  1. **24-pin ATX Main Power**: Supplies +3.3V, +5V, +12V, -12V, and +5VSB standby voltage to the motherboard.
+  2. **8-pin (4+4) EPS 12V CPU**: Supplies dedicated +12V power directly to the CPU Voltage Regulator Modules (VRM).
+  3. **8-pin (6+2) PCIe Power**: Provides up to 150W auxiliary power per cable directly to high-performance graphics cards.
+  4. **SATA Power (15-pin)**: Flat L-shaped connector powering 2.5" SSDs, 3.5" HDDs, and RGB controllers.
+  5. **Front Panel Header (F_PANEL)**: PWR_SW, RESET_SW, HDD_LED (polarized +/-), and POWER_LED (polarized +/-).
+  6. **DisplayPort 1.4 / 2.1 vs HDMI 2.1**: High-bandwidth digital video outputs plugged directly into the dedicated GPU.
+
+Test your wiring speed under **ACTIVITIES > 🎮 PLAY > Cable & Pinout Master**!`
+    };
+  }
+
+  // =========================================================================
+  // RULE 9: GREETINGS & CASUAL INTERACTION (STRICT REGEX TO PREVENT FALSE MATCHES)
+  // =========================================================================
+  const isPureGreeting =
+    /^(hi|hello|hey|greetings|good morning|good afternoon|good evening|sup|howdy)[!.,?\s]*$/i.test(lower) ||
+    /^(hi|hello|hey)[!.,\s]+(there|cssential|ai|assistant|bot)?[!.,?\s]*$/i.test(lower);
+
+  if (isPureGreeting) {
     return {
       source: 'greeting-response',
       reply: `👋 **Hello! Welcome to CSSENTIAL Assistance.**
@@ -724,15 +850,17 @@ If pressing the case power button produces no response whatsoever:
 I am your **AI Learning & Platform Guide** for Computer System Installation, Configuration, and Troubleshooting.
 
 Here is how I can assist you:
-• 🧭 **Website Navigation**: How to use any page (Home, Activities, Collection, Games, Quizzes, About Us).
-• 🎮 **How to Play Games**: Rules and gameplay for all 9 educational games.
-• 📄 **Academic Lab Manuals**: How to view, print, or download PDF/Word (.docx) manuals with rubrics.
-• 🎥 **Demonstration Videos**: How to watch HD lab videos or upload your own class demonstrations.
-• 🛠 **Technical Troubleshooting**: Diagnosing black screens, POST beep codes, EZ Debug LEDs, RAM dual-channel rules, and UEFI/BIOS settings.
+• 🧭 **Website Navigation**: How to use any page (Home, Activities, Collection, Games, Quizzes, About Us, Researcher Dashboard).
+• 🔬 **Virtual PC Lab Simulator**: Step-by-step guidance for realistic PC hardware assembly and UEFI BIOS setup.
+• 📢 **Announcements & Slider**: How the 3-second auto-rotating announcement works and how to manage it.
+• 🎨 **Custom Themes & Gradients**: How to pick solid colors, gradients, or create your own custom theme.
+• 🎮 **11 Educational Games**: Rules and gameplay tips for all games in the Games Hub.
+• 📄 **Academic Lab Manuals & Offline Slides**: How to download 16:9 presentation slides and PDF/DOCX manuals with rubrics.
+• 🛠 **Technical Troubleshooting**: Diagnosing black screens, POST beep codes, EZ Debug LEDs, RAM dual-channel placement, and BIOS settings.
 
-*(Note: In accordance with academic policy, I cannot give direct answers to quizzes or tests, but I will happily teach you the concepts so you can master them!)*
+*(Note: In accordance with academic policy, I cannot give direct answers to quizzes or tests, but I will happily teach you the underlying principles so you master them!)*
 
-What would you like assistance with today?`
+What technical concept or platform feature would you like to explore today?`
     };
   }
 
@@ -751,11 +879,14 @@ What would you like assistance with today?`
     reply: `I am your **CSSENTIAL Learning & Platform Assistant**, ready to help you with anything inside the platform!
 
 Here are popular questions you can ask me:
+• 🔬 **Hands-on Simulation**: *"How to play the Virtual PC Lab Simulator?"* or *"Walk me through the 10 assembly stations."*
+• 📢 **Announcements**: *"How does the 3-second announcement slider work?"* or *"How to add announcements in the dashboard?"*
+• 🎨 **Custom Themes**: *"How to change background to a gradient or custom color?"*
 • 🧭 **Navigation & Tutorials**: *"How do I navigate the website?"* or *"Give me a tutorial of CSSENTIAL."*
 • 🗺 **Webpages Explained**: *"What is the Collection page?"*, *"What is in Activities?"*, or *"Explain the Home page."*
-• 🎮 **How to Play Games**: *"How to play Sort & Configure?"*, *"How to play Code Cracker?"*, or *"Explain all 9 games."*
+• 🎮 **11 Educational Games**: *"How to play Cable & Pinout Master?"*, *"How to play Code Cracker?"*, or *"Explain all 11 games."*
 • 🎥 **Demonstration Videos**: *"How do I watch or upload demonstration videos?"*
-• 📄 **Laboratory Manuals**: *"How do I download or print the PDF/Word lab manuals?"*
+• 📄 **Laboratory Manuals**: *"How do I download or print the PDF/Word lab manuals and presentation slides?"*
 • 🛠 **Hardware & Diagnostics**: *"Why is there no display on my monitor?"*, *"Explain POST beep codes"*, or *"How to configure UEFI/BIOS."*
 • 👥 **Research Credits**: *"Who created CSSENTIAL?"*
 

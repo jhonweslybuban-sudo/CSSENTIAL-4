@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { LESSONS } from '../data/curriculum';
 import { PageView } from '../types';
+import { AnnouncementSlider } from './AnnouncementSlider';
 
 interface HomeWebWallProps {
   onNavigate: (page: PageView) => void;
@@ -384,61 +385,8 @@ export const HomeWebWall: React.FC<HomeWebWallProps> = ({
 
       </div>
 
-      {/* BOTTOM PANEL: ANNOUNCEMENTS & LAB NOTICES */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-xs p-4 sm:p-5">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center">
-              <Bell className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-extrabold text-gray-900 tracking-tight">
-                ANNOUNCEMENTS &amp; LABORATORY REMINDERS
-              </h2>
-              <p className="text-xs text-gray-500">
-                Official course updates for Computer System Installation &amp; Configuration
-              </p>
-            </div>
-          </div>
-          <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
-            Semester II - Lab Group A &amp; B
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          <div className="p-3.5 bg-blue-50/60 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 mb-1">
-              <Cpu className="w-4 h-4 text-blue-700" />
-              <span>Unit 2 Physical Assembly Assessment</span>
-            </div>
-            <p className="text-xs text-gray-700 leading-relaxed">
-              Review <strong>Lesson 2 (Installing Computer Systems)</strong>. Remember that brass standoffs must be mounted only where corresponding motherboard holes exist.
-            </p>
-          </div>
-
-          <div className="p-3.5 bg-amber-50/60 border border-amber-200 rounded-lg">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 mb-1">
-              <ShieldAlert className="w-4 h-4 text-amber-700" />
-              <span>ESD Safety Standard Compliance</span>
-            </div>
-            <p className="text-xs text-gray-700 leading-relaxed">
-              Every student must wear an anti-static wrist strap clipped to bare chassis metal before handling CPU chips and dual-channel RAM sticks.
-            </p>
-          </div>
-
-          <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-lg">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 mb-1">
-              <Info className="w-4 h-4 text-emerald-700" />
-              <span>Interactive Games Hub Now Active</span>
-            </div>
-            <p className="text-xs text-gray-700 leading-relaxed">
-              Complete the 9 interactive educational games under the <strong>ACTIVITIES &gt; 🎮 PLAY</strong> button. Your scores and attempts are logged automatically.
-            </p>
-          </div>
-
-        </div>
-      </div>
+      {/* BOTTOM PANEL: 3-SECOND AUTO-SLIDING ANNOUNCEMENTS & LAB NOTICES */}
+      <AnnouncementSlider />
 
     </div>
   );

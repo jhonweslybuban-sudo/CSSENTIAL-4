@@ -11,7 +11,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+
+// Helper to generate globally unique IDs
+function generateUniqueId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
 
 // Database storage setup
 const DATA_DIR = path.join(__dirname, 'data');
@@ -30,29 +36,61 @@ interface DatabaseSchema {
   lesson_views: any[];
   ai_usage: any[];
   activity_logs: any[];
+  announcements?: any[];
+}
+
+function deduplicateRecords<T extends Record<string, any>>(items: T[], idKeys: string[]): T[] {
+  const seen = new Set<string>();
+  return (items || []).filter(item => {
+    if (!item) return false;
+    let key = '';
+    for (const k of idKeys) {
+      if (item[k]) {
+        key = `${k}:${item[k]}`;
+        break;
+      }
+    }
+    if (!key) {
+      key = JSON.stringify(item);
+    }
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function cleanDummyData(data: DatabaseSchema): DatabaseSchema {
   const dummyIds = new Set(['std_demo_1', 'std_demo_2', 'CSS-2024-001', 'CSS-2024-002', 'CSS-2024-003', 'CSS-2024-004', 'CSS-2024-005']);
   const dummyNames = new Set(['Aldren Santos', 'Kaye Andrea Reyes', 'Mark Jayson Del Rosario', 'Patricia Mae Alcantara', 'Christian Dave Bautista']);
   
-  const realStudents = (data.students || []).filter(s => {
+  const rawStudents = (data.students || []).filter(s => {
+    if (!s) return false;
     if (dummyIds.has(s.student_id)) return false;
     if (s.student_name && s.student_name.includes('(Sample)')) return false;
     if (s.student_name && dummyNames.has(s.student_name.trim())) return false;
     return true;
   });
+  const realStudents = deduplicateRecords(rawStudents, ['student_id']);
   const realIds = new Set(realStudents.map(s => s.student_id));
+
+  const validSessions = deduplicateRecords((data.sessions || []).filter(s => realIds.has(s.student_id)), ['session_id', 'id']);
+  const validAttempts = deduplicateRecords((data.activity_attempts || []).filter(a => realIds.has(a.student_id)), ['attempt_id', 'id']);
+  const validQuizzes = deduplicateRecords((data.quiz_results || []).filter(q => realIds.has(q.student_id)), ['quiz_id', 'id']);
+  const validGames = deduplicateRecords((data.game_results || []).filter(g => realIds.has(g.student_id)), ['game_result_id', 'id']);
+  const validViews = deduplicateRecords((data.lesson_views || []).filter(l => realIds.has(l.student_id)), ['view_id', 'id']);
+  const validAiUsage = deduplicateRecords((data.ai_usage || []).filter(u => realIds.has(u.student_id)), ['usage_id', 'id']);
+  const validLogs = deduplicateRecords((data.activity_logs || []).filter(l => realIds.has(l.student_id)), ['log_id', 'id']);
 
   return {
     students: realStudents,
-    sessions: (data.sessions || []).filter(s => realIds.has(s.student_id)),
-    activity_attempts: (data.activity_attempts || []).filter(a => realIds.has(a.student_id)),
-    quiz_results: (data.quiz_results || []).filter(q => realIds.has(q.student_id)),
-    game_results: (data.game_results || []).filter(g => realIds.has(g.student_id)),
-    lesson_views: (data.lesson_views || []).filter(l => realIds.has(l.student_id)),
-    ai_usage: (data.ai_usage || []).filter(u => realIds.has(u.student_id)),
-    activity_logs: (data.activity_logs || []).filter(l => realIds.has(l.student_id))
+    sessions: validSessions,
+    activity_attempts: validAttempts,
+    quiz_results: validQuizzes,
+    game_results: validGames,
+    lesson_views: validViews,
+    ai_usage: validAiUsage,
+    activity_logs: validLogs,
+    announcements: data.announcements || []
   };
 }
 
@@ -201,7 +239,7 @@ app.post('/api/sessions/start', (req, res) => {
   if (student) {
     student.last_active = now;
     db.activity_logs.unshift({
-      log_id: `log_${Date.now()}`,
+      log_id: generateUniqueId('log'),
       student_id,
       student_name: student.student_name,
       session_id: session.session_id,
@@ -271,7 +309,7 @@ app.post('/api/activity-attempts', (req, res) => {
   if (student) {
     student.last_active = now;
     db.activity_logs.unshift({
-      log_id: `log_${Date.now()}`,
+      log_id: generateUniqueId('log'),
       student_id,
       student_name: student.student_name,
       session_id,
@@ -322,7 +360,7 @@ app.post('/api/quiz-results', (req, res) => {
   if (student) {
     student.last_active = now;
     db.activity_logs.unshift({
-      log_id: `log_${Date.now()}`,
+      log_id: generateUniqueId('log'),
       student_id,
       student_name: student.student_name,
       session_id,
@@ -375,7 +413,7 @@ app.post('/api/game-results', (req, res) => {
   if (student) {
     student.last_active = now;
     db.activity_logs.unshift({
-      log_id: `log_${Date.now()}`,
+      log_id: generateUniqueId('log'),
       student_id,
       student_name: student.student_name,
       session_id,
@@ -419,7 +457,7 @@ app.post('/api/lesson-views', (req, res) => {
   if (student) {
     student.last_active = now;
     db.activity_logs.unshift({
-      log_id: `log_${Date.now()}`,
+      log_id: generateUniqueId('log'),
       student_id,
       student_name: student.student_name,
       session_id,
@@ -471,7 +509,7 @@ app.post('/api/ai-usage', (req, res) => {
   const student = db.students.find(s => s.student_id === student_id);
   if (student) {
     db.activity_logs.unshift({
-      log_id: `log_${Date.now()}`,
+      log_id: generateUniqueId('log'),
       student_id,
       student_name: student.student_name,
       session_id,
@@ -504,6 +542,23 @@ app.post('/api/logs', (req, res) => {
   }
   saveDatabase(db);
   res.json(log);
+});
+
+// Announcements Endpoints
+app.get('/api/announcements', (req, res) => {
+  const db = loadDatabase();
+  res.json(db.announcements || []);
+});
+
+app.post('/api/announcements', (req, res) => {
+  const { announcements } = req.body;
+  if (Array.isArray(announcements)) {
+    const db = loadDatabase();
+    db.announcements = announcements;
+    saveDatabase(db);
+    return res.json({ success: true, count: announcements.length });
+  }
+  res.status(400).json({ error: 'Array of announcements expected' });
 });
 
 // Deletion Endpoints
@@ -870,16 +925,28 @@ Your mission is to help users learn, navigate the website, and master computer t
 
 CORE PLATFORM KNOWLEDGE:
 1. WEBPAGES ON CSSENTIAL:
-   - HOME (Web Wall): Central portal, course summary, quick links to topics, featured hardware breakdown, system status.
+   - HOME (Web Wall): Central portal, 3-second auto-rotating announcement slider with clickable links and pause/resume, course summary, quick links to topics, featured hardware breakdown, system status.
    - ACTIVITIES: 8 interactive modules (Troubleshooting Scenarios, Problem Identification, Installation Practice, Configuration, System Testing, Fault Diagnosis, Case Study, Quick Quiz) + 🎮 PLAY button for Games Hub.
-   - COLLECTION: 6 module lessons with Presentations (🖥 PRESENT), Academic Lab Manuals in PDF and Word DOCX formats with 100-point rubrics, and watchable HD Video lectures (▶ WATCH) with in-player video upload/embed capabilities.
-   - GAMES HUB: 9 educational games (Sort & Configure, Code Cracker, Troubleshooting Search, Installation Sequence, Flashcards, Memory Match, Drag & Drop Parts, Computer Quiz, Tech Word Scramble) with real-time scoring and transcript logging.
+   - COLLECTION: 6 module lessons with Presentations (🖥 PRESENT - includes interactive 16:9 fullscreen slide deck with downloadable offline .html deck, print/PDF, and Word .doc handouts), Academic Lab Manuals in PDF and Word DOCX formats with 100-point rubrics, and watchable HD Video lectures (▶ WATCH) with in-player video upload/embed capabilities.
+   - GAMES HUB: 11 educational games (Virtual PC Lab Simulator, Cable & Pinout Master, Sort & Configure, Code Cracker, Troubleshooting Search, Installation Sequence, Flashcards, Memory Match, Drag & Drop Parts, Computer Quiz, Tech Word Scramble) with real-time scoring and transcript logging.
    - QUIZZES: Formative and summative assessments testing CSIC competencies with automated scoring.
    - ABOUT US: Research background, academic study details, developer credits (Jhon Wesly T. Buban, Juliana Marizh B. Calaputpu, Charlotte Mae H. Colon, Precious Lara M. Timoteo). Strictly never mention anyone else.
-   - RESEARCHER DASHBOARD: Password-gated admin console (CSSENTIAL2026) for monitoring student metrics, viewing attempt logs, exporting grades, uploading custom laboratory demonstration videos, and managing automated data retention & cleanup.
-   - THEME SELECTOR: Palette customizer offering Classic Institutional, Modern Slate, Warm Amber, and Cyber Tech.
+   - RESEARCHER DASHBOARD: Password-gated admin console (CSSENTIAL2026) for monitoring student metrics, viewing attempt logs, exporting grades, creating/editing/deleting announcements with optional images and links, uploading custom laboratory demonstration videos, and managing automated data retention & cleanup.
+   - THEME SELECTOR: Palette customizer offering standard color variations, beautiful gradient presets, and a custom 2-color gradient designer with angle controls.
 
-2. CURRICULUM TOPICS (6 COMPETENCIES):
+2. VIRTUAL PC LAB SIMULATOR (10-STAGE HANDS-ON INTERACTIVE LAB):
+   - Stage 1: ESD Safety (Equip anti-static wrist strap and grounded ESD mat).
+   - Stage 2: CPU Installation (Align gold Pin 1 corner triangle with socket notch, lower ZIF lever).
+   - Stage 3: Thermal Interface Material (Apply pea-sized dot of thermal paste to center of CPU IHS).
+   - Stage 4: CPU Cooler Installation (Align heatsink, tighten cross pattern, connect 4-pin PWM to CPU_FAN).
+   - Stage 5: Dual-Channel RAM Installation (Seat modules firmly into slots A2 and B2 until latches click).
+   - Stage 6: Motherboard Mounting (Install brass standoffs to prevent short circuits, screw in ATX board).
+   - Stage 7: High-Speed NVMe M.2 SSD Installation (Insert at 30° angle, push down, fasten tiny screw).
+   - Stage 8: Power Supply Unit & Wiring (Mount 750W PSU in basement shroud, connect 24-pin ATX, 8-pin EPS, PCIe).
+   - Stage 9: Dedicated Graphics Card (GPU) (Seat into primary PCIe 4.0 x16 slot, plug 8-pin PCIe power).
+   - Stage 10: UEFI/BIOS Configuration & Boot Setup (Enter BIOS with DEL/F2, enable XMP/DOCP, set SATA to AHCI, verify boot drive).
+
+3. CURRICULUM TOPICS (6 COMPETENCIES):
    - Topic 1: Preparing for Installation (Safety, OHS, ESD precautions, anti-static wrist strap, tools).
    - Topic 2: Hardware Identification & System Assembly (Motherboard, CPU zero-insertion-force, RAM dual-channel slots A2/B2, GPU PCIe x16, brass standoffs to prevent shorts, thermal paste pea-sized dot).
    - Topic 3: Cable Routing & Power Connections (24-pin ATX, 8-pin EPS CPU, PCIe power, SATA, front panel headers PWR_SW/RESET_SW).
@@ -887,20 +954,18 @@ CORE PLATFORM KNOWLEDGE:
    - Topic 5: Operating System Deployment & Partitioning (Clean Windows install, GPT vs MBR, UEFI bootable media, driver installation).
    - Topic 6: System Diagnostics, Testing & Troubleshooting (CompTIA 6-step method, POST beep codes, EZ Debug LEDs, MemTest86, Prime95, FurMark, resolving black screen/no POST).
 
-3. HOW TO PLAY THE 9 EDUCATIONAL GAMES:
+4. HOW TO PLAY THE 11 EDUCATIONAL GAMES:
+   - Virtual PC Lab Simulator: Realistic 10-stage physical PC build and UEFI setup simulator.
+   - Cable & Pinout Master: Match 24-pin ATX, 8-pin EPS, PCIe, and front panel headers.
    - Sort & Configure: Fast-paced category classification into Input, Output, Storage, Processing, and Safety bins.
    - Code Cracker: Answer technical diagnostic questions to decrypt the terminal passcode.
-   - Troubleshooting Search: Inspect a motherboard schematic and click the fault area.
+   - Troubleshooting Search: Inspect a motherboard workbench schematic and click the fault area.
    - Installation Sequence: Arrange PC assembly milestone cards into their exact chronological order.
    - Technical Flashcards: Flip cards to master hardware acronyms, port bandwidths, and specs.
    - Memory Match: Flip cards to pair hardware components with their functions.
    - Drag & Drop PC Parts: Drag components from the bench into their chassis sockets.
    - Computer System Quiz: 10-question timed technical speed challenge.
    - Tech Word Scramble: Unscramble letter tiles to reveal computer terms.
-
-4. DEMONSTRATION VIDEOS & LAB MANUALS:
-   - HD videos are watchable for all 6 competencies; users can also click "Upload / Change Video" to upload custom MP4/WebM files or embed YouTube/Vimeo links.
-   - Academic Lab Manuals can be viewed, printed to PDF, or downloaded as Word (.docx) documents with formal rubrics.
 
 CRITICAL EDUCATIONAL & ACADEMIC INTEGRITY RULES:
 - NEVER give direct answers, solution keys, or multiple-choice letters to any quiz, exam, activity, or puzzle!
@@ -909,17 +974,21 @@ CRITICAL EDUCATIONAL & ACADEMIC INTEGRITY RULES:
 - Current student context: Currently on page "${currentPage || 'HOME'}" with context "${currentContext || 'General'}".
 - Maintain an encouraging, friendly, and pedagogically sound tone.`;
 
-  // First try with primary model, then with fallback alias
+  // First try with primary models, then with fallback alias
   const ai = getGeminiClient();
   if (ai) {
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-flash-latest'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-pro'];
     for (const modelName of modelsToTry) {
       try {
         const response = await ai.models.generateContent({
           model: modelName,
           contents: [
-            { role: 'user', parts: [{ text: `${systemInstruction}\n\nCurrent user question: ${message}` }] }
-          ]
+            { role: 'user', parts: [{ text: message }] }
+          ],
+          config: {
+            systemInstruction: systemInstruction,
+            temperature: 0.7
+          }
         });
 
         const reply = response.text;

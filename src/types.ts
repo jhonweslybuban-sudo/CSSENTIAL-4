@@ -111,6 +111,19 @@ export interface AIUsageRecord {
   last_question?: string;
 }
 
+export interface AnnouncementItem {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  badgeColor?: 'blue' | 'amber' | 'emerald' | 'purple' | 'red';
+  date: string;
+  imageUrl?: string;
+  author?: string;
+  linkAction?: string;
+  link?: string;
+}
+
 export interface ActivityLog {
   id?: string;
   log_id?: string;

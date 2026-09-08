@@ -7,7 +7,8 @@ import {
   LessonView,
   StudentProfile,
   ResearcherStats,
-  DownloadRecord
+  DownloadRecord,
+  AnnouncementItem
 } from '../types';
 import { getPlatformAssistanceResponse } from './aiKnowledge';
 
@@ -51,19 +52,44 @@ export function isDummyStudent(s: any): boolean {
   return false;
 }
 
+function deduplicateLocalItems<T extends Record<string, any>>(items: T[], idKeys: string[]): T[] {
+  const seen = new Set<string>();
+  return (items || []).filter(item => {
+    if (!item) return false;
+    let key = '';
+    for (const k of idKeys) {
+      if (item[k]) {
+        key = `${k}:${item[k]}`;
+        break;
+      }
+    }
+    if (!key) {
+      key = JSON.stringify(item);
+    }
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function generateClientUniqueId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
 function cleanLocalDatabase(db: LocalDatabaseSchema): LocalDatabaseSchema {
-  const realStudents = (db.students || []).filter(s => !isDummyStudent(s));
+  const rawStudents = (db.students || []).filter(s => !isDummyStudent(s));
+  const realStudents = deduplicateLocalItems(rawStudents, ['student_id', 'id']);
   const realIds = new Set(realStudents.map(s => s.student_id));
   return {
     students: realStudents,
-    sessions: (db.sessions || []).filter(s => realIds.has(s.student_id)),
-    activity_attempts: (db.activity_attempts || []).filter(a => realIds.has(a.student_id)),
-    quiz_results: (db.quiz_results || []).filter(q => realIds.has(q.student_id)),
-    game_results: (db.game_results || []).filter(g => realIds.has(g.student_id)),
-    lesson_views: (db.lesson_views || []).filter(l => realIds.has(l.student_id)),
-    ai_usage: (db.ai_usage || []).filter(u => realIds.has(u.student_id)),
-    downloads: (db.downloads || []).filter(d => realIds.has(d.student_id)),
-    activity_logs: (db.activity_logs || []).filter(l => realIds.has(l.student_id))
+    sessions: deduplicateLocalItems((db.sessions || []).filter(s => realIds.has(s.student_id)), ['session_id', 'id']),
+    activity_attempts: deduplicateLocalItems((db.activity_attempts || []).filter(a => realIds.has(a.student_id)), ['attempt_id', 'id']),
+    quiz_results: deduplicateLocalItems((db.quiz_results || []).filter(q => realIds.has(q.student_id)), ['quiz_id', 'id']),
+    game_results: deduplicateLocalItems((db.game_results || []).filter(g => realIds.has(g.student_id)), ['game_result_id', 'id']),
+    lesson_views: deduplicateLocalItems((db.lesson_views || []).filter(l => realIds.has(l.student_id)), ['view_id', 'id']),
+    ai_usage: deduplicateLocalItems((db.ai_usage || []).filter(u => realIds.has(u.student_id)), ['usage_id', 'id']),
+    downloads: deduplicateLocalItems((db.downloads || []).filter(d => realIds.has(d.student_id)), ['id', 'download_id']),
+    activity_logs: deduplicateLocalItems((db.activity_logs || []).filter(l => realIds.has(l.student_id)), ['log_id', 'id'])
   };
 }
 
@@ -88,7 +114,14 @@ function loadLocalDatabase(): LocalDatabaseSchema {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.students)) {
         const cleaned = cleanLocalDatabase(parsed);
-        if (cleaned.students.length !== parsed.students.length) {
+        const hasChanges =
+          cleaned.students.length !== (parsed.students || []).length ||
+          cleaned.activity_logs.length !== (parsed.activity_logs || []).length ||
+          cleaned.game_results.length !== (parsed.game_results || []).length ||
+          cleaned.quiz_results.length !== (parsed.quiz_results || []).length ||
+          cleaned.activity_attempts.length !== (parsed.activity_attempts || []).length;
+
+        if (hasChanges) {
           saveLocalDatabase(cleaned);
         }
         return cleaned;
@@ -345,7 +378,7 @@ export const api = {
     }
     // Also log this explicit action in activity_logs
     db.activity_logs.unshift({
-      log_id: `log_act_${Date.now()}`,
+      log_id: generateClientUniqueId('log_act'),
       student_id: completeAttempt.student_id,
       session_id: completeAttempt.session_id,
       timestamp: completeAttempt.end_time,
@@ -368,7 +401,7 @@ export const api = {
   },
 
   async recordQuizResult(result: Partial<QuizResult>): Promise<QuizResult> {
-    const id = `qz_${Date.now()}`;
+    const id = generateClientUniqueId('qz');
     const completeQuiz: QuizResult = {
       id,
       quiz_id: id,
@@ -392,7 +425,7 @@ export const api = {
       db.students[sIdx].last_active = completeQuiz.end_time;
     }
     db.activity_logs.unshift({
-      log_id: `log_qz_${Date.now()}`,
+      log_id: generateClientUniqueId('log_qz'),
       student_id: completeQuiz.student_id,
       session_id: completeQuiz.session_id,
       timestamp: completeQuiz.end_time,
@@ -415,7 +448,7 @@ export const api = {
   },
 
   async recordGameResult(result: Partial<GameResult>): Promise<GameResult> {
-    const id = `gm_${Date.now()}`;
+    const id = generateClientUniqueId('gm');
     const completeGame: GameResult = {
       id,
       game_result_id: id,
@@ -439,7 +472,7 @@ export const api = {
       db.students[sIdx].last_active = completeGame.end_time;
     }
     db.activity_logs.unshift({
-      log_id: `log_gm_${Date.now()}`,
+      log_id: generateClientUniqueId('log_gm'),
       student_id: completeGame.student_id,
       session_id: completeGame.session_id,
       timestamp: completeGame.end_time,
@@ -462,7 +495,7 @@ export const api = {
   },
 
   async recordLessonView(view: Partial<LessonView>): Promise<LessonView> {
-    const id = `lv_${Date.now()}`;
+    const id = generateClientUniqueId('lv');
     const completeView: LessonView = {
       id,
       view_id: id,
@@ -478,7 +511,7 @@ export const api = {
     const db = loadLocalDatabase();
     db.lesson_views.unshift(completeView);
     db.activity_logs.unshift({
-      log_id: `log_lv_${Date.now()}`,
+      log_id: generateClientUniqueId('log_lv'),
       student_id: completeView.student_id,
       session_id: completeView.session_id,
       timestamp: completeView.finished_at,
@@ -503,7 +536,7 @@ export const api = {
   async recordDownload(data: { student_id: string; session_id: string; resource_name: string; file_type: string }): Promise<void> {
     const db = loadLocalDatabase();
     const dlRecord: DownloadRecord = {
-      id: `dl_${Date.now()}`,
+      id: generateClientUniqueId('dl'),
       student_id: data.student_id,
       session_id: data.session_id,
       resource_name: data.resource_name,
@@ -512,7 +545,7 @@ export const api = {
     };
     db.downloads.unshift(dlRecord);
     db.activity_logs.unshift({
-      log_id: `log_dl_${Date.now()}`,
+      log_id: generateClientUniqueId('log_dl'),
       student_id: data.student_id,
       session_id: data.session_id,
       timestamp: dlRecord.timestamp,
@@ -535,7 +568,7 @@ export const api = {
   async logAction(student_id: string, session_id: string, action_text: string): Promise<void> {
     const db = loadLocalDatabase();
     db.activity_logs.unshift({
-      log_id: `log_${Date.now()}`,
+      log_id: generateClientUniqueId('log'),
       student_id,
       session_id,
       timestamp: new Date().toISOString(),
@@ -626,15 +659,20 @@ export const api = {
           }
         });
 
+        const mergedSessions = deduplicateLocalItems([...(backendData.sessions || []), ...(localDb.sessions || [])], ['session_id', 'id']);
+        const mergedViews = deduplicateLocalItems([...(backendData.lesson_views || []), ...(localDb.lesson_views || [])], ['view_id', 'id']);
+        const mergedDownloads = deduplicateLocalItems([...(backendData.downloads || []), ...(localDb.downloads || [])], ['download_id', 'id']);
+        const mergedLogs = deduplicateLocalItems([...(backendData.activity_logs || []), ...(localDb.activity_logs || [])], ['log_id', 'id']);
+
         return {
           students: mergedStudents,
-          sessions: backendData.sessions || localDb.sessions,
+          sessions: mergedSessions,
           activity_attempts: mergedAttempts,
           quiz_results: mergedQuizzes,
           game_results: mergedGames,
-          lesson_views: backendData.lesson_views || localDb.lesson_views,
-          downloads: backendData.downloads || localDb.downloads,
-          activity_logs: backendData.activity_logs || localDb.activity_logs
+          lesson_views: mergedViews,
+          downloads: mergedDownloads,
+          activity_logs: mergedLogs
         };
       }
     } catch (err) {
@@ -676,21 +714,21 @@ export const api = {
         created_at: s.created_at,
         last_active: s.last_active
       })),
-      activityAttempts: activityAttempts.map((a: any) => ({
+      activityAttempts: deduplicateLocalItems(activityAttempts, ['id', 'attempt_id']).map((a: any) => ({
         ...a,
         id: a.id || a.attempt_id
       })),
-      quizResults: quizResults.map((q: any) => ({
+      quizResults: deduplicateLocalItems(quizResults, ['id', 'quiz_id']).map((q: any) => ({
         ...q,
         id: q.id || q.quiz_id
       })),
-      gameResults: gameResults.map((g: any) => ({
+      gameResults: deduplicateLocalItems(gameResults, ['id', 'game_result_id']).map((g: any) => ({
         ...g,
         id: g.id || g.game_result_id
       })),
-      downloads,
-      activityLogs: records.activity_logs || [],
-      lessonViews: records.lesson_views || []
+      downloads: deduplicateLocalItems(downloads, ['id', 'download_id']),
+      activityLogs: deduplicateLocalItems(records.activity_logs || [], ['log_id', 'id']),
+      lessonViews: deduplicateLocalItems(records.lesson_views || [], ['view_id', 'id'])
     };
   },
 
@@ -899,5 +937,129 @@ export const api = {
     } catch (err) {
       console.error('Failed to delete custom video:', err);
     }
+  },
+
+  // Announcement Management (Home Web Wall Slider & Dashboard Manager)
+  getAnnouncements(): AnnouncementItem[] {
+    try {
+      const raw = localStorage.getItem('cssential_announcements');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load announcements from storage:', err);
+    }
+    return DEFAULT_ANNOUNCEMENTS;
+  },
+
+  saveAnnouncements(list: AnnouncementItem[]): void {
+    try {
+      localStorage.setItem('cssential_announcements', JSON.stringify(list));
+      window.dispatchEvent(new CustomEvent('cssential_announcements_updated', { detail: list }));
+    } catch (err) {
+      console.error('Failed to save announcements:', err);
+    }
+
+    try {
+      fetch('/api/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ announcements: list })
+      }).catch(() => {});
+    } catch {}
+  },
+
+  addAnnouncement(item: Omit<AnnouncementItem, 'id' | 'date'> & { id?: string; date?: string; link?: string }): AnnouncementItem {
+    const list = this.getAnnouncements();
+    const newItem: AnnouncementItem = {
+      id: item.id || `ann_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      title: item.title,
+      content: item.content,
+      category: item.category || 'General Notice',
+      badgeColor: item.badgeColor || 'blue',
+      date: item.date || new Date().toISOString().split('T')[0],
+      imageUrl: item.imageUrl,
+      author: item.author || 'Instructor / Researcher',
+      linkAction: item.linkAction,
+      link: item.link
+    };
+    list.unshift(newItem);
+    this.saveAnnouncements(list);
+    return newItem;
+  },
+
+  updateAnnouncement(idOrItem: string | AnnouncementItem, updates?: Partial<AnnouncementItem>): void {
+    const list = this.getAnnouncements();
+    const targetId = typeof idOrItem === 'string' ? idOrItem : idOrItem.id;
+    const index = list.findIndex(a => a.id === targetId);
+    if (index !== -1) {
+      if (typeof idOrItem === 'string' && updates) {
+        list[index] = { ...list[index], ...updates };
+      } else if (typeof idOrItem !== 'string') {
+        list[index] = idOrItem;
+      }
+      this.saveAnnouncements(list);
+    }
+  },
+
+  deleteAnnouncement(id: string): void {
+    const list = this.getAnnouncements().filter(a => a.id !== id);
+    this.saveAnnouncements(list);
+  },
+
+  resetAnnouncementsToDefault(): AnnouncementItem[] {
+    this.saveAnnouncements(DEFAULT_ANNOUNCEMENTS);
+    return DEFAULT_ANNOUNCEMENTS;
   }
 };
+
+export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = [
+  {
+    id: 'ann_1',
+    title: 'Unit 2 Physical Assembly Assessment',
+    category: 'Lab Assessment',
+    badgeColor: 'blue',
+    date: '2026-03-01',
+    content: 'Review Lesson 2 (Installing Computer Systems). Remember that brass standoffs must be mounted only where corresponding motherboard holes exist. Extra standoffs create catastrophic short circuits on bottom traces!',
+    author: 'Jhon Wesly T. Buban'
+  },
+  {
+    id: 'ann_2',
+    title: 'ESD Safety Standard Compliance',
+    category: 'Safety Directive',
+    badgeColor: 'amber',
+    date: '2026-03-02',
+    content: 'Every student must wear an anti-static wrist strap clipped to bare chassis metal before handling CPU chips and dual-channel RAM sticks. Maintain work area relative humidity between 40% and 60%.',
+    author: 'Laboratory Safety Officer'
+  },
+  {
+    id: 'ann_3',
+    title: 'Hands-On Virtual PC Lab Simulator Active',
+    category: 'Interactive Lab',
+    badgeColor: 'emerald',
+    date: '2026-03-03',
+    content: 'Practice realistic computer hardware assembly, cable connections, and UEFI BIOS configuration at home before entering the physical hardware laboratory! Complete all 10 assembly stations & POST diagnostics.',
+    author: 'CSSENTIAL Curriculum Team'
+  },
+  {
+    id: 'ann_4',
+    title: 'Interactive Games Hub: 11 Educational Games',
+    category: 'Gamified Learning',
+    badgeColor: 'purple',
+    date: '2026-03-04',
+    content: 'Master hardware identification, cable pinouts, and troubleshooting methodology through our 11 educational games under ACTIVITIES > 🎮 PLAY. Real-time scores and progress sync directly to the Researcher Dashboard.',
+    author: 'CSSENTIAL Development Team'
+  },
+  {
+    id: 'ann_5',
+    title: 'Curriculum Presentations & Offline Decks',
+    category: 'Study Resources',
+    badgeColor: 'blue',
+    date: '2026-03-05',
+    content: 'All 6 competency units now feature full 16:9 interactive visual presentations with one-click offline HTML downloads and official academic laboratory manuals in PDF and Word (.docx) formats.',
+    author: 'Juliana Marizh B. Calaputpu'
+  }
+];

@@ -22,6 +22,7 @@ import { DragDropPartsGame } from './components/games/DragDropPartsGame';
 import { ComputerSystemQuizGame } from './components/games/ComputerSystemQuizGame';
 import { TechWordScrambleGame } from './components/games/TechWordScrambleGame';
 import { CablePinoutMasterGame } from './components/games/CablePinoutMasterGame';
+import { VirtualPCLabSimulator } from './components/VirtualPCLabSimulator';
 
 import { PageView, StudentProfile } from './types';
 import { ActivityDefinition, ACTIVITIES_DATA } from './data/curriculum';
@@ -246,6 +247,13 @@ export default function App() {
             )}
             {selectedGame === 'CABLE_PINOUT_MASTER' && (
               <CablePinoutMasterGame
+                studentId={student?.student_id || 'STU-GUEST'}
+                sessionId={sessionId || 'SESS-TEMP'}
+                onBack={() => navigateTo('GAMES_HUB')}
+              />
+            )}
+            {selectedGame === 'VIRTUAL_PC_LAB' && (
+              <VirtualPCLabSimulator
                 studentId={student?.student_id || 'STU-GUEST'}
                 sessionId={sessionId || 'SESS-TEMP'}
                 onBack={() => navigateTo('GAMES_HUB')}

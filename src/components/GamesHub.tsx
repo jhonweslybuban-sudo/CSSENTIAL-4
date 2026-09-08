@@ -12,7 +12,9 @@ import {
   HelpCircle,
   Type,
   Play,
-  Cable
+  Cable,
+  Cpu,
+  Wrench
 } from 'lucide-react';
 
 export type GameType =
@@ -25,7 +27,8 @@ export type GameType =
   | 'DRAG_DROP'
   | 'SYSTEM_QUIZ'
   | 'WORD_SCRAMBLE'
-  | 'CABLE_PINOUT_MASTER';
+  | 'CABLE_PINOUT_MASTER'
+  | 'VIRTUAL_PC_LAB';
 
 interface GamesHubProps {
   onSelectGame: (game: GameType) => void;
@@ -116,6 +119,14 @@ export const GamesHub: React.FC<GamesHubProps> = ({
       desc: 'Match 24-pin ATX, EPS, PCIe 8-pin, SATA, Front Panel PWR/LEDs, and high-speed display cables to their motherboard sockets and pinout orientations.',
       icon: <Cable className="w-6 h-6 text-emerald-700" />,
       badge: '10th Game • Hardware Lab'
+    },
+    {
+      id: 'VIRTUAL_PC_LAB' as GameType,
+      title: 'Virtual PC Lab Simulator',
+      category: 'Hands-on Practice',
+      desc: 'Practice hands-on computer assembly and system configuration as if you were in the physical school lab: ESD safety, CPU/RAM mounting, standoffs, PSU cables, and UEFI BIOS setup.',
+      icon: <Wrench className="w-6 h-6 text-indigo-700" />,
+      badge: '11th Game • Realistic Lab'
     }
   ];
 
@@ -139,7 +150,7 @@ export const GamesHub: React.FC<GamesHubProps> = ({
               <span>CSSENTIAL INTERACTIVE GAMES HUB</span>
             </h2>
             <p className="text-xs text-gray-500">
-              10 Educational Games &amp; Diagnostic Exercises for Computer Hardware &amp; System Configuration
+              11 Educational Games &amp; Hands-on Laboratory Simulations for Computer Hardware &amp; System Configuration
             </p>
           </div>
         </div>
