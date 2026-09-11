@@ -1,45 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, GraduationCap, Code2, Award, BookOpen, Laptop, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ResearcherProfile } from '../types';
+import { api, DEFAULT_RESEARCHERS } from '../services/api';
 
 export const AboutUsView: React.FC = () => {
-  const researchers = [
-    {
-      id: 'buban',
-      name: 'Jhon Wesly T. Buban',
-      role: 'Developer / Researcher',
-      tag: 'Full-Stack Development & AI Integration',
-      bio: 'Led the technical architecture, interactive game engines, local database telemetry, and AI Assistant integration for the CSSENTIAL web application.',
-      initials: 'JB',
-      color: 'bg-blue-600'
-    },
-    {
-      id: 'calaputpu',
-      name: 'Juliana Marizh B. Calaputpu',
-      role: 'Researcher',
-      tag: 'Curriculum & Instructional Design',
-      bio: 'Spearheaded curriculum alignment, educational lesson structuring, and instructional material synthesis for computer system installation and configuration.',
-      initials: 'JC',
-      color: 'bg-indigo-600'
-    },
-    {
-      id: 'colon',
-      name: 'Charlotte Mae H. Colon',
-      role: 'Researcher',
-      tag: 'Intervention Activities & Assessment',
-      bio: 'Formulated diagnostic troubleshooting scenarios, technical laboratory rubrics, and comprehensive evaluation quizzes for computer hardware students and technicians.',
-      initials: 'CC',
-      color: 'bg-cyan-600'
-    },
-    {
-      id: 'timoteo',
-      name: 'Precious Lara M. Timoteo',
-      role: 'Researcher',
-      tag: 'Educational Usability & Media Development',
-      bio: 'Directed instructional media curation, usability testing frameworks, and pedagogical interface optimization for multi-intervention learning.',
-      initials: 'PT',
-      color: 'bg-purple-600'
-    }
-  ];
+  const [researchers, setResearchers] = useState<ResearcherProfile[]>(() => api.getResearchers());
+
+  useEffect(() => {
+    // Initial fetch from server to get persistent database records
+    api.fetchRemoteResearchers().then(list => setResearchers(list));
+
+    const handleUpdate = (e: any) => {
+      if (e.detail && Array.isArray(e.detail)) {
+        setResearchers(e.detail);
+      } else {
+        setResearchers(api.getResearchers());
+      }
+    };
+
+    window.addEventListener('cssential_researchers_updated', handleUpdate);
+    return () => window.removeEventListener('cssential_researchers_updated', handleUpdate);
+  }, []);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-300">
@@ -65,19 +46,30 @@ export const AboutUsView: React.FC = () => {
             id={`researcher-card-${person.id}`}
             className="bg-white rounded-xl border border-gray-200 hover:border-blue-400 p-6 shadow-xs hover:shadow-md transition-all flex flex-col sm:flex-row gap-5 items-start"
           >
-            {/* Initials Avatar */}
-            <div
-              className={`w-16 h-16 rounded-2xl ${person.color} text-white font-black text-xl flex items-center justify-center shrink-0 shadow-md`}
-            >
-              {person.initials}
-            </div>
+            {/* Avatar or Initials */}
+            {person.avatarUrl ? (
+              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-blue-200 shadow-md shrink-0 bg-gray-100 flex items-center justify-center">
+                <img
+                  src={person.avatarUrl}
+                  alt={person.name}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : (
+              <div
+                className={`w-18 h-18 sm:w-20 sm:h-20 rounded-2xl ${person.color || 'bg-blue-600'} text-white font-black text-xl flex items-center justify-center shrink-0 shadow-md`}
+              >
+                {person.initials || person.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              </div>
+            )}
 
-            <div className="space-y-2 flex-1">
+            <div className="space-y-2 flex-1 min-w-0">
               <div>
                 <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block">
                   {person.role}
                 </span>
-                <h3 className="text-lg font-black text-gray-900 leading-tight">
+                <h3 className="text-lg font-black text-gray-900 leading-tight truncate">
                   {person.name}
                 </h3>
                 <span className="inline-block text-xs font-semibold text-gray-500 mt-0.5">
@@ -89,7 +81,7 @@ export const AboutUsView: React.FC = () => {
                 {person.tag}
               </div>
 
-              <p className="text-xs text-gray-600 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">
                 {person.bio}
               </p>
             </div>

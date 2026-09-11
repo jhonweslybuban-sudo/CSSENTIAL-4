@@ -306,7 +306,7 @@ export const HomeWebWall: React.FC<HomeWebWallProps> = ({
                   Interactive Games Hub
                 </div>
                 <div className="text-[11px] text-gray-500">
-                  9 educational puzzle games
+                  13 educational games &amp; simulators
                 </div>
               </div>
             </button>

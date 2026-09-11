@@ -23,6 +23,8 @@ import { ComputerSystemQuizGame } from './components/games/ComputerSystemQuizGam
 import { TechWordScrambleGame } from './components/games/TechWordScrambleGame';
 import { CablePinoutMasterGame } from './components/games/CablePinoutMasterGame';
 import { VirtualPCLabSimulator } from './components/VirtualPCLabSimulator';
+import { PCBuildSimulator } from './components/PCBuildSimulator';
+import { BiosSimulator } from './components/BiosSimulator';
 
 import { PageView, StudentProfile } from './types';
 import { ActivityDefinition, ACTIVITIES_DATA } from './data/curriculum';
@@ -254,6 +256,20 @@ export default function App() {
             )}
             {selectedGame === 'VIRTUAL_PC_LAB' && (
               <VirtualPCLabSimulator
+                studentId={student?.student_id || 'STU-GUEST'}
+                sessionId={sessionId || 'SESS-TEMP'}
+                onBack={() => navigateTo('GAMES_HUB')}
+              />
+            )}
+            {selectedGame === 'PC_BUILD_SIMULATOR' && (
+              <PCBuildSimulator
+                studentId={student?.student_id || 'STU-GUEST'}
+                sessionId={sessionId || 'SESS-TEMP'}
+                onBack={() => navigateTo('GAMES_HUB')}
+              />
+            )}
+            {selectedGame === 'BIOS_SIMULATOR' && (
+              <BiosSimulator
                 studentId={student?.student_id || 'STU-GUEST'}
                 sessionId={sessionId || 'SESS-TEMP'}
                 onBack={() => navigateTo('GAMES_HUB')}

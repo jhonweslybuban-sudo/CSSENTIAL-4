@@ -183,3 +183,20 @@ export interface LessonContent {
   troubleshootingTips: string[];
   videoUrl: string;
 }
+
+export interface ResearcherProfile {
+  id: string;
+  name: string;
+  role: string;
+  tag: string;
+  bio: string;
+  initials: string;
+  color: string;
+  avatarUrl?: string;
+}
+
+export interface BrandingSettings {
+  logoUrl?: string;
+  siteTitle?: string;
+  siteSubtitle?: string;
+}

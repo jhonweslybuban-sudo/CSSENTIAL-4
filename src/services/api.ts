@@ -8,7 +8,9 @@ import {
   StudentProfile,
   ResearcherStats,
   DownloadRecord,
-  AnnouncementItem
+  AnnouncementItem,
+  BrandingSettings,
+  ResearcherProfile
 } from '../types';
 import { getPlatformAssistanceResponse } from './aiKnowledge';
 
@@ -1013,8 +1015,183 @@ export const api = {
   resetAnnouncementsToDefault(): AnnouncementItem[] {
     this.saveAnnouncements(DEFAULT_ANNOUNCEMENTS);
     return DEFAULT_ANNOUNCEMENTS;
+  },
+
+  // Branding Management (Logo, Site Title, Subtitle)
+  getBranding(): BrandingSettings {
+    try {
+      const raw = localStorage.getItem('cssential_branding_settings');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            logoUrl: parsed.logoUrl || undefined,
+            siteTitle: parsed.siteTitle || 'CSSENTIAL',
+            siteSubtitle: parsed.siteSubtitle || 'A One-Click Multi-Intervention Platform for Troubleshooting Computer System Installation and Configuration'
+          };
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load branding from storage:', err);
+    }
+    return DEFAULT_BRANDING;
+  },
+
+  async fetchRemoteBranding(): Promise<BrandingSettings> {
+    try {
+      const res = await fetch('/api/branding');
+      if (res.ok) {
+        const remote = await res.json();
+        if (remote && typeof remote === 'object') {
+          const current = this.getBranding();
+          const merged: BrandingSettings = {
+            logoUrl: remote.logoUrl !== undefined ? remote.logoUrl : current.logoUrl,
+            siteTitle: remote.siteTitle || current.siteTitle || 'CSSENTIAL',
+            siteSubtitle: remote.siteSubtitle || current.siteSubtitle
+          };
+          localStorage.setItem('cssential_branding_settings', JSON.stringify(merged));
+          window.dispatchEvent(new CustomEvent('cssential_branding_updated', { detail: merged }));
+          return merged;
+        }
+      }
+    } catch {}
+    return this.getBranding();
+  },
+
+  saveBranding(settings: BrandingSettings): void {
+    try {
+      localStorage.setItem('cssential_branding_settings', JSON.stringify(settings));
+      window.dispatchEvent(new CustomEvent('cssential_branding_updated', { detail: settings }));
+    } catch (err) {
+      console.error('Failed to save branding locally:', err);
+    }
+
+    try {
+      fetch('/api/branding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      }).catch(() => {});
+    } catch {}
+  },
+
+  resetBrandingToDefault(): BrandingSettings {
+    this.saveBranding(DEFAULT_BRANDING);
+    return DEFAULT_BRANDING;
+  },
+
+  // Researchers Management (Photos, Bios, Roles, Descriptions)
+  getResearchers(): ResearcherProfile[] {
+    try {
+      const raw = localStorage.getItem('cssential_researchers_profiles');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load researchers from storage:', err);
+    }
+    return DEFAULT_RESEARCHERS;
+  },
+
+  async fetchRemoteResearchers(): Promise<ResearcherProfile[]> {
+    try {
+      const res = await fetch('/api/researchers');
+      if (res.ok) {
+        const remote = await res.json();
+        if (Array.isArray(remote) && remote.length > 0) {
+          localStorage.setItem('cssential_researchers_profiles', JSON.stringify(remote));
+          window.dispatchEvent(new CustomEvent('cssential_researchers_updated', { detail: remote }));
+          return remote;
+        }
+      }
+    } catch {}
+    return this.getResearchers();
+  },
+
+  saveResearchers(list: ResearcherProfile[]): void {
+    try {
+      localStorage.setItem('cssential_researchers_profiles', JSON.stringify(list));
+      window.dispatchEvent(new CustomEvent('cssential_researchers_updated', { detail: list }));
+    } catch (err) {
+      console.error('Failed to save researchers locally:', err);
+    }
+
+    try {
+      fetch('/api/researchers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ researchers: list })
+      }).catch(() => {});
+    } catch {}
+  },
+
+  updateResearcher(id: string, updates: Partial<ResearcherProfile>): ResearcherProfile[] {
+    const list = this.getResearchers();
+    const idx = list.findIndex(r => r.id === id);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...updates };
+      this.saveResearchers(list);
+    }
+    return list;
+  },
+
+  resetResearchersToDefault(): ResearcherProfile[] {
+    this.saveResearchers(DEFAULT_RESEARCHERS);
+    return DEFAULT_RESEARCHERS;
   }
 };
+
+export const DEFAULT_BRANDING: BrandingSettings = {
+  logoUrl: undefined,
+  siteTitle: 'CSSENTIAL',
+  siteSubtitle: 'A One-Click Multi-Intervention Platform for Troubleshooting Computer System Installation and Configuration'
+};
+
+export const DEFAULT_RESEARCHERS: ResearcherProfile[] = [
+  {
+    id: 'buban',
+    name: 'Jhon Wesly T. Buban',
+    role: 'Developer / Researcher',
+    tag: 'Full-Stack Development & AI Integration',
+    bio: 'Led the technical architecture, interactive game engines, local database telemetry, and AI Assistant integration for the CSSENTIAL web application.',
+    initials: 'JB',
+    color: 'bg-blue-600',
+    avatarUrl: ''
+  },
+  {
+    id: 'calaputpu',
+    name: 'Juliana Marizh B. Calaputpu',
+    role: 'Researcher',
+    tag: 'Curriculum & Instructional Design',
+    bio: 'Spearheaded curriculum alignment, educational lesson structuring, and instructional material synthesis for computer system installation and configuration.',
+    initials: 'JC',
+    color: 'bg-indigo-600',
+    avatarUrl: ''
+  },
+  {
+    id: 'colon',
+    name: 'Charlotte Mae H. Colon',
+    role: 'Researcher',
+    tag: 'Intervention Activities & Assessment',
+    bio: 'Formulated diagnostic troubleshooting scenarios, technical laboratory rubrics, and comprehensive evaluation quizzes for computer hardware students and technicians.',
+    initials: 'CC',
+    color: 'bg-cyan-600',
+    avatarUrl: ''
+  },
+  {
+    id: 'timoteo',
+    name: 'Precious Lara M. Timoteo',
+    role: 'Researcher',
+    tag: 'Educational Usability & Media Development',
+    bio: 'Directed instructional media curation, usability testing frameworks, and pedagogical interface optimization for multi-intervention learning.',
+    initials: 'PT',
+    color: 'bg-purple-600',
+    avatarUrl: ''
+  }
+];
 
 export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = [
   {

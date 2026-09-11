@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Monitor, ArrowLeft, User, ShieldCheck, Palette } from 'lucide-react';
-import { PageView } from '../types';
+import { PageView, BrandingSettings } from '../types';
+import { api } from '../services/api';
 
 interface HeaderProps {
   currentPage?: PageView;
@@ -25,6 +26,24 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStudentModal,
   sessionTimeFormatted = '00:00'
 }) => {
+  const [branding, setBranding] = useState<BrandingSettings>(() => api.getBranding());
+
+  useEffect(() => {
+    // Initial fetch from server to get persistent database branding
+    api.fetchRemoteBranding().then(b => setBranding(b));
+
+    const handleUpdate = (e: any) => {
+      if (e.detail) {
+        setBranding(e.detail);
+      } else {
+        setBranding(api.getBranding());
+      }
+    };
+
+    window.addEventListener('cssential_branding_updated', handleUpdate);
+    return () => window.removeEventListener('cssential_branding_updated', handleUpdate);
+  }, []);
+
   return (
     <header className="w-full bg-white border-b border-gray-200 shadow-xs sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -32,20 +51,31 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Logo, Title & Subtitle */}
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 bg-blue-700 rounded-lg flex items-center justify-center text-white shadow-xs shrink-0">
-              <Monitor className="w-7 h-7" strokeWidth={2.2} />
-            </div>
+            {branding.logoUrl ? (
+              <div className="w-12 h-12 rounded-lg overflow-hidden border border-blue-200 bg-white shadow-xs shrink-0 flex items-center justify-center p-0.5">
+                <img
+                  src={branding.logoUrl}
+                  alt={branding.siteTitle || 'Website Logo'}
+                  className="w-full h-full object-contain rounded-md"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : (
+              <div className="w-12 h-12 bg-blue-700 rounded-lg flex items-center justify-center text-white shadow-xs shrink-0">
+                <Monitor className="w-7 h-7" strokeWidth={2.2} />
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-blue-900 leading-none">
-                  CSSENTIAL
+                  {branding.siteTitle || 'CSSENTIAL'}
                 </h1>
                 <span className="hidden md:inline-block px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">
                   Learning Platform
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 font-medium line-clamp-1 mt-0.5">
-                A One-Click Multi-Intervention Platform for Troubleshooting Computer System Installation and Configuration
+              <p className="text-xs sm:text-sm text-gray-600 font-medium line-clamp-1 mt-0.5 max-w-2xl">
+                {branding.siteSubtitle || 'A One-Click Multi-Intervention Platform for Troubleshooting Computer System Installation and Configuration'}
               </p>
             </div>
           </div>

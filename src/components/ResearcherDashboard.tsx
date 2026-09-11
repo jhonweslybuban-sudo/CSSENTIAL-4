@@ -39,6 +39,7 @@ import { ResearcherStats, StudentProfile, ActivityAttempt, QuizResult, GameResul
 import { ResearcherVideoManager } from './ResearcherVideoManager';
 import { ResearcherRecordManager } from './ResearcherRecordManager';
 import { ResearcherAnnouncementManager } from './ResearcherAnnouncementManager';
+import { ResearcherBrandingManager } from './ResearcherBrandingManager';
 
 interface ResearcherDashboardProps {
   onBackToHome: () => void;
@@ -49,7 +50,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
 }) => {
   const [stats, setStats] = useState<ResearcherStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'ANNOUNCEMENTS' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'ANNOUNCEMENTS' | 'MANAGE_BRANDING' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS'>('OVERVIEW');
   
   // Password Protection Gate (Password: CSSENTIAL2026)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -80,7 +81,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [sectionFilter, setSectionFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE_ONLY' | 'GITHUB_ONLY'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE_ONLY'>('ALL');
   const [sortOrder, setSortOrder] = useState<'NEWEST' | 'OLDEST' | 'SCORE_HIGH' | 'DURATION_HIGH'>('NEWEST');
 
   // Selected student for detailed drill-down modal
@@ -245,8 +246,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
       const matchesSection = sectionFilter === 'ALL' || s.year_section.includes(sectionFilter);
       const matchesStatus = 
         statusFilter === 'ALL' ||
-        (statusFilter === 'ACTIVE_ONLY' && s.isCurrentlyActive) ||
-        (statusFilter === 'GITHUB_ONLY' && s.isGitHub);
+        (statusFilter === 'ACTIVE_ONLY' && s.isCurrentlyActive);
       return matchesSearch && matchesSection && matchesStatus;
     });
   }, [studentMetrics, searchQuery, sectionFilter, statusFilter]);
@@ -635,10 +635,6 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
-              <div className="px-3.5 py-1.5 rounded-xl bg-white/15 border border-white/20 text-xs font-bold flex items-center gap-2">
-                <span className="text-base">🐙</span>
-                <span>GitHub Link Visitors: <strong className="text-white text-sm">{studentMetrics.filter(s => s.isGitHub).length}</strong></span>
-              </div>
               <button
                 onClick={() => setStatusFilter(prev => prev === 'ACTIVE_ONLY' ? 'ALL' : 'ACTIVE_ONLY')}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
@@ -648,16 +644,6 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                 }`}
               >
                 {statusFilter === 'ACTIVE_ONLY' ? 'Showing Active Only ✓' : 'Filter Active Only'}
-              </button>
-              <button
-                onClick={() => setStatusFilter(prev => prev === 'GITHUB_ONLY' ? 'ALL' : 'GITHUB_ONLY')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                  statusFilter === 'GITHUB_ONLY'
-                    ? 'bg-white text-cyan-900 shadow-md'
-                    : 'bg-emerald-800/60 hover:bg-emerald-800 text-white'
-                }`}
-              >
-                {statusFilter === 'GITHUB_ONLY' ? 'GitHub Only ✓' : 'Filter GitHub Only'}
               </button>
             </div>
           </div>
@@ -759,6 +745,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             { id: 'GAMES', label: `Games Telemetry (${stats?.gameResults.length || 0})` },
             { id: 'LOGS', label: `Student Actions Log (${stats?.activityLogs?.length || 0})` },
             { id: 'ANNOUNCEMENTS', label: '📢 Announcements & Notices' },
+            { id: 'MANAGE_BRANDING', label: '🎨 Logo & Researcher Profiles' },
             { id: 'MANAGE_VIDEOS', label: 'Demonstration Videos' },
             { id: 'MANAGE_RECORDS', label: 'Data Retention & Cleanup' }
           ].map(tab => (
@@ -806,7 +793,6 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
           >
             <option value="ALL">All Statuses ({studentMetrics.length})</option>
             <option value="ACTIVE_ONLY">🟢 Active Now ({studentMetrics.filter(s => s.isCurrentlyActive).length})</option>
-            <option value="GITHUB_ONLY">🐙 GitHub Referrals ({studentMetrics.filter(s => s.isGitHub).length})</option>
           </select>
 
           <select
@@ -985,16 +971,6 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-gray-500 bg-gray-100">
                               Offline
-                            </span>
-                          )}
-                          {student.isGitHub ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
-                              <ExternalLink className="w-2.5 h-2.5" />
-                              GitHub Referral
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-gray-400 font-mono">
-                              {student.referral_source || 'Direct'}
                             </span>
                           )}
                         </div>
@@ -1345,7 +1321,14 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 8: DEMONSTRATION VIDEOS MANAGEMENT */}
+          {/* TAB 8: BRANDING & RESEARCHER PROFILES MANAGEMENT */}
+          {activeTab === 'MANAGE_BRANDING' && (
+            <div className="p-6">
+              <ResearcherBrandingManager />
+            </div>
+          )}
+
+          {/* TAB 9: DEMONSTRATION VIDEOS MANAGEMENT */}
           {activeTab === 'MANAGE_VIDEOS' && (
             <div className="p-6">
               <ResearcherVideoManager />

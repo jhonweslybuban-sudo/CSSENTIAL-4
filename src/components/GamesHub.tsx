@@ -14,7 +14,10 @@ import {
   Play,
   Cable,
   Cpu,
-  Wrench
+  Wrench,
+  Sliders,
+  Terminal,
+  Gauge
 } from 'lucide-react';
 
 export type GameType =
@@ -28,7 +31,9 @@ export type GameType =
   | 'SYSTEM_QUIZ'
   | 'WORD_SCRAMBLE'
   | 'CABLE_PINOUT_MASTER'
-  | 'VIRTUAL_PC_LAB';
+  | 'VIRTUAL_PC_LAB'
+  | 'PC_BUILD_SIMULATOR'
+  | 'BIOS_SIMULATOR';
 
 interface GamesHubProps {
   onSelectGame: (game: GameType) => void;
@@ -127,6 +132,22 @@ export const GamesHub: React.FC<GamesHubProps> = ({
       desc: 'Practice hands-on computer assembly and system configuration as if you were in the physical school lab: ESD safety, CPU/RAM mounting, standoffs, PSU cables, and UEFI BIOS setup.',
       icon: <Wrench className="w-6 h-6 text-indigo-700" />,
       badge: '11th Game • Realistic Lab'
+    },
+    {
+      id: 'PC_BUILD_SIMULATOR' as GameType,
+      title: 'PC Build Simulator',
+      category: 'System Building & OC',
+      desc: 'A hands-on system-building simulator with Guided Build, Free Build, overclocking sliders (Core Clock & Voltage), and an official "CSSMark" benchmark.',
+      icon: <Sliders className="w-6 h-6 text-blue-700" />,
+      badge: 'NEW • 3 Modes & CSSMark'
+    },
+    {
+      id: 'BIOS_SIMULATOR' as GameType,
+      title: 'BIOS/UEFI Simulator',
+      category: 'Firmware Practice',
+      desc: 'A realistic recreation of an actual BIOS/UEFI setup utility screen. Practice changing XMP, Secure Boot, TPM 2.0, CPU Multipliers, and Boot Priority with zero risk.',
+      icon: <Terminal className="w-6 h-6 text-cyan-700" />,
+      badge: 'NEW • Zero-Risk Practice'
     }
   ];
 
@@ -150,7 +171,7 @@ export const GamesHub: React.FC<GamesHubProps> = ({
               <span>CSSENTIAL INTERACTIVE GAMES HUB</span>
             </h2>
             <p className="text-xs text-gray-500">
-              11 Educational Games &amp; Hands-on Laboratory Simulations for Computer Hardware &amp; System Configuration
+              13 Educational Games &amp; Hands-on Laboratory Simulations for Computer Hardware, Assembly &amp; System Configuration
             </p>
           </div>
         </div>

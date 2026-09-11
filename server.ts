@@ -37,6 +37,8 @@ interface DatabaseSchema {
   ai_usage: any[];
   activity_logs: any[];
   announcements?: any[];
+  branding?: any;
+  researchers?: any[];
 }
 
 function deduplicateRecords<T extends Record<string, any>>(items: T[], idKeys: string[]): T[] {
@@ -90,7 +92,9 @@ function cleanDummyData(data: DatabaseSchema): DatabaseSchema {
     lesson_views: validViews,
     ai_usage: validAiUsage,
     activity_logs: validLogs,
-    announcements: data.announcements || []
+    announcements: data.announcements || [],
+    branding: data.branding || null,
+    researchers: data.researchers || null
   };
 }
 
@@ -104,7 +108,10 @@ function loadDatabase(): DatabaseSchema {
       game_results: [],
       lesson_views: [],
       ai_usage: [],
-      activity_logs: []
+      activity_logs: [],
+      announcements: [],
+      branding: null,
+      researchers: null
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
     return initialData;
@@ -559,6 +566,41 @@ app.post('/api/announcements', (req, res) => {
     return res.json({ success: true, count: announcements.length });
   }
   res.status(400).json({ error: 'Array of announcements expected' });
+});
+
+// Branding Endpoints (Logo, Site Title, Subtitle)
+app.get('/api/branding', (req, res) => {
+  const db = loadDatabase();
+  res.json(db.branding || null);
+});
+
+app.post('/api/branding', (req, res) => {
+  const { logoUrl, siteTitle, siteSubtitle } = req.body;
+  const db = loadDatabase();
+  db.branding = {
+    logoUrl: logoUrl !== undefined ? logoUrl : (db.branding?.logoUrl || null),
+    siteTitle: siteTitle !== undefined ? siteTitle : (db.branding?.siteTitle || 'CSSENTIAL'),
+    siteSubtitle: siteSubtitle !== undefined ? siteSubtitle : (db.branding?.siteSubtitle || 'A One-Click Multi-Intervention Platform for Troubleshooting Computer System Installation and Configuration')
+  };
+  saveDatabase(db);
+  res.json({ success: true, branding: db.branding });
+});
+
+// Researchers Profile Endpoints (Images, descriptions, tags, roles)
+app.get('/api/researchers', (req, res) => {
+  const db = loadDatabase();
+  res.json(db.researchers || null);
+});
+
+app.post('/api/researchers', (req, res) => {
+  const { researchers } = req.body;
+  if (Array.isArray(researchers)) {
+    const db = loadDatabase();
+    db.researchers = researchers;
+    saveDatabase(db);
+    return res.json({ success: true, researchers: db.researchers });
+  }
+  res.status(400).json({ error: 'Array of researchers expected' });
 });
 
 // Deletion Endpoints
