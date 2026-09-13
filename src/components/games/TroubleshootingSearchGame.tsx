@@ -564,28 +564,24 @@ export const TroubleshootingSearchGame: React.FC<TroubleshootingSearchGameProps>
             return (
               <div
                 key={obj.id}
-                className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2.5 transition-all select-none ${
+                className={`px-3 py-2 rounded-lg border text-xs font-semibold flex items-center justify-between gap-2 transition-all select-none ${
                   isFound
                     ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-2xs'
                     : isCurrentTarget
                     ? 'bg-blue-50 border-blue-400 text-blue-900 ring-2 ring-blue-400/40 shadow-xs'
-                    : 'bg-gray-50 border-gray-200 text-gray-600'
+                    : 'bg-gray-50 border-gray-200 text-gray-700'
                 }`}
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 p-0.5 flex items-center justify-center shrink-0">
-                  <HardwareVisualArt id={obj.id} className="w-7 h-7" />
-                </div>
-
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="truncate font-bold text-[11px]">{obj.name}</span>
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className="truncate font-bold text-xs">{obj.name}</span>
                     {isFound ? (
                       <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     ) : isCurrentTarget ? (
                       <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping shrink-0" />
                     ) : null}
                   </div>
-                  <span className="text-[9px] text-gray-400 block truncate">
+                  <span className="text-[10px] text-gray-500 block truncate">
                     {isFound ? 'Discovered ✓' : obj.category}
                   </span>
                 </div>

@@ -357,6 +357,45 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
         </div>
       </div>
 
+      {/* First-Time User Quick-Start Guidance */}
+      <div className="bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-700 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-sm tracking-wider">
+                FIRST TIME USER GUIDE
+              </span>
+              <span className="text-xs font-bold text-blue-950">
+                How to Complete the Simulation Workbench:
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-blue-900 pt-1">
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">1</span>
+                <div>
+                  <strong className="block font-bold">Read the Stage Directive</strong>
+                  <span className="text-blue-800 text-[11px]">Review the highlighted prompt on the left to see which component or action is needed.</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">2</span>
+                <div>
+                  <strong className="block font-bold">Pick from Lab Inventory</strong>
+                  <span className="text-blue-800 text-[11px]">Select the correct tool, silicon part, or cable from the right-hand inventory shelf.</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">3</span>
+                <div>
+                  <strong className="block font-bold">Apply to Workbench</strong>
+                  <span className="text-blue-800 text-[11px]">Click the item to insert or execute, advancing toward full system certification!</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Simulation View or Final Certificate */}
       {!isFinished ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

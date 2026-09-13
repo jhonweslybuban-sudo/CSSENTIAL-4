@@ -230,6 +230,36 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
             </div>
           </div>
 
+          {/* Beginner Friendly Quick Instructions Banner */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="bg-blue-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-sm tracking-wider">
+                    HOW TO PLAY (3 EASY STEPS)
+                  </span>
+                  <span className="text-xs font-bold text-blue-950">
+                    Pinout & Cable Matching Made Simple
+                  </span>
+                </div>
+                <div className="text-xs text-blue-900 grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 font-medium">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-blue-200 text-blue-800 font-bold flex items-center justify-center text-[10px] shrink-0">1</span>
+                    <span>Read socket name & pin requirement on the left</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-blue-200 text-blue-800 font-bold flex items-center justify-center text-[10px] shrink-0">2</span>
+                    <span>Click the matching cable or header wire on the right</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-blue-200 text-blue-800 font-bold flex items-center justify-center text-[10px] shrink-0">3</span>
+                    <span>Click <strong>CONNECT CABLE</strong> to test alignment</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Diagnostic Scenario & Motherboard Socket Workbench */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             

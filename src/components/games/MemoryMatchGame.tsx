@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RotateCcw, Clock, Trophy, ArrowLeft, Sparkles } from 'lucide-react';
-import { MEMORY_CARDS } from '../../data/gamesData';
+import { RotateCcw, Clock, Trophy, ArrowLeft, Sparkles, Layers } from 'lucide-react';
+import { MEMORY_CARD_SETS } from '../../data/gamesData';
 import { api } from '../../services/api';
 
 interface MemoryMatchGameProps {
@@ -14,9 +14,12 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
   sessionId,
   onBack
 }) => {
-  // Shuffle cards
+  // Current set index (0, 1, or 2)
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+
+  // Cards for active set
   const [cards, setCards] = useState(() =>
-    [...MEMORY_CARDS].sort(() => Math.random() - 0.5)
+    [...MEMORY_CARD_SETS[0]].sort(() => Math.random() - 0.5)
   );
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [matchedPairs, setMatchedPairs] = useState<string[]>([]);
@@ -33,6 +36,8 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
     }, 1000);
     return () => clearInterval(timerRef.current);
   }, []);
+
+  const activeSet = MEMORY_CARD_SETS[currentSetIndex];
 
   const handleCardClick = (index: number) => {
     if (
@@ -57,7 +62,7 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
         setMatchedPairs(newMatches);
         setFlippedIndices([]);
 
-        if (newMatches.length === MEMORY_CARDS.length / 2) {
+        if (newMatches.length === activeSet.length / 2) {
           // Completed!
           setIsCompleted(true);
           clearInterval(timerRef.current);
@@ -70,7 +75,7 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
             end_time: new Date().toISOString(),
             duration_seconds: duration,
             score: Math.max(10, 100 - (moves - 6) * 5),
-            level: 1,
+            level: currentSetIndex + 1,
             completed: true
           });
         }
@@ -83,8 +88,11 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
     }
   };
 
-  const handleRestart = () => {
-    setCards([...MEMORY_CARDS].sort(() => Math.random() - 0.5));
+  // When retrying or switching sets, advance to a fresh set of content
+  const handleRestart = (newSetIdx?: number) => {
+    const nextIdx = newSetIdx !== undefined ? newSetIdx : (currentSetIndex + 1) % MEMORY_CARD_SETS.length;
+    setCurrentSetIndex(nextIdx);
+    setCards([...MEMORY_CARD_SETS[nextIdx]].sort(() => Math.random() - 0.5));
     setFlippedIndices([]);
     setMatchedPairs([]);
     setMoves(0);
@@ -113,6 +121,10 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
         </button>
 
         <div className="flex items-center gap-3 text-xs font-bold">
+          <div className="hidden sm:flex items-center gap-1 text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md border border-purple-200">
+            <Layers className="w-3.5 h-3.5" />
+            <span>Set {currentSetIndex + 1} of {MEMORY_CARD_SETS.length}</span>
+          </div>
           <div className="flex items-center gap-1 font-mono text-gray-700 bg-gray-100 px-2.5 py-1 rounded-md">
             <Clock className="w-3.5 h-3.5 text-blue-600" />
             <span>{formatTime(elapsedSeconds)}</span>
@@ -121,18 +133,43 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
             Moves: {moves}
           </div>
           <div className="text-blue-900 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
-            Pairs: {matchedPairs.length} / {MEMORY_CARDS.length / 2}
+            Pairs: {matchedPairs.length} / {activeSet.length / 2}
           </div>
         </div>
       </div>
 
       {!isCompleted ? (
         <div className="space-y-4">
-          <div className="text-center">
-            <h2 className="text-xl font-black text-gray-900">MEMORY MATCH</h2>
-            <p className="text-xs text-gray-600 mt-0.5">
-              Flip two cards to match hardware components with their correct diagnostic role or specification!
+          <div className="text-center space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full">
+                {currentSetIndex === 0 && 'Set 1: Core Silicon & Peripherals'}
+                {currentSetIndex === 1 && 'Set 2: Power, Thermal & Board Buses'}
+                {currentSetIndex === 2 && 'Set 3: Firmware, LAN & Diagnostics'}
+              </span>
+            </div>
+            <h2 className="text-xl font-black text-gray-900">MEMORY MATCH LAB</h2>
+            <p className="text-xs text-gray-600 max-w-lg mx-auto">
+              Flip two cards to match hardware components with their correct diagnostic role or specification. Retrying switches to a different set of content!
             </p>
+
+            {/* Set Selection Buttons */}
+            <div className="flex justify-center items-center gap-2 pt-1">
+              <span className="text-[11px] font-bold text-gray-500">SELECT SET:</span>
+              {MEMORY_CARD_SETS.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleRestart(idx)}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                    currentSetIndex === idx
+                      ? 'bg-blue-700 text-white shadow-xs'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
+                  }`}
+                >
+                  Set {idx + 1}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Cards Grid (3x4 or 4x3) */}
@@ -186,11 +223,11 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
           </p>
           <div className="flex justify-center gap-3 pt-2">
             <button
-              onClick={handleRestart}
+              onClick={() => handleRestart()}
               className="flex items-center gap-1.5 px-6 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Play Again</span>
+              <span>Next Content Set (Set {((currentSetIndex + 1) % MEMORY_CARD_SETS.length) + 1})</span>
             </button>
             <button
               onClick={onBack}

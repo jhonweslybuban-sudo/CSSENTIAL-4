@@ -114,6 +114,49 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
     );
   };
 
+  // One-click submit and direct advance to next question
+  const handleSubmitAndAdvance = async (idxToSubmit?: number) => {
+    const finalSelected = idxToSubmit !== undefined ? idxToSubmit : selectedOption;
+    if (finalSelected === null || !currentItem) return;
+
+    const isCorrect = finalSelected === currentItem.shuffledCorrectIndex;
+    const newAnswers = [...answersState, { isCorrect, selected: finalSelected }];
+    setAnswersState(newAnswers);
+
+    api.logAction(
+      studentId,
+      sessionId,
+      `Submitted Question ${currentIndex + 1}/${randomizedItems.length} in "${activity.name}": ${isCorrect ? 'CORRECT' : 'INCORRECT'}`
+    );
+
+    if (currentIndex < randomizedItems.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setSelectedOption(null);
+      setIsAnswerChecked(false);
+      setShowHint(false);
+    } else {
+      // Completed activity quiz!
+      setIsCompleted(true);
+      const correctCount = newAnswers.filter(a => a.isCorrect).length;
+      const total = randomizedItems.length;
+      const pct = Math.round((correctCount / total) * 100);
+
+      await api.recordActivityAttempt({
+        student_id: studentId,
+        session_id: sessionId,
+        activity_name: activity.name,
+        activity_type: activity.type,
+        start_time: new Date(startTime).toISOString(),
+        end_time: new Date().toISOString(),
+        duration_seconds: elapsedSeconds,
+        score: correctCount,
+        total_items: total,
+        percentage: pct,
+        completed: true
+      });
+    }
+  };
+
   const handleNext = async () => {
     if (currentIndex < randomizedItems.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -321,38 +364,43 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
             )}
 
             {/* Bottom Action Buttons */}
-            <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+            <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50/90 border border-amber-200 px-3 py-1.5 rounded-lg font-medium">
                 <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
                 <span className="hidden sm:inline">Quiz Mode: AI Assistant is disabled during assessments</span>
                 <span className="sm:hidden">AI Disabled</span>
               </div>
 
-              {!isAnswerChecked ? (
-                <button
-                  id="check-answer-btn"
-                  onClick={handleCheckAnswer}
-                  disabled={selectedOption === null}
-                  className={`px-6 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedOption !== null
-                      ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer shadow-xs'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  CHECK ANSWER
-                </button>
-              ) : (
-                <button
-                  id="next-question-btn"
-                  onClick={handleNext}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-xs transition-all cursor-pointer"
-                >
-                  <span>
-                    {currentIndex < activity.items.length - 1 ? 'NEXT QUESTION' : 'VIEW FINAL RESULTS'}
-                  </span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {!isAnswerChecked ? (
+                  <button
+                    id="submit-advance-btn"
+                    onClick={() => handleSubmitAndAdvance()}
+                    disabled={selectedOption === null}
+                    className={`flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-xs font-bold transition-all ${
+                      selectedOption !== null
+                        ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer shadow-xs active:scale-95'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <span>
+                      {currentIndex < activity.items.length - 1 ? 'SUBMIT & NEXT QUESTION' : 'SUBMIT & FINISH'}
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    id="next-question-btn"
+                    onClick={handleNext}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-xs transition-all cursor-pointer active:scale-95"
+                  >
+                    <span>
+                      {currentIndex < activity.items.length - 1 ? 'NEXT QUESTION' : 'VIEW FINAL RESULTS'}
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
           </div>

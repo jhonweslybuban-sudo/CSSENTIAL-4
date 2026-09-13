@@ -247,25 +247,55 @@ export const FLASHCARDS_DATA = [
   }
 ];
 
-export const MEMORY_CARDS = [
-  { id: 'm1', pairId: 'cpu', content: 'CPU (Processor)', isConcept: true },
-  { id: 'm2', pairId: 'cpu', content: 'Executes instructions & calculations', isConcept: false },
-  
-  { id: 'm3', pairId: 'ram', content: 'RAM Module', isConcept: true },
-  { id: 'm4', pairId: 'ram', content: 'Volatile fast working memory', isConcept: false },
-
-  { id: 'm5', pairId: 'ssd', content: 'Solid State Drive (SSD)', isConcept: true },
-  { id: 'm6', pairId: 'ssd', content: 'Non-volatile flash file storage', isConcept: false },
-
-  { id: 'm7', pairId: 'keyboard', content: 'Keyboard & Mouse', isConcept: true },
-  { id: 'm8', pairId: 'keyboard', content: 'Primary User Input Devices', isConcept: false },
-
-  { id: 'm9', pairId: 'monitor', content: 'Monitor & Display', isConcept: true },
-  { id: 'm10', pairId: 'monitor', content: 'Visual Graphical Output Device', isConcept: false },
-
-  { id: 'm11', pairId: 'sata', content: 'SATA Cable', isConcept: true },
-  { id: 'm12', pairId: 'sata', content: 'Storage Drive Data Interconnect', isConcept: false }
+export const MEMORY_CARD_SETS = [
+  // Set 1: Fundamental Processing & Core Silicon
+  [
+    { id: 's1_m1', pairId: 'cpu', content: 'CPU (Processor)', isConcept: true },
+    { id: 's1_m2', pairId: 'cpu', content: 'Executes instructions & system calculations', isConcept: false },
+    { id: 's1_m3', pairId: 'ram', content: 'RAM (DDR4/DDR5)', isConcept: true },
+    { id: 's1_m4', pairId: 'ram', content: 'Volatile high-speed working memory', isConcept: false },
+    { id: 's1_m5', pairId: 'ssd', content: 'Solid State Drive (SSD)', isConcept: true },
+    { id: 's1_m6', pairId: 'ssd', content: 'Non-volatile high-speed flash file storage', isConcept: false },
+    { id: 's1_m7', pairId: 'keyboard', content: 'Keyboard & Mouse', isConcept: true },
+    { id: 's1_m8', pairId: 'keyboard', content: 'Primary human user input interface', isConcept: false },
+    { id: 's1_m9', pairId: 'monitor', content: 'Monitor / Display', isConcept: true },
+    { id: 's1_m10', pairId: 'monitor', content: 'Visual graphical output terminal', isConcept: false },
+    { id: 's1_m11', pairId: 'sata', content: 'SATA Data Cable', isConcept: true },
+    { id: 's1_m12', pairId: 'sata', content: 'Storage drive bus interconnect', isConcept: false }
+  ],
+  // Set 2: Power Delivery, Cooling & Board Electronics
+  [
+    { id: 's2_m1', pairId: 'psu', content: 'Power Supply (PSU)', isConcept: true },
+    { id: 's2_m2', pairId: 'psu', content: 'Converts AC wall current into regulated DC voltages', isConcept: false },
+    { id: 's2_m3', pairId: 'paste', content: 'Thermal Paste Compound', isConcept: true },
+    { id: 's2_m4', pairId: 'paste', content: 'Fills microscopic air gaps to conduct CPU heat', isConcept: false },
+    { id: 's2_m5', pairId: 'cmos', content: 'CMOS CR2032 Battery', isConcept: true },
+    { id: 's2_m6', pairId: 'cmos', content: 'Powers real-time clock & BIOS NVRAM chips', isConcept: false },
+    { id: 's2_m7', pairId: 'heatsink', content: 'CPU Cooler Heatsink', isConcept: true },
+    { id: 's2_m8', pairId: 'heatsink', content: 'Dissipates thermal wattage away from silicon', isConcept: false },
+    { id: 's2_m9', pairId: 'standoffs', content: 'Brass Case Standoffs', isConcept: true },
+    { id: 's2_m10', pairId: 'standoffs', content: 'Prevents motherboard electrical short to chassis', isConcept: false },
+    { id: 's2_m11', pairId: 'pcie', content: 'PCIe x16 Slot', isConcept: true },
+    { id: 's2_m12', pairId: 'pcie', content: 'High-bandwidth discrete graphics card bus', isConcept: false }
+  ],
+  // Set 3: Networking, Diagnostics & Firmware Protocols
+  [
+    { id: 's3_m1', pairId: 'bios', content: 'UEFI BIOS Firmware', isConcept: true },
+    { id: 's3_m2', pairId: 'bios', content: 'Initializes hardware & performs POST sequence', isConcept: false },
+    { id: 's3_m3', pairId: 'post', content: 'POST Beep Codes', isConcept: true },
+    { id: 's3_m4', pairId: 'post', content: 'Audible diagnostic signals for boot initialization', isConcept: false },
+    { id: 's3_m5', pairId: 'rj45', content: 'RJ-45 Ethernet Cable', isConcept: true },
+    { id: 's3_m6', pairId: 'rj45', content: 'Twisted pair 8P8C local area network cord', isConcept: false },
+    { id: 's3_m7', pairId: 'esd', content: 'Anti-Static Wrist Strap', isConcept: true },
+    { id: 's3_m8', pairId: 'esd', content: 'Drains electrostatic charge to prevent shock', isConcept: false },
+    { id: 's3_m9', pairId: 'nvme', content: 'M.2 NVMe SSD', isConcept: true },
+    { id: 's3_m10', pairId: 'nvme', content: 'Direct PCIe storage protocol exceeding 3500MB/s', isConcept: false },
+    { id: 's3_m11', pairId: 'xmp', content: 'XMP / DOCP Profile', isConcept: true },
+    { id: 's3_m12', pairId: 'xmp', content: 'Overclocks RAM to manufacturer rated speed', isConcept: false }
+  ]
 ];
+
+export const MEMORY_CARDS = MEMORY_CARD_SETS[0];
 
 export interface DragDropPart {
   id: string;

@@ -201,27 +201,51 @@ export const BiosSimulator: React.FC<BiosSimulatorProps> = ({
         </div>
 
         {/* BIOS Tab Navigation */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-slate-700 pb-2">
-          {[
-            { id: 'MAIN', label: 'Main' },
-            { id: 'ADVANCED', label: 'Advanced' },
-            { id: 'OVERCLOCK', label: 'Ai Tweaker (OC)' },
-            { id: 'BOOT', label: 'Boot Configuration' },
-            { id: 'SECURITY', label: 'Security (TPM)' },
-            { id: 'EXIT', label: 'Save & Exit' }
-          ].map(t => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id as any)}
-              className={`px-4 py-2 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap uppercase tracking-wider ${
-                activeTab === t.id
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-gray-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="space-y-2">
+          {/* Quick Beginner Mode Helper Banner */}
+          <div className="bg-blue-950/60 border border-blue-800/60 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 text-blue-200">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping shrink-0" />
+              <span className="font-bold">Simplified Section Guide:</span>
+              <span className="text-gray-300">
+                {activeTab === 'MAIN' && 'View CPU specs, memory capacity, and system date/time.'}
+                {activeTab === 'ADVANCED' && 'Configure storage controller AHCI/NVMe modes and VT-x virtualization.'}
+                {activeTab === 'OVERCLOCK' && 'Adjust XMP memory speed profiles and CPU multiplier clocking safely.'}
+                {activeTab === 'BOOT' && 'Change boot order priorities (e.g. boot from USB flash drive for Windows install).'}
+                {activeTab === 'SECURITY' && 'Enable TPM 2.0 and Secure Boot for modern Windows 11 compatibility.'}
+                {activeTab === 'EXIT' && 'Save all customized settings or reset to factory defaults with 0 hardware risk.'}
+              </span>
+            </div>
+            <div className="text-[11px] font-mono text-blue-300 shrink-0 bg-blue-900/50 px-2 py-0.5 rounded border border-blue-700">
+              Active: [{activeTab}]
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-slate-700 pb-2">
+            {[
+              { id: 'MAIN', label: '1. Main (System)', desc: 'Specs & Time' },
+              { id: 'ADVANCED', label: '2. Advanced (Drives)', desc: 'AHCI / VT-x' },
+              { id: 'OVERCLOCK', label: '3. Ai Tweaker (OC)', desc: 'XMP & Multiplier' },
+              { id: 'BOOT', label: '4. Boot Priority', desc: 'USB & SSD Order' },
+              { id: 'SECURITY', label: '5. Security (TPM)', desc: 'Secure Boot & TPM' },
+              { id: 'EXIT', label: '6. Save & Exit', desc: 'Commit Changes' }
+            ].map(t => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id as any)}
+                className={`px-3.5 py-2 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap uppercase tracking-wider flex flex-col items-start ${
+                  activeTab === t.id
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <span>{t.label}</span>
+                <span className={`text-[9px] font-normal lowercase tracking-normal ${activeTab === t.id ? 'text-blue-200' : 'text-gray-500'}`}>
+                  {t.desc}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Main Tab Content Area */}

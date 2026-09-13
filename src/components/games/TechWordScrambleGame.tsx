@@ -14,6 +14,10 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
   sessionId,
   onBack
 }) => {
+  // Shuffle/randomize questions on mount
+  const [shuffledItems, setShuffledItems] = useState(() =>
+    [...SCRAMBLE_WORDS].sort(() => Math.random() - 0.5)
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputVal, setInputVal] = useState('');
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; message: string } | null>(null);
@@ -22,11 +26,11 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
   const [isCompleted, setIsCompleted] = useState(false);
 
   const startTimeRef = useRef<number>(Date.now());
-  const currentItem = SCRAMBLE_WORDS[currentIndex];
+  const currentItem = shuffledItems[currentIndex] || shuffledItems[0];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputVal.trim() || feedback) return;
+    if (!inputVal.trim()) return;
 
     const cleanInput = inputVal.trim().toUpperCase();
     const isCorrect = cleanInput === currentItem.word.toUpperCase();
@@ -35,12 +39,18 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
       setScore(s => s + 10);
       setFeedback({ isCorrect: true, message: `Correct! Word is ${currentItem.word}! 🎉` });
     } else {
-      setFeedback({ isCorrect: false, message: `Incorrect! Try again or reveal the hint.` });
+      // Allow retry immediately: clear feedback after short glance or on next keypress
+      setFeedback({ isCorrect: false, message: `Incorrect! You can re-type and try again, or view the hint below.` });
     }
   };
 
+  const handleRetryInput = () => {
+    setInputVal('');
+    setFeedback(null);
+  };
+
   const handleNext = async () => {
-    if (currentIndex < SCRAMBLE_WORDS.length - 1) {
+    if (currentIndex < shuffledItems.length - 1) {
       setCurrentIndex(i => i + 1);
       setInputVal('');
       setFeedback(null);
@@ -63,6 +73,8 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
   };
 
   const handleRestart = () => {
+    // Re-shuffle items on replay
+    setShuffledItems([...SCRAMBLE_WORDS].sort(() => Math.random() - 0.5));
     setCurrentIndex(0);
     setInputVal('');
     setFeedback(null);
@@ -157,18 +169,34 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
                 type="text"
                 autoFocus
                 value={inputVal}
-                onChange={e => setInputVal(e.target.value)}
+                onChange={e => {
+                  setInputVal(e.target.value);
+                  if (feedback && !feedback.isCorrect) {
+                    setFeedback(null);
+                  }
+                }}
                 placeholder="TYPE YOUR ANSWER..."
                 disabled={feedback?.isCorrect}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-center font-mono text-lg font-bold tracking-widest uppercase focus:ring-2 focus:ring-blue-600 outline-hidden"
               />
               {!feedback?.isCorrect ? (
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"
-                >
-                  SUBMIT
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"
+                  >
+                    SUBMIT
+                  </button>
+                  {feedback && !feedback.isCorrect && (
+                    <button
+                      type="button"
+                      onClick={handleRetryInput}
+                      className="px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"
+                    >
+                      CLEAR & RETRY
+                    </button>
+                  )}
+                </div>
               ) : (
                 <button
                   type="button"

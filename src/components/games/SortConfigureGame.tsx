@@ -30,7 +30,8 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
   const [basketPos, setBasketPos] = useState(50); // percentage 0-100
   const [fallingItem, setFallingItem] = useState<{ item: SortItem; y: number; x: number } | null>(null);
   const [gameState, setGameState] = useState<'IDLE' | 'PLAYING' | 'GAMEOVER' | 'VICTORY'>('IDLE');
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ text: string; isWrong: boolean } | null>(null);
+  const [redFlashActive, setRedFlashActive] = useState(false);
 
   const startTimeRef = useRef<number>(Date.now());
 
@@ -84,7 +85,7 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
           if (hit) {
             if (isCorrectCategory) {
               setScore(s => s + 20);
-              setFeedback(`+20 Caught ${prev.item.name}! (${targetCategory})`);
+              setFeedback({ text: `✓ +20 Caught ${prev.item.name}! (${targetCategory})`, isWrong: false });
               // Progress level or change category
               if ((score + 20) % 60 === 0) {
                 setCurrentCategoryIndex(ci => (ci + 1) % categories.length);
@@ -98,7 +99,12 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
                 }
                 return nextLives;
               });
-              setFeedback(`Wrong! ${prev.item.name} is a ${prev.item.category}`);
+              setFeedback({
+                text: `✕ WRONG! ${prev.item.name} belongs to [${prev.item.category}], NOT [${targetCategory}] (-1 Life)`,
+                isWrong: true
+              });
+              setRedFlashActive(true);
+              setTimeout(() => setRedFlashActive(false), 900);
             }
           } else {
             // Missed item
@@ -111,15 +117,20 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
                 }
                 return nextLives;
               });
-              setFeedback(`Missed ${prev.item.name}! (-1 Life)`);
+              setFeedback({
+                text: `⚠️ MISSED! ${prev.item.name} was a valid ${targetCategory}! (-1 Life)`,
+                isWrong: true
+              });
+              setRedFlashActive(true);
+              setTimeout(() => setRedFlashActive(false), 900);
             }
           }
 
-          // Spawn next
+          // Spawn next with longer readable feedback
           setTimeout(() => {
             setFeedback(null);
             spawnItem();
-          }, 300);
+          }, 1100);
 
           return null;
         }
@@ -237,10 +248,29 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
           </div>
         )}
 
+        {/* Red Flash Screen Overlay for Wrong Answers */}
+        {redFlashActive && (
+          <div className="absolute inset-0 z-30 pointer-events-none border-4 border-red-500 bg-red-600/20 animate-pulse flex items-start justify-center pt-2">
+            <div className="flex items-center gap-2 px-3 py-1 bg-red-600 text-white rounded-full text-xs font-black tracking-wider uppercase shadow-lg animate-bounce">
+              <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+              <span>🚨 WRONG ANSWER DETECTED!</span>
+            </div>
+          </div>
+        )}
+
         {/* Feedback Alert Pill */}
         {feedback && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 bg-slate-800/90 text-white text-xs font-bold rounded-full border border-slate-600 shadow-md animate-in fade-in">
-            {feedback}
+          <div
+            className={`absolute top-4 left-1/2 -translate-x-1/2 z-20 px-5 py-2 text-xs font-bold rounded-full shadow-lg flex items-center gap-2 animate-in fade-in zoom-in-95 duration-150 ${
+              feedback.isWrong
+                ? 'bg-red-600 text-white border-2 border-red-400 ring-4 ring-red-500/40 shadow-red-900/50'
+                : 'bg-emerald-600 text-white border-2 border-emerald-400 shadow-emerald-900/50'
+            }`}
+          >
+            {feedback.isWrong && (
+              <span className="w-3 h-3 rounded-full bg-white shrink-0 animate-ping" />
+            )}
+            <span>{feedback.text}</span>
           </div>
         )}
 

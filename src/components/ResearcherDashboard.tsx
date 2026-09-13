@@ -611,7 +611,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
       {/* 2. TELEMETRY KPI METRICS GRID & LIVE MONITOR */}
       {stats && (
         <div className="space-y-3.5">
-          {/* Real-time Status & GitHub Referral Monitor Banner */}
+          {/* Real-time Status Monitor Banner */}
           <div className="bg-linear-to-r from-emerald-600 via-teal-700 to-cyan-800 rounded-2xl p-4 shadow-sm text-white flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-xs">
