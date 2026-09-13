@@ -10,7 +10,12 @@ import {
   DownloadRecord,
   AnnouncementItem,
   BrandingSettings,
-  ResearcherProfile
+  ResearcherProfile,
+  ChatMessage,
+  TeacherActivity,
+  TeacherMaterial,
+  CollectionVideo,
+  CertificateInfo
 } from '../types';
 import { getPlatformAssistanceResponse } from './aiKnowledge';
 
@@ -1141,6 +1146,359 @@ export const api = {
   resetResearchersToDefault(): ResearcherProfile[] {
     this.saveResearchers(DEFAULT_RESEARCHERS);
     return DEFAULT_RESEARCHERS;
+  },
+
+  // ==========================================
+  // COMMUNITY CHATBOX
+  // ==========================================
+  async getChatMessages(): Promise<ChatMessage[]> {
+    try {
+      const res = await fetch('/api/chat/messages');
+      if (res.ok) {
+        const msgs = await res.json();
+        if (Array.isArray(msgs)) {
+          localStorage.setItem('cssential_cached_chat', JSON.stringify(msgs));
+          return msgs;
+        }
+      }
+    } catch {}
+
+    try {
+      const cached = localStorage.getItem('cssential_cached_chat');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+
+    return [
+      {
+        id: 'msg_default_1',
+        student_id: 'inst_faculty_1',
+        student_name: 'Engr. Jhon Wesly Buban',
+        year_section: 'Faculty Lead / System Architect',
+        text: 'Welcome to the CSSENTIAL Community Forum! Ask questions about Computer System Installation and Configuration, share lab discoveries, and assist your fellow classmates.',
+        timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+        is_instructor: true,
+        report_count: 0
+      }
+    ];
+  },
+
+  async sendChatMessage(msg: {
+    student_id: string;
+    student_name: string;
+    year_section?: string;
+    text: string;
+    is_instructor?: boolean;
+  }): Promise<ChatMessage> {
+    try {
+      const res = await fetch('/api/chat/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(msg)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {}
+
+    // Offline fallback
+    const localMsg: ChatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      student_id: msg.student_id,
+      student_name: msg.student_name,
+      year_section: msg.year_section,
+      text: msg.text,
+      timestamp: new Date().toISOString(),
+      is_instructor: msg.is_instructor,
+      report_count: 0
+    };
+    const cached = await this.getChatMessages();
+    cached.push(localMsg);
+    localStorage.setItem('cssential_cached_chat', JSON.stringify(cached));
+    return localMsg;
+  },
+
+  async reportChatMessage(messageId: string): Promise<boolean> {
+    try {
+      await fetch(`/api/chat/messages/${messageId}/report`, { method: 'POST' });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async deleteChatMessage(messageId: string): Promise<boolean> {
+    try {
+      await fetch(`/api/chat/messages/${messageId}`, { method: 'DELETE' });
+    } catch {}
+
+    try {
+      const cached = await this.getChatMessages();
+      const updated = cached.filter(m => m.id !== messageId);
+      localStorage.setItem('cssential_cached_chat', JSON.stringify(updated));
+    } catch {}
+    return true;
+  },
+
+  // ==========================================
+  // COLLECTION VIDEOS
+  // ==========================================
+  async getCollectionVideos(): Promise<CollectionVideo[]> {
+    try {
+      const res = await fetch('/api/videos');
+      if (res.ok) {
+        const vids = await res.json();
+        if (Array.isArray(vids) && vids.length > 0) {
+          localStorage.setItem('cssential_cached_videos', JSON.stringify(vids));
+          return vids;
+        }
+      }
+    } catch {}
+
+    try {
+      const cached = localStorage.getItem('cssential_cached_videos');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+
+    return [
+      {
+        id: 'vid-1',
+        title: 'PC Hardware Assembly & Component Installation Masterclass',
+        description: 'Comprehensive step-by-step physical demonstration of socket alignment, dual-channel RAM insertion, NVMe mounting, and thermal paste cross-pattern spread.',
+        topicNumber: 2,
+        duration: '14:20',
+        thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+        url: 'https://www.youtube-nocookie.com/embed/BL4DCEp7blY',
+        instructor: 'CSSENTIAL Faculty Lead'
+      },
+      {
+        id: 'vid-2',
+        title: 'UEFI/BIOS Setup, XMP Profiles & Secure Boot Configuration',
+        description: 'Walkthrough of entering UEFI setup, enabling Intel XMP / AMD EXPO memory frequency profiles, AHCI SATA mode, and configuring boot drive priority.',
+        topicNumber: 4,
+        duration: '11:45',
+        thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80',
+        url: 'https://www.youtube-nocookie.com/embed/4pX1aM3JvQ4',
+        instructor: 'CSSENTIAL Faculty Lead'
+      },
+      {
+        id: 'vid-3',
+        title: 'CompTIA Systematic Diagnostics & Hardware Black-Screen Troubleshooting',
+        description: 'Diagnosing no-POST conditions, interpreting EZ Debug LEDs, testing PSU rails, and clearing CMOS safely using the 6-step CompTIA model.',
+        topicNumber: 6,
+        duration: '16:05',
+        thumbnail: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=800&auto=format&fit=crop&q=80',
+        url: 'https://www.youtube-nocookie.com/embed/x_oR8MvL5g4',
+        instructor: 'CSSENTIAL Faculty Lead'
+      }
+    ];
+  },
+
+  async saveCollectionVideo(video: Partial<CollectionVideo>): Promise<CollectionVideo> {
+    try {
+      const res = await fetch('/api/videos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(video)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.video;
+      }
+    } catch {}
+
+    const vids = await this.getCollectionVideos();
+    const newVid: CollectionVideo = {
+      id: video.id || `vid_${Date.now()}`,
+      title: video.title || 'New Video Material',
+      description: video.description || '',
+      url: video.url || '',
+      thumbnail: video.thumbnail || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+      duration: video.duration || '10:00',
+      topicNumber: video.topicNumber || 1,
+      instructor: video.instructor || 'CSSENTIAL Faculty Lead'
+    };
+    vids.unshift(newVid);
+    localStorage.setItem('cssential_cached_videos', JSON.stringify(vids));
+    return newVid;
+  },
+
+  async deleteCollectionVideo(videoId: string): Promise<boolean> {
+    try {
+      await fetch(`/api/videos/${videoId}`, { method: 'DELETE' });
+    } catch {}
+
+    const vids = await this.getCollectionVideos();
+    const filtered = vids.filter(v => v.id !== videoId);
+    localStorage.setItem('cssential_cached_videos', JSON.stringify(filtered));
+    return true;
+  },
+
+  // ==========================================
+  // TEACHER ACTIVITIES & LEARNING MATERIALS
+  // ==========================================
+  async getTeacherActivities(): Promise<TeacherActivity[]> {
+    try {
+      const res = await fetch('/api/teacher/activities');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          localStorage.setItem('cssential_teacher_activities', JSON.stringify(data));
+          return data;
+        }
+      }
+    } catch {}
+
+    try {
+      const cached = localStorage.getItem('cssential_teacher_activities');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return [];
+  },
+
+  async saveTeacherActivity(activity: Partial<TeacherActivity>): Promise<TeacherActivity> {
+    try {
+      const res = await fetch('/api/teacher/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(activity)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.activity;
+      }
+    } catch {}
+
+    const list = await this.getTeacherActivities();
+    const newAct: TeacherActivity = {
+      id: activity.id || `tact_${Date.now()}`,
+      title: activity.title || 'Instructor Quiz',
+      description: activity.description || '',
+      category: activity.category || 'Teacher Assessment',
+      difficulty: activity.difficulty || 'Intermediate',
+      questions: activity.questions || [],
+      is_published: activity.is_published ?? true,
+      created_by: activity.created_by || 'Professor',
+      created_at: new Date().toISOString()
+    };
+    const existingIdx = list.findIndex(a => a.id === newAct.id);
+    if (existingIdx >= 0) {
+      list[existingIdx] = newAct;
+    } else {
+      list.unshift(newAct);
+    }
+    localStorage.setItem('cssential_teacher_activities', JSON.stringify(list));
+    return newAct;
+  },
+
+  async deleteTeacherActivity(id: string): Promise<boolean> {
+    try {
+      await fetch(`/api/teacher/activities/${id}`, { method: 'DELETE' });
+    } catch {}
+
+    const list = await this.getTeacherActivities();
+    const filtered = list.filter(a => a.id !== id);
+    localStorage.setItem('cssential_teacher_activities', JSON.stringify(filtered));
+    return true;
+  },
+
+  async getTeacherMaterials(): Promise<TeacherMaterial[]> {
+    try {
+      const res = await fetch('/api/teacher/materials');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          localStorage.setItem('cssential_teacher_materials', JSON.stringify(data));
+          return data;
+        }
+      }
+    } catch {}
+
+    try {
+      const cached = localStorage.getItem('cssential_teacher_materials');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return [];
+  },
+
+  async saveTeacherMaterial(material: Partial<TeacherMaterial>): Promise<TeacherMaterial> {
+    try {
+      const res = await fetch('/api/teacher/materials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(material)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.material;
+      }
+    } catch {}
+
+    const list = await this.getTeacherMaterials();
+    const newMat: TeacherMaterial = {
+      id: material.id || `mat_${Date.now()}`,
+      title: material.title || 'Course Material',
+      topicNumber: material.topicNumber || 1,
+      description: material.description || '',
+      content: material.content || '',
+      file_url: material.file_url,
+      is_published: material.is_published ?? true,
+      instructor: material.instructor || 'Faculty Member',
+      created_at: new Date().toISOString()
+    };
+    const existingIdx = list.findIndex(m => m.id === newMat.id);
+    if (existingIdx >= 0) {
+      list[existingIdx] = newMat;
+    } else {
+      list.unshift(newMat);
+    }
+    localStorage.setItem('cssential_teacher_materials', JSON.stringify(list));
+    return newMat;
+  },
+
+  async deleteTeacherMaterial(id: string): Promise<boolean> {
+    try {
+      await fetch(`/api/teacher/materials/${id}`, { method: 'DELETE' });
+    } catch {}
+
+    const list = await this.getTeacherMaterials();
+    const filtered = list.filter(m => m.id !== id);
+    localStorage.setItem('cssential_teacher_materials', JSON.stringify(filtered));
+    return true;
+  },
+
+  // ==========================================
+  // CERTIFICATION STATUS
+  // ==========================================
+  async getCertificateStatus(studentId: string): Promise<CertificateInfo> {
+    try {
+      const res = await fetch(`/api/certificate/status/${studentId}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {}
+
+    const db = loadLocalDatabase();
+    const attempts = db.activity_attempts.filter(a => a.student_id === studentId && a.completed);
+    const quizzes = db.quiz_results.filter(q => q.student_id === studentId && q.completed);
+    const games = db.game_results.filter(g => g.student_id === studentId && g.completed);
+    const pcLabPassed = attempts.some(a => a.activity_name?.toLowerCase().includes('virtual pc lab') || a.activity_name?.toLowerCase().includes('pc build'));
+
+    const isEligible = (attempts.length >= 2 && quizzes.length >= 1) || (attempts.length >= 1 && games.length >= 1) || pcLabPassed || (quizzes.length >= 1 && games.length >= 2);
+    const student = db.students.find(s => s.student_id === studentId);
+
+    return {
+      student_id: studentId,
+      student_name: student ? student.name : 'Student',
+      year_section: student ? student.year_section : 'General Section',
+      isEligible,
+      stats: {
+        activitiesCount: attempts.length,
+        quizzesCount: quizzes.length,
+        gamesCount: games.length,
+        pcLabPassed
+      },
+      certificate_id: `CERT-CSS-2026-${(studentId || 'GEN').slice(-6).toUpperCase()}`
+    };
   }
 };
 

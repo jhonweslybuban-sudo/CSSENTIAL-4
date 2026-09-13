@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { WORKSPACE_OBJECTS, SearchTarget } from '../../data/gamesData';
 import { api } from '../../services/api';
-import { HardwareVisualArt, VisualFieldGuideModal } from './HardwareVisualAssets';
+import { VisualFieldGuideModal } from './HardwareVisualAssets';
 
 interface TroubleshootingSearchGameProps {
   studentId: string;
@@ -183,46 +183,40 @@ export const TroubleshootingSearchGame: React.FC<TroubleshootingSearchGameProps>
         </div>
       </div>
 
-      {/* 2. Visual Target Mission Card (Prevents wrong answers by showing exact appearance) */}
+      {/* 2. Target Mission Banner - Simplified to display component name clearly without duplicate image */}
       {!isCompleted && currentTarget && (
         <div className="bg-linear-to-r from-slate-900 via-blue-950 to-indigo-950 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-blue-900/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in">
           
-          <div className="flex items-center gap-4">
-            {/* Visual Thumbnail of Target */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white p-2 shrink-0 flex items-center justify-center shadow-lg border-2 border-yellow-400/80">
-              <HardwareVisualArt id={currentTarget.id} className="w-14 h-14 sm:w-16 sm:h-16" />
+          <div className="space-y-1.5 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-400 text-slate-950 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <Search className="w-3 h-3" />
+                Target Component
+              </span>
+              <span className="text-xs text-blue-300 font-semibold">
+                Category: {currentTarget.category}
+              </span>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-400 text-slate-950 px-2.5 py-0.5 rounded-full">
-                  Target Component to Locate
+            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <span>{currentTarget.name}</span>
+            </h3>
+
+            <p className="text-xs text-slate-200 max-w-xl leading-relaxed">
+              <strong className="text-yellow-300">Identification Clue: </strong>
+              {currentTarget.visualClue}
+            </p>
+
+            {/* Distinctive recognition badges */}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {currentTarget.keyFeatures.map((feat, idx) => (
+                <span
+                  key={idx}
+                  className="text-[10px] bg-blue-900/60 border border-blue-700/60 text-blue-200 px-2 py-0.5 rounded-md font-medium"
+                >
+                  ✓ {feat}
                 </span>
-                <span className="text-xs text-blue-300 font-semibold">
-                  {currentTarget.category}
-                </span>
-              </div>
-
-              <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
-                <span>{currentTarget.name}</span>
-              </h3>
-
-              <p className="text-xs text-slate-200 max-w-xl leading-relaxed">
-                <strong className="text-yellow-300">How to Spot: </strong>
-                {currentTarget.visualClue}
-              </p>
-
-              {/* Distinctive recognition badges */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {currentTarget.keyFeatures.map((feat, idx) => (
-                  <span
-                    key={idx}
-                    className="text-[10px] bg-blue-900/60 border border-blue-700/60 text-blue-200 px-2 py-0.5 rounded-md font-medium"
-                  >
-                    ✓ {feat}
-                  </span>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
 

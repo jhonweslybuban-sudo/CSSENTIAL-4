@@ -1,7 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, CheckCircle2, RotateCcw, HelpCircle, Trophy, Sparkles } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, RotateCcw, HelpCircle, Trophy, Sparkles, Shuffle, RefreshCw } from 'lucide-react';
 import { SCRAMBLE_WORDS } from '../../data/gamesData';
 import { api } from '../../services/api';
+
+// Fisher-Yates array shuffle algorithm
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 interface TechWordScrambleGameProps {
   studentId: string;
@@ -15,17 +25,17 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
   onBack
 }) => {
   // Shuffle/randomize questions on mount
-  const [shuffledItems, setShuffledItems] = useState(() =>
-    [...SCRAMBLE_WORDS].sort(() => Math.random() - 0.5)
-  );
+  const [shuffledItems, setShuffledItems] = useState(() => shuffleArray(SCRAMBLE_WORDS));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputVal, setInputVal] = useState('');
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; message: string } | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [attempts, setAttempts] = useState(0);
   const [score, setScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
 
   const startTimeRef = useRef<number>(Date.now());
+  const inputRef = useRef<HTMLInputElement>(null);
   const currentItem = shuffledItems[currentIndex] || shuffledItems[0];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -34,19 +44,32 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
 
     const cleanInput = inputVal.trim().toUpperCase();
     const isCorrect = cleanInput === currentItem.word.toUpperCase();
+    const nextAttempts = attempts + 1;
+    setAttempts(nextAttempts);
 
     if (isCorrect) {
-      setScore(s => s + 10);
-      setFeedback({ isCorrect: true, message: `Correct! Word is ${currentItem.word}! 🎉` });
+      const earned = Math.max(5, 15 - (nextAttempts - 1) * 3);
+      setScore(s => s + earned);
+      setFeedback({ isCorrect: true, message: `✓ Correct! The technical word is ${currentItem.word}! (+${earned} pts) 🎉` });
     } else {
-      // Allow retry immediately: clear feedback after short glance or on next keypress
-      setFeedback({ isCorrect: false, message: `Incorrect! You can re-type and try again, or view the hint below.` });
+      // Allow retry immediately: multiple attempts permitted
+      setFeedback({
+        isCorrect: false,
+        message: `✕ Not quite right! Attempt #${nextAttempts}. You can try again as many times as needed.`
+      });
+      if (nextAttempts >= 2 && !showHint) {
+        setShowHint(true);
+      }
+      setTimeout(() => {
+        inputRef.current?.select();
+      }, 50);
     }
   };
 
   const handleRetryInput = () => {
     setInputVal('');
     setFeedback(null);
+    inputRef.current?.focus();
   };
 
   const handleNext = async () => {
@@ -55,6 +78,10 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
       setInputVal('');
       setFeedback(null);
       setShowHint(false);
+      setAttempts(0);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
     } else {
       setIsCompleted(true);
       const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
@@ -73,12 +100,13 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
   };
 
   const handleRestart = () => {
-    // Re-shuffle items on replay
-    setShuffledItems([...SCRAMBLE_WORDS].sort(() => Math.random() - 0.5));
+    // Re-shuffle items with Fisher-Yates on replay
+    setShuffledItems(shuffleArray(SCRAMBLE_WORDS));
     setCurrentIndex(0);
     setInputVal('');
     setFeedback(null);
     setShowHint(false);
+    setAttempts(0);
     setScore(0);
     setIsCompleted(false);
     startTimeRef.current = Date.now();
@@ -156,16 +184,17 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
                 <span>Show Technical Definition Hint</span>
               </button>
             ) : (
-              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 inline-block">
+              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 inline-block animate-in fade-in">
                 <strong>Clue:</strong> {currentItem.hint}
               </div>
             )}
           </div>
 
-          {/* Input Form */}
+          {/* Input Form with Unlimited Retries */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
+                ref={inputRef}
                 type="text"
                 autoFocus
                 value={inputVal}
@@ -183,7 +212,7 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"
+                    className="flex-1 sm:flex-none px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer active:scale-95"
                   >
                     SUBMIT
                   </button>
@@ -191,9 +220,10 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
                     <button
                       type="button"
                       onClick={handleRetryInput}
-                      className="px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer active:scale-95"
                     >
-                      CLEAR & RETRY
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>TRY AGAIN</span>
                     </button>
                   )}
                 </div>
@@ -201,19 +231,19 @@ export const TechWordScrambleGame: React.FC<TechWordScrambleGameProps> = ({
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer"
+                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                 >
-                  NEXT →
+                  <span>NEXT WORD →</span>
                 </button>
               )}
             </div>
 
             {feedback && (
               <div
-                className={`p-3 rounded-lg text-xs font-bold text-center ${
+                className={`p-3 rounded-lg text-xs font-bold text-center animate-in fade-in ${
                   feedback.isCorrect
-                    ? 'bg-emerald-50 border border-emerald-200 text-emerald-900'
-                    : 'bg-red-50 border border-red-200 text-red-900'
+                    ? 'bg-emerald-50 border border-emerald-300 text-emerald-900'
+                    : 'bg-red-50 border-2 border-red-300 text-red-900'
                 }`}
               >
                 {feedback.message}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, ArrowLeft, User, ShieldCheck, Palette } from 'lucide-react';
+import { Monitor, ArrowLeft, User, ShieldCheck, Palette, Award, MessageSquare } from 'lucide-react';
 import { PageView, BrandingSettings } from '../types';
 import { api } from '../services/api';
 
@@ -13,6 +13,8 @@ interface HeaderProps {
   onOpenDashboard?: () => void;
   onOpenThemeModal?: () => void;
   onOpenStudentModal?: () => void;
+  onOpenCertificate?: () => void;
+  onOpenChat?: () => void;
   sessionTimeFormatted?: string;
 }
 
@@ -24,6 +26,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenDashboard,
   onOpenThemeModal,
   onOpenStudentModal,
+  onOpenCertificate,
+  onOpenChat,
   sessionTimeFormatted = '00:00'
 }) => {
   const [branding, setBranding] = useState<BrandingSettings>(() => api.getBranding());
@@ -115,6 +119,32 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <User className="w-4 h-4" />
                 <span>Student Login</span>
+              </button>
+            )}
+
+            {/* Community Discussion Chat */}
+            {onOpenChat && (
+              <button
+                id="header-chat-btn"
+                onClick={onOpenChat}
+                title="Student & Faculty Discussion Chatroom"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4 text-indigo-600" />
+                <span className="hidden md:inline">Discussion</span>
+              </button>
+            )}
+
+            {/* Academic Certificate */}
+            {onOpenCertificate && (
+              <button
+                id="header-certificate-btn"
+                onClick={onOpenCertificate}
+                title="View Academic Certificate of Competency"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-900 bg-amber-50 border border-amber-300 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <Award className="w-4 h-4 text-amber-600" />
+                <span className="hidden md:inline">Certificate</span>
               </button>
             )}
 

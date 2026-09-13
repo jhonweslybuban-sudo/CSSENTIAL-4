@@ -13,10 +13,23 @@ import {
   HardDrive,
   Sliders,
   Check,
-  Award
+  Award,
+  BookOpen,
+  X,
+  Info
 } from 'lucide-react';
 import { CABLE_CHALLENGES, CABLE_OPTIONS, CableChallenge, CableOption } from '../../data/gamesData';
 import { api } from '../../services/api';
+
+const getDifficulty = (chId: string): { level: number; label: string; badgeColor: string } => {
+  if (chId === 'ch-1' || chId === 'ch-4' || chId === 'ch-8') {
+    return { level: 1, label: 'Level 1: Beginner (Keyed Basics)', badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
+  }
+  if (chId === 'ch-2' || chId === 'ch-5' || chId === 'ch-7') {
+    return { level: 2, label: 'Level 2: Intermediate (Power & Headers)', badgeColor: 'bg-blue-100 text-blue-800 border-blue-300' };
+  }
+  return { level: 3, label: 'Level 3: Advanced (Pinout & Polarity)', badgeColor: 'bg-purple-100 text-purple-800 border-purple-300' };
+};
 
 interface CablePinoutMasterGameProps {
   studentId: string;
@@ -33,19 +46,24 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
   const [selectedCableId, setSelectedCableId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<'All' | 'Power' | 'Data' | 'Front Panel' | 'Display'>('All');
   const [showHint, setShowHint] = useState(false);
+  const [showExamplesModal, setShowExamplesModal] = useState(false);
   const [polarityReversed, setPolarityReversed] = useState(false);
   const [roundResult, setRoundResult] = useState<'correct' | 'incorrect' | null>(null);
   const [score, setScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [shuffledChallenges, setShuffledChallenges] = useState<CableChallenge[]>([]);
+  const [orderedChallenges, setOrderedChallenges] = useState<CableChallenge[]>([]);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const startTimeRef = useRef<number>(Date.now());
 
-  // Shuffle questions on initial load
+  // Progressive difficulty sequence (Level 1 -> Level 2 -> Level 3)
   useEffect(() => {
-    const shuffled = [...CABLE_CHALLENGES].sort(() => Math.random() - 0.5);
-    setShuffledChallenges(shuffled);
+    const sorted = [...CABLE_CHALLENGES].sort((a, b) => {
+      const diffA = getDifficulty(a.id).level;
+      const diffB = getDifficulty(b.id).level;
+      return diffA - diffB;
+    });
+    setOrderedChallenges(sorted);
     startTimeRef.current = Date.now();
 
     api.logAction(
@@ -64,7 +82,7 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
     return () => clearInterval(timer);
   }, [isCompleted]);
 
-  const activeChallenge = shuffledChallenges[currentRound];
+  const activeChallenge = orderedChallenges[currentRound];
 
   const filteredCables = activeCategory === 'All'
     ? CABLE_OPTIONS
@@ -104,7 +122,7 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
   };
 
   const handleNextRound = async () => {
-    if (currentRound < shuffledChallenges.length - 1) {
+    if (currentRound < orderedChallenges.length - 1) {
       setCurrentRound(prev => prev + 1);
       setSelectedCableId(null);
       setRoundResult(null);
@@ -113,8 +131,8 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
     } else {
       // Completed game
       setIsCompleted(true);
-      const total = shuffledChallenges.length;
-      const finalScore = score + (roundResult === 'correct' ? 0 : 0); // score already incremented
+      const total = orderedChallenges.length;
+      const finalScore = score + (roundResult === 'correct' ? 0 : 0);
       const pct = Math.round((finalScore / total) * 100);
 
       await api.recordActivityAttempt({
@@ -134,8 +152,12 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
   };
 
   const handleRestart = () => {
-    const shuffled = [...CABLE_CHALLENGES].sort(() => Math.random() - 0.5);
-    setShuffledChallenges(shuffled);
+    const sorted = [...CABLE_CHALLENGES].sort((a, b) => {
+      const diffA = getDifficulty(a.id).level;
+      const diffB = getDifficulty(b.id).level;
+      return diffA - diffB;
+    });
+    setOrderedChallenges(sorted);
     setCurrentRound(0);
     setSelectedCableId(null);
     setRoundResult(null);
@@ -161,6 +183,8 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
     );
   }
 
+  const currentDiff = getDifficulty(activeChallenge.id);
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
       
@@ -177,7 +201,10 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
-                Game 10 / 10 • Physical Hardware Lab
+                Progressive Physical Lab
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${currentDiff.badgeColor}`}>
+                {currentDiff.label}
               </span>
             </div>
             <h1 className="text-lg sm:text-xl font-black text-gray-900">
@@ -186,14 +213,22 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowExamplesModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+            title="Open Pinout Reference & Examples Guide"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Connector Examples Guide</span>
+          </button>
           <div className="text-right">
             <span className="text-[11px] font-bold text-gray-500 block">TIME</span>
             <span className="text-sm font-black text-gray-800">{formatTime(elapsedSeconds)}</span>
           </div>
           <div className="text-right">
             <span className="text-[11px] font-bold text-gray-500 block">SCORE</span>
-            <span className="text-sm font-black text-blue-700">{score} / {shuffledChallenges.length}</span>
+            <span className="text-sm font-black text-blue-700">{score} / {orderedChallenges.length}</span>
           </div>
           <button
             onClick={handleRestart}
@@ -209,24 +244,37 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
       {!isCompleted ? (
         <div className="space-y-6">
           
-          {/* Progress Tracker */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center justify-between">
-            <span className="text-xs font-black text-gray-700 uppercase tracking-wider">
-              Diagnostic Case {currentRound + 1} of {shuffledChallenges.length}
-            </span>
-            <div className="flex gap-1.5">
-              {shuffledChallenges.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-5 h-2 rounded-full transition-all ${
-                    idx === currentRound
-                      ? 'bg-blue-600 w-8'
-                      : idx < currentRound
-                      ? 'bg-emerald-500'
-                      : 'bg-gray-200'
-                  }`}
-                />
-              ))}
+          {/* Progress Tracker with Progressive Difficulty Indicators */}
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-gray-700 uppercase tracking-wider">
+                Case {currentRound + 1} of {orderedChallenges.length}
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${currentDiff.badgeColor}`}>
+                {currentDiff.label}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {orderedChallenges.map((ch, idx) => {
+                const diff = getDifficulty(ch.id);
+                return (
+                  <div
+                    key={idx}
+                    title={`${ch.socketName} (${diff.label})`}
+                    className={`h-2.5 rounded-full transition-all ${
+                      idx === currentRound
+                        ? 'bg-blue-600 w-8 ring-2 ring-blue-300'
+                        : idx < currentRound
+                        ? 'bg-emerald-500 w-4'
+                        : diff.level === 1
+                        ? 'bg-emerald-200 w-4'
+                        : diff.level === 2
+                        ? 'bg-blue-200 w-4'
+                        : 'bg-purple-200 w-4'
+                    }`}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -257,6 +305,14 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
                   </div>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowExamplesModal(true)}
+                className="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-gray-50 border border-blue-300 rounded-lg text-xs font-bold text-blue-800 shadow-xs cursor-pointer self-start sm:self-auto"
+              >
+                <Info className="w-3.5 h-3.5 text-blue-600" />
+                <span>View Pinout Examples</span>
+              </button>
             </div>
           </div>
 
@@ -432,7 +488,7 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
                     onClick={handleNextRound}
                     className="w-full py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 shadow-md"
                   >
-                    <span>{currentRound < shuffledChallenges.length - 1 ? 'NEXT DIAGNOSTIC CASE' : 'VIEW FINAL RESULTS'}</span>
+                    <span>{currentRound < orderedChallenges.length - 1 ? 'NEXT DIAGNOSTIC CASE' : 'VIEW FINAL RESULTS'}</span>
                   </button>
                 )}
               </div>
@@ -492,12 +548,12 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
           <div className="grid grid-cols-3 gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
             <div>
               <span className="text-[11px] font-bold text-gray-500 block uppercase">Score</span>
-              <span className="text-xl font-black text-blue-700">{score} / {shuffledChallenges.length}</span>
+              <span className="text-xl font-black text-blue-700">{score} / {orderedChallenges.length}</span>
             </div>
             <div>
               <span className="text-[11px] font-bold text-gray-500 block uppercase">Accuracy</span>
               <span className="text-xl font-black text-gray-800">
-                {Math.round((score / shuffledChallenges.length) * 100)}%
+                {orderedChallenges.length > 0 ? Math.round((score / orderedChallenges.length) * 100) : 0}%
               </span>
             </div>
             <div>
@@ -520,6 +576,111 @@ export const CablePinoutMasterGame: React.FC<CablePinoutMasterGameProps> = ({
             >
               <span>BACK TO GAMES HUB</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Connector Examples & Pinout Guide Modal */}
+      {showExamplesModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-indigo-400" />
+                <h3 className="font-bold text-base">Internal Cables & Pinouts Visual Reference Guide</h3>
+              </div>
+              <button
+                onClick={() => setShowExamplesModal(false)}
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-6 text-sm">
+              
+              {/* Comparison 1: CPU EPS vs PCIe */}
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 font-black text-amber-900 text-sm">
+                  <ShieldAlert className="w-4 h-4 text-amber-600" />
+                  <span>CRITICAL EXAMPLE: 8-Pin CPU (EPS) vs 8-Pin GPU (PCIe)</span>
+                </div>
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  Both connectors have 8 pins, but <strong>THEY ARE NOT INTERCHANGEABLE</strong>! Forcing the wrong cable can cause a short circuit or damage hardware.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="p-3 bg-white rounded-lg border border-amber-200">
+                    <div className="font-bold text-blue-900 text-xs mb-1">CPU / EPS 12V Power</div>
+                    <ul className="text-[11px] text-gray-700 space-y-1 list-disc list-inside">
+                      <li>Splits as <strong>4 + 4 pins</strong></li>
+                      <li>Plugs into motherboard near CPU socket</li>
+                      <li>Supplies processor VRM power</li>
+                    </ul>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg border border-amber-200">
+                    <div className="font-bold text-indigo-900 text-xs mb-1">PCIe / GPU Power</div>
+                    <ul className="text-[11px] text-gray-700 space-y-1 list-disc list-inside">
+                      <li>Splits as <strong>6 + 2 pins</strong></li>
+                      <li>Plugs into dedicated Graphics Cards</li>
+                      <li>Provides up to 150W per 8-pin plug</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Comparison 2: SATA Data vs SATA Power */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
+                <div className="font-black text-blue-900 text-sm">SATA Storage Connectors (L-Keyed)</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 bg-white rounded-lg border border-blue-200">
+                    <div className="font-bold text-red-700 text-xs mb-1">SATA III Data Cable</div>
+                    <p className="text-[11px] text-gray-600">
+                      Narrow <strong>7-pin</strong> L-notch cable connecting drive to motherboard SATA port. Usually red, black, or blue with metal latch clips.
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg border border-blue-200">
+                    <div className="font-bold text-gray-800 text-xs mb-1">SATA Power Connector</div>
+                    <p className="text-[11px] text-gray-600">
+                      Wide <strong>15-pin</strong> flat connector coming directly from the Power Supply (PSU) providing +3.3V, +5V, and +12V.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Comparison 3: Front Panel Headers & Polarity */}
+              <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl space-y-2">
+                <div className="font-black text-purple-900 text-sm">Front Panel Header (F_PANEL) & Polarity Rules</div>
+                <p className="text-xs text-purple-800">
+                  Located on bottom-right of the motherboard. Pin headers connect power button, reset button, and status LEDs.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="p-3 bg-white rounded-lg border border-purple-200">
+                    <div className="font-bold text-emerald-800 text-xs mb-1">Switches (PWR_SW, RESET_SW)</div>
+                    <p className="text-[11px] text-gray-600">
+                      Momentary push switches shorting logic circuit to ground. <strong>NO POLARITY</strong> — work in either direction!
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg border border-purple-200">
+                    <div className="font-bold text-amber-800 text-xs mb-1">LEDs (HDD_LED, POWER_LED)</div>
+                    <p className="text-[11px] text-gray-600">
+                      Light emitting diodes only conduct one way. <strong>POLARITY SENSITIVE</strong>: colored wire is positive (+), white or black wire is negative (-).
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <div className="text-right pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowExamplesModal(false)}
+                  className="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Got It! Back to Challenge
+                </button>
+              </div>
+
+            </div>
           </div>
         </div>
       )}

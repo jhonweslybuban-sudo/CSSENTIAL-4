@@ -11,6 +11,8 @@ import { CollectionView } from './components/CollectionView';
 import { AboutUsView } from './components/AboutUsView';
 import { ResearcherDashboard } from './components/ResearcherDashboard';
 import { AIAssistant } from './components/AIAssistant';
+import { CertificateModal } from './components/CertificateModal';
+import { CommunityChatModal } from './components/CommunityChatModal';
 
 import { SortConfigureGame } from './components/games/SortConfigureGame';
 import { CodeCrackerGame } from './components/games/CodeCrackerGame';
@@ -44,6 +46,8 @@ export default function App() {
   const [paletteId, setPaletteId] = useState<ThemePaletteId>(getSavedPalette());
   const [aiInitialPrompt, setAiInitialPrompt] = useState<string | null>(null);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [showCertificateModal, setShowCertificateModal] = useState<boolean>(false);
+  const [showChatModal, setShowChatModal] = useState<boolean>(false);
 
   // Apply theme palette whenever it changes or on load
   useEffect(() => {
@@ -130,6 +134,8 @@ export default function App() {
         onOpenDashboard={() => navigateTo('RESEARCHER_DASHBOARD')}
         onOpenThemeModal={() => setShowThemeModal(true)}
         onOpenStudentModal={() => setShowEntryModal(true)}
+        onOpenCertificate={() => setShowCertificateModal(true)}
+        onOpenChat={() => setShowChatModal(true)}
       />
 
       {/* 2. Wireframe Navbar */}
@@ -379,6 +385,26 @@ export default function App() {
           applyThemePalette(newId);
         }}
         onClose={() => setShowThemeModal(false)}
+      />
+
+      {/* Automatic Certification of Technical Competency */}
+      <CertificateModal
+        isOpen={showCertificateModal}
+        onClose={() => setShowCertificateModal(false)}
+        studentId={student?.student_id || 'STU-GUEST'}
+        studentName={student?.name || 'Registered Student'}
+        yearSection={student?.year_section || 'General Section'}
+        onNavigateToActivities={() => navigateTo('ACTIVITIES')}
+        onNavigateToGames={() => navigateTo('GAMES_HUB')}
+      />
+
+      {/* Real-time Student & Faculty Community Chat */}
+      <CommunityChatModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        studentId={student?.student_id || 'STU-GUEST'}
+        studentName={student?.name || 'Student'}
+        yearSection={student?.year_section || 'General Section'}
       />
 
     </div>

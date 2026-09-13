@@ -39,6 +39,10 @@ interface DatabaseSchema {
   announcements?: any[];
   branding?: any;
   researchers?: any[];
+  chat_messages?: any[];
+  teacher_activities?: any[];
+  teacher_materials?: any[];
+  collection_videos?: any[];
 }
 
 function deduplicateRecords<T extends Record<string, any>>(items: T[], idKeys: string[]): T[] {
@@ -83,6 +87,39 @@ function cleanDummyData(data: DatabaseSchema): DatabaseSchema {
   const validAiUsage = deduplicateRecords((data.ai_usage || []).filter(u => realIds.has(u.student_id)), ['usage_id', 'id']);
   const validLogs = deduplicateRecords((data.activity_logs || []).filter(l => realIds.has(l.student_id)), ['log_id', 'id']);
 
+  const defaultVideos = [
+    {
+      id: 'vid-1',
+      title: 'PC Hardware Assembly & Component Installation Masterclass',
+      description: 'Comprehensive step-by-step physical demonstration of socket alignment, dual-channel RAM insertion, NVMe mounting, and thermal paste cross-pattern spread.',
+      topicNumber: 2,
+      duration: '14:20',
+      thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+      url: 'https://www.youtube-nocookie.com/embed/BL4DCEp7blY',
+      instructor: 'CSSENTIAL Faculty Lead'
+    },
+    {
+      id: 'vid-2',
+      title: 'UEFI/BIOS Setup, XMP Profiles & Secure Boot Configuration',
+      description: 'Walkthrough of entering UEFI setup, enabling Intel XMP / AMD EXPO memory frequency profiles, AHCI SATA mode, and configuring boot drive priority.',
+      topicNumber: 4,
+      duration: '11:45',
+      thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80',
+      url: 'https://www.youtube-nocookie.com/embed/4pX1aM3JvQ4',
+      instructor: 'CSSENTIAL Faculty Lead'
+    },
+    {
+      id: 'vid-3',
+      title: 'CompTIA Systematic Diagnostics & Hardware Black-Screen Troubleshooting',
+      description: 'Diagnosing no-POST conditions, interpreting EZ Debug LEDs, testing PSU rails, and clearing CMOS safely using the 6-step CompTIA model.',
+      topicNumber: 6,
+      duration: '16:05',
+      thumbnail: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=800&auto=format&fit=crop&q=80',
+      url: 'https://www.youtube-nocookie.com/embed/x_oR8MvL5g4',
+      instructor: 'CSSENTIAL Faculty Lead'
+    }
+  ];
+
   return {
     students: realStudents,
     sessions: validSessions,
@@ -94,11 +131,48 @@ function cleanDummyData(data: DatabaseSchema): DatabaseSchema {
     activity_logs: validLogs,
     announcements: data.announcements || [],
     branding: data.branding || null,
-    researchers: data.researchers || null
+    researchers: data.researchers || null,
+    chat_messages: data.chat_messages || [],
+    teacher_activities: data.teacher_activities || [],
+    teacher_materials: data.teacher_materials || [],
+    collection_videos: (data.collection_videos && data.collection_videos.length > 0) ? data.collection_videos : defaultVideos
   };
 }
 
 function loadDatabase(): DatabaseSchema {
+  const defaultVideos = [
+    {
+      id: 'vid-1',
+      title: 'PC Hardware Assembly & Component Installation Masterclass',
+      description: 'Comprehensive step-by-step physical demonstration of socket alignment, dual-channel RAM insertion, NVMe mounting, and thermal paste cross-pattern spread.',
+      topicNumber: 2,
+      duration: '14:20',
+      thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+      url: 'https://www.youtube-nocookie.com/embed/BL4DCEp7blY',
+      instructor: 'CSSENTIAL Faculty Lead'
+    },
+    {
+      id: 'vid-2',
+      title: 'UEFI/BIOS Setup, XMP Profiles & Secure Boot Configuration',
+      description: 'Walkthrough of entering UEFI setup, enabling Intel XMP / AMD EXPO memory frequency profiles, AHCI SATA mode, and configuring boot drive priority.',
+      topicNumber: 4,
+      duration: '11:45',
+      thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80',
+      url: 'https://www.youtube-nocookie.com/embed/4pX1aM3JvQ4',
+      instructor: 'CSSENTIAL Faculty Lead'
+    },
+    {
+      id: 'vid-3',
+      title: 'CompTIA Systematic Diagnostics & Hardware Black-Screen Troubleshooting',
+      description: 'Diagnosing no-POST conditions, interpreting EZ Debug LEDs, testing PSU rails, and clearing CMOS safely using the 6-step CompTIA model.',
+      topicNumber: 6,
+      duration: '16:05',
+      thumbnail: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=800&auto=format&fit=crop&q=80',
+      url: 'https://www.youtube-nocookie.com/embed/x_oR8MvL5g4',
+      instructor: 'CSSENTIAL Faculty Lead'
+    }
+  ];
+
   if (!fs.existsSync(DB_FILE)) {
     const initialData: DatabaseSchema = {
       students: [],
@@ -111,7 +185,32 @@ function loadDatabase(): DatabaseSchema {
       activity_logs: [],
       announcements: [],
       branding: null,
-      researchers: null
+      researchers: null,
+      chat_messages: [
+        {
+          id: 'msg_welcome_1',
+          student_id: 'inst_faculty_1',
+          student_name: 'Engr. Jhon Wesly Buban',
+          year_section: 'Faculty / Lead Architect',
+          text: 'Welcome to the CSSENTIAL Community Forum! Feel free to ask questions about Computer System Installation and Configuration, share lab discoveries, and assist your fellow classmates.',
+          timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+          is_instructor: true,
+          report_count: 0
+        },
+        {
+          id: 'msg_welcome_2',
+          student_id: 'std_welcome_2',
+          student_name: 'Juliana Calaputpu',
+          year_section: 'BSIT 3-A',
+          text: 'Don\'t forget to practice in the Virtual PC Lab Simulator before taking the summative assessment quiz! The dual-channel RAM and standoff placement steps are essential.',
+          timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+          is_instructor: false,
+          report_count: 0
+        }
+      ],
+      teacher_activities: [],
+      teacher_materials: [],
+      collection_videos: defaultVideos
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
     return initialData;
@@ -601,6 +700,248 @@ app.post('/api/researchers', (req, res) => {
     return res.json({ success: true, researchers: db.researchers });
   }
   res.status(400).json({ error: 'Array of researchers expected' });
+});
+
+// ==========================================
+// 1. VIDEOS FOR COLLECTION MANAGEMENT
+// ==========================================
+app.get('/api/videos', (req, res) => {
+  const db = loadDatabase();
+  res.json(db.collection_videos || []);
+});
+
+app.post('/api/videos', (req, res) => {
+  const { title, description, url, thumbnail, duration, topicNumber, instructor } = req.body;
+  if (!title || !url) {
+    return res.status(400).json({ error: 'Title and Video URL are required' });
+  }
+  const db = loadDatabase();
+  if (!db.collection_videos) db.collection_videos = [];
+
+  const newVideo = {
+    id: req.body.id || `vid_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    title: title.trim(),
+    description: (description || '').trim(),
+    url: url.trim(),
+    thumbnail: thumbnail || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+    duration: duration || '10:00',
+    topicNumber: topicNumber ? Number(topicNumber) : 1,
+    instructor: instructor || 'CSSENTIAL Instructor',
+    created_at: new Date().toISOString()
+  };
+
+  const existingIdx = db.collection_videos.findIndex(v => v.id === newVideo.id);
+  if (existingIdx >= 0) {
+    db.collection_videos[existingIdx] = { ...db.collection_videos[existingIdx], ...newVideo };
+  } else {
+    db.collection_videos.push(newVideo);
+  }
+
+  saveDatabase(db);
+  res.json({ success: true, video: newVideo });
+});
+
+app.delete('/api/videos/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  if (db.collection_videos) {
+    db.collection_videos = db.collection_videos.filter(v => v.id !== id);
+    saveDatabase(db);
+  }
+  res.json({ success: true, deletedId: id });
+});
+
+// ==========================================
+// 2. COMMUNITY CHATBOX (STUDENT & MODERATION)
+// ==========================================
+app.get('/api/chat/messages', (req, res) => {
+  const db = loadDatabase();
+  res.json(db.chat_messages || []);
+});
+
+app.post('/api/chat/messages', (req, res) => {
+  const { student_id, student_name, year_section, text, is_instructor } = req.body;
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: 'Message text cannot be empty' });
+  }
+
+  const db = loadDatabase();
+  if (!db.chat_messages) db.chat_messages = [];
+
+  const message = {
+    id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    student_id: student_id || 'STU-GUEST',
+    student_name: (student_name || 'Anonymous Student').trim(),
+    year_section: (year_section || 'General Section').trim(),
+    text: text.trim().slice(0, 500),
+    timestamp: new Date().toISOString(),
+    is_instructor: Boolean(is_instructor),
+    report_count: 0
+  };
+
+  db.chat_messages.push(message);
+  // Keep last 300 messages
+  if (db.chat_messages.length > 300) {
+    db.chat_messages = db.chat_messages.slice(-300);
+  }
+
+  saveDatabase(db);
+  res.json(message);
+});
+
+app.post('/api/chat/messages/:id/report', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  if (db.chat_messages) {
+    const msg = db.chat_messages.find(m => m.id === id);
+    if (msg) {
+      msg.report_count = (msg.report_count || 0) + 1;
+      saveDatabase(db);
+      return res.json({ success: true, report_count: msg.report_count });
+    }
+  }
+  res.status(404).json({ error: 'Message not found' });
+});
+
+app.delete('/api/chat/messages/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  if (db.chat_messages) {
+    db.chat_messages = db.chat_messages.filter(m => m.id !== id);
+    saveDatabase(db);
+  }
+  res.json({ success: true, deletedId: id });
+});
+
+// ==========================================
+// 3. TEACHER / PROFESSOR CONTENT MANAGEMENT
+// ==========================================
+app.get('/api/teacher/activities', (req, res) => {
+  const db = loadDatabase();
+  res.json(db.teacher_activities || []);
+});
+
+app.post('/api/teacher/activities', (req, res) => {
+  const { id, title, description, category, difficulty, questions, is_published, created_by } = req.body;
+  if (!title || !Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ error: 'Title and at least one question are required' });
+  }
+
+  const db = loadDatabase();
+  if (!db.teacher_activities) db.teacher_activities = [];
+
+  const activity = {
+    id: id || `tact_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    title: title.trim(),
+    description: (description || '').trim(),
+    category: category || 'Teacher Assessment',
+    difficulty: difficulty || 'Intermediate',
+    questions: questions,
+    is_published: is_published !== undefined ? Boolean(is_published) : true,
+    created_by: created_by || 'Professor / Instructor',
+    created_at: new Date().toISOString()
+  };
+
+  const existingIdx = db.teacher_activities.findIndex(a => a.id === activity.id);
+  if (existingIdx >= 0) {
+    db.teacher_activities[existingIdx] = { ...db.teacher_activities[existingIdx], ...activity };
+  } else {
+    db.teacher_activities.unshift(activity);
+  }
+
+  saveDatabase(db);
+  res.json({ success: true, activity });
+});
+
+app.delete('/api/teacher/activities/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  if (db.teacher_activities) {
+    db.teacher_activities = db.teacher_activities.filter(a => a.id !== id);
+    saveDatabase(db);
+  }
+  res.json({ success: true, deletedId: id });
+});
+
+app.get('/api/teacher/materials', (req, res) => {
+  const db = loadDatabase();
+  res.json(db.teacher_materials || []);
+});
+
+app.post('/api/teacher/materials', (req, res) => {
+  const { id, title, topicNumber, description, content, file_url, is_published, instructor } = req.body;
+  if (!title || !description) {
+    return res.status(400).json({ error: 'Title and description are required' });
+  }
+
+  const db = loadDatabase();
+  if (!db.teacher_materials) db.teacher_materials = [];
+
+  const material = {
+    id: id || `mat_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    title: title.trim(),
+    topicNumber: topicNumber ? Number(topicNumber) : 1,
+    description: description.trim(),
+    content: (content || '').trim(),
+    file_url: file_url || null,
+    is_published: is_published !== undefined ? Boolean(is_published) : true,
+    instructor: instructor || 'Faculty Member',
+    created_at: new Date().toISOString()
+  };
+
+  const existingIdx = db.teacher_materials.findIndex(m => m.id === material.id);
+  if (existingIdx >= 0) {
+    db.teacher_materials[existingIdx] = { ...db.teacher_materials[existingIdx], ...material };
+  } else {
+    db.teacher_materials.unshift(material);
+  }
+
+  saveDatabase(db);
+  res.json({ success: true, material });
+});
+
+app.delete('/api/teacher/materials/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  if (db.teacher_materials) {
+    db.teacher_materials = db.teacher_materials.filter(m => m.id !== id);
+    saveDatabase(db);
+  }
+  res.json({ success: true, deletedId: id });
+});
+
+// ==========================================
+// 4. AUTOMATIC CERTIFICATION STATUS
+// ==========================================
+app.get('/api/certificate/status/:studentId', (req, res) => {
+  const { studentId } = req.params;
+  const db = loadDatabase();
+  const student = db.students.find(s => s.student_id === studentId);
+
+  const attempts = (db.activity_attempts || []).filter(a => a.student_id === studentId && a.completed);
+  const quizzes = (db.quiz_results || []).filter(q => q.student_id === studentId && q.completed);
+  const games = (db.game_results || []).filter(g => g.student_id === studentId && g.completed);
+  const pcLabPassed = attempts.some(a => a.activity_name?.toLowerCase().includes('virtual pc lab') || a.activity_name?.toLowerCase().includes('pc build'));
+
+  // Qualification: completed at least 2 activities OR 1 quiz + 1 game, or Virtual PC Lab
+  const activitiesCount = attempts.length;
+  const quizzesCount = quizzes.length;
+  const gamesCount = games.length;
+  const isEligible = (activitiesCount >= 2 && quizzesCount >= 1) || (activitiesCount >= 1 && gamesCount >= 1) || pcLabPassed || (quizzesCount >= 1 && gamesCount >= 2);
+
+  res.json({
+    student_id: studentId,
+    student_name: student ? student.student_name : 'Student',
+    year_section: student ? student.year_section : 'General Section',
+    isEligible,
+    stats: {
+      activitiesCount,
+      quizzesCount,
+      gamesCount,
+      pcLabPassed
+    },
+    certificate_id: `CERT-CSS-2026-${(studentId || 'GEN').slice(-6).toUpperCase()}`
+  });
 });
 
 // Deletion Endpoints

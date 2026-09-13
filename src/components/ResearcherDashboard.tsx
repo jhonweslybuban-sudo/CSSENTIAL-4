@@ -40,6 +40,7 @@ import { ResearcherVideoManager } from './ResearcherVideoManager';
 import { ResearcherRecordManager } from './ResearcherRecordManager';
 import { ResearcherAnnouncementManager } from './ResearcherAnnouncementManager';
 import { ResearcherBrandingManager } from './ResearcherBrandingManager';
+import { TeacherContentManager } from './TeacherContentManager';
 
 interface ResearcherDashboardProps {
   onBackToHome: () => void;
@@ -50,7 +51,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
 }) => {
   const [stats, setStats] = useState<ResearcherStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'ANNOUNCEMENTS' | 'MANAGE_BRANDING' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'TEACHER_CMS' | 'ANNOUNCEMENTS' | 'MANAGE_BRANDING' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS'>('OVERVIEW');
   
   // Password Protection Gate (Password: CSSENTIAL2026)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -744,6 +745,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             { id: 'QUIZZES', label: `Quizzes (${stats?.quizResults.length || 0})` },
             { id: 'GAMES', label: `Games Telemetry (${stats?.gameResults.length || 0})` },
             { id: 'LOGS', label: `Student Actions Log (${stats?.activityLogs?.length || 0})` },
+            { id: 'TEACHER_CMS', label: '🎓 Teacher CMS & Activity Authoring' },
             { id: 'ANNOUNCEMENTS', label: '📢 Announcements & Notices' },
             { id: 'MANAGE_BRANDING', label: '🎨 Logo & Researcher Profiles' },
             { id: 'MANAGE_VIDEOS', label: 'Demonstration Videos' },
@@ -1314,7 +1316,14 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 7: ANNOUNCEMENTS MANAGEMENT */}
+          {/* TAB 7: TEACHER CMS & AUTHORING */}
+          {activeTab === 'TEACHER_CMS' && (
+            <div className="p-6">
+              <TeacherContentManager />
+            </div>
+          )}
+
+          {/* TAB 8: ANNOUNCEMENTS MANAGEMENT */}
           {activeTab === 'ANNOUNCEMENTS' && (
             <div className="p-6">
               <ResearcherAnnouncementManager />

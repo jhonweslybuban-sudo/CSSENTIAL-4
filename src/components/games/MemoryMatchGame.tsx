@@ -14,13 +14,16 @@ export const MemoryMatchGame: React.FC<MemoryMatchGameProps> = ({
   sessionId,
   onBack
 }) => {
-  // Current set index (0, 1, or 2)
-  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  // Current set index (0, 1, or 2) - randomized on launch
+  const [currentSetIndex, setCurrentSetIndex] = useState(() =>
+    Math.floor(Math.random() * MEMORY_CARD_SETS.length)
+  );
 
   // Cards for active set
-  const [cards, setCards] = useState(() =>
-    [...MEMORY_CARD_SETS[0]].sort(() => Math.random() - 0.5)
-  );
+  const [cards, setCards] = useState(() => {
+    const randomSet = Math.floor(Math.random() * MEMORY_CARD_SETS.length);
+    return [...MEMORY_CARD_SETS[randomSet]].sort(() => Math.random() - 0.5);
+  });
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [matchedPairs, setMatchedPairs] = useState<string[]>([]);
   const [moves, setMoves] = useState(0);

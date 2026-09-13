@@ -200,3 +200,72 @@ export interface BrandingSettings {
   siteTitle?: string;
   siteSubtitle?: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  student_id: string;
+  student_name: string;
+  year_section?: string;
+  text: string;
+  timestamp: string;
+  is_instructor?: boolean;
+  report_count?: number;
+}
+
+export interface TeacherActivityQuestion {
+  question: string;
+  options: string[];
+  correct: number;
+  explanation: string;
+}
+
+export interface TeacherActivity {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
+  questions: TeacherActivityQuestion[];
+  is_published: boolean;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface TeacherMaterial {
+  id: string;
+  title: string;
+  topicNumber?: number;
+  description: string;
+  content: string;
+  file_url?: string;
+  is_published: boolean;
+  instructor?: string;
+  created_at?: string;
+}
+
+export interface CollectionVideo {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  thumbnail: string;
+  duration: string;
+  topicNumber: number;
+  instructor?: string;
+  created_at?: string;
+}
+
+export interface CertificateInfo {
+  student_id: string;
+  student_name: string;
+  year_section: string;
+  isEligible: boolean;
+  stats: {
+    activitiesCount: number;
+    quizzesCount: number;
+    gamesCount: number;
+    pcLabPassed: boolean;
+  };
+  certificate_id: string;
+}
+

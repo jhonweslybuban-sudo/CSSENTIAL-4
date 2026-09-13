@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, CheckCircle2, XCircle, Trophy, RotateCcw, Clock, Award } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Trophy, RotateCcw, Clock, Award, ChevronRight } from 'lucide-react';
 import { COMPREHENSIVE_QUIZ_QUESTIONS } from '../../data/gamesData';
 import { api } from '../../services/api';
 
@@ -23,15 +23,23 @@ export const ComputerSystemQuizGame: React.FC<ComputerSystemQuizGameProps> = ({
   const [score, setScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [autoAdvance, setAutoAdvance] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<any>(null);
+  const autoAdvanceTimeoutRef = useRef<any>(null);
+  const countdownIntervalRef = useRef<any>(null);
 
   React.useEffect(() => {
     timerRef.current = setInterval(() => {
       setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
     }, 1000);
-    return () => clearInterval(timerRef.current);
+    return () => {
+      clearInterval(timerRef.current);
+      if (autoAdvanceTimeoutRef.current) clearTimeout(autoAdvanceTimeoutRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    };
   }, []);
 
   const currentQ = questions[currentIndex];
@@ -42,14 +50,30 @@ export const ComputerSystemQuizGame: React.FC<ComputerSystemQuizGameProps> = ({
   };
 
   const handleCheck = () => {
-    if (selectedAnswer === null) return;
+    if (selectedAnswer === null || isChecked) return;
     setIsChecked(true);
     if (selectedAnswer === currentQ.correct) {
       setScore(s => s + 1);
     }
+
+    if (autoAdvance) {
+      setCountdown(2);
+      countdownIntervalRef.current = setInterval(() => {
+        setCountdown(prev => (prev && prev > 1 ? prev - 1 : null));
+      }, 1000);
+
+      autoAdvanceTimeoutRef.current = setTimeout(() => {
+        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        handleNext();
+      }, 2000);
+    }
   };
 
   const handleNext = async () => {
+    if (autoAdvanceTimeoutRef.current) clearTimeout(autoAdvanceTimeoutRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    setCountdown(null);
+
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(i => i + 1);
       setSelectedAnswer(null);
@@ -75,7 +99,18 @@ export const ComputerSystemQuizGame: React.FC<ComputerSystemQuizGameProps> = ({
     }
   };
 
+  const handlePrimaryButtonClick = () => {
+    if (!isChecked) {
+      handleCheck();
+    } else {
+      handleNext();
+    }
+  };
+
   const handleRestart = () => {
+    if (autoAdvanceTimeoutRef.current) clearTimeout(autoAdvanceTimeoutRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    setCountdown(null);
     setCurrentIndex(0);
     setSelectedAnswer(null);
     setIsChecked(false);
@@ -191,28 +226,57 @@ export const ComputerSystemQuizGame: React.FC<ComputerSystemQuizGameProps> = ({
               </div>
             )}
 
-            {/* Controls */}
-            <div className="pt-2 flex justify-end">
-              {!isChecked ? (
-                <button
-                  onClick={handleCheck}
-                  disabled={selectedAnswer === null}
-                  className={`px-6 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedAnswer !== null
-                      ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer shadow-xs'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  SUBMIT ANSWER
-                </button>
-              ) : (
-                <button
-                  onClick={handleNext}
-                  className="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-xs cursor-pointer"
-                >
-                  {currentIndex < questions.length - 1 ? 'NEXT QUESTION →' : 'VIEW SCORE REPORT'}
-                </button>
-              )}
+            {/* Controls & Unified Single Action Button */}
+            <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={autoAdvance}
+                  onChange={(e) => setAutoAdvance(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className="font-medium">Auto-advance after feedback (2s)</span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                {!isChecked ? (
+                  <button
+                    id="quiz-primary-action-btn"
+                    onClick={handlePrimaryButtonClick}
+                    disabled={selectedAnswer === null}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs ${
+                      selectedAnswer !== null
+                        ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer active:scale-95'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <span>SUBMIT ANSWER</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    id="quiz-primary-action-btn"
+                    onClick={handlePrimaryButtonClick}
+                    className={`flex items-center gap-2 px-6 py-2.5 text-white text-xs font-black rounded-lg shadow-md transition-all cursor-pointer active:scale-95 animate-in zoom-in-95 duration-150 ${
+                      selectedAnswer === currentQ.correct
+                        ? 'bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-300'
+                        : 'bg-red-600 hover:bg-red-700 ring-2 ring-red-300'
+                    }`}
+                  >
+                    {selectedAnswer === currentQ.correct ? (
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    ) : (
+                      <XCircle className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>
+                      {selectedAnswer === currentQ.correct ? 'CORRECT!' : 'INCORRECT'} —{' '}
+                      {currentIndex < questions.length - 1 ? 'NEXT QUESTION' : 'VIEW SCORE REPORT'}
+                      {countdown !== null ? ` (${countdown}s)` : ''}
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
           </div>

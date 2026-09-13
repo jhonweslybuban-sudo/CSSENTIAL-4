@@ -20,7 +20,8 @@ import {
   Terminal,
   Settings,
   Flame,
-  Check
+  Check,
+  X
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -189,6 +190,9 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
   const [startTime] = useState<number>(Date.now());
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
+  const [showHowToUse, setShowHowToUse] = useState<boolean>(true);
+  const [showObjectivesModal, setShowObjectivesModal] = useState<boolean>(false);
+  const [highlightAssistance, setHighlightAssistance] = useState<boolean>(true);
   const [simLog, setSimLog] = useState<string[]>([
     'Virtual PC Hardware & Configuration Laboratory Initialized.',
     'Workbench ready: ESD Mat at 0V. Power disconnected.'
@@ -326,30 +330,66 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
           </div>
         </div>
 
-        {/* Telemetry Metrics Badges */}
-        <div className="flex items-center gap-3">
-          <div className="px-3.5 py-2 bg-blue-50 border border-blue-100 rounded-xl text-center">
-            <div className="text-[10px] font-bold text-blue-700 uppercase">Stage</div>
-            <div className="text-sm font-black text-blue-950 font-mono">
+        {/* Controls & Badges */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => setShowHowToUse(prev => !prev)}
+            className={`px-3 py-2 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-colors cursor-pointer ${
+              showHowToUse
+                ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span>How to Use</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowObjectivesModal(true)}
+            className="px-3 py-2 text-xs font-bold rounded-xl border border-purple-300 bg-purple-50 text-purple-800 hover:bg-purple-100 flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Layers className="w-3.5 h-3.5 text-purple-600" />
+            <span>Step Objectives ({completedStages.length}/{SIMULATION_STAGES.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setHighlightAssistance(prev => !prev)}
+            className={`px-3 py-2 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-colors cursor-pointer ${
+              highlightAssistance
+                ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-xs'
+                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+            title="Toggle highlighted clickable areas on the workbench and shelf"
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${highlightAssistance ? 'text-amber-600' : 'text-gray-400'}`} />
+            <span>Highlights: {highlightAssistance ? 'ON' : 'OFF'}</span>
+          </button>
+
+          <div className="px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-xl text-center">
+            <div className="text-[9px] font-bold text-blue-700 uppercase">Stage</div>
+            <div className="text-xs font-black text-blue-950 font-mono">
               {currentStageIdx + 1} / {SIMULATION_STAGES.length}
             </div>
           </div>
 
-          <div className="px-3.5 py-2 bg-amber-50 border border-amber-100 rounded-xl text-center">
-            <div className="text-[10px] font-bold text-amber-700 uppercase">Mistakes</div>
-            <div className="text-sm font-black text-amber-950 font-mono">{mistakes}</div>
+          <div className="px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl text-center">
+            <div className="text-[9px] font-bold text-amber-700 uppercase">Mistakes</div>
+            <div className="text-xs font-black text-amber-950 font-mono">{mistakes}</div>
           </div>
 
-          <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-center">
-            <div className="text-[10px] font-bold text-emerald-700 uppercase">Lab Timer</div>
-            <div className="text-sm font-black text-emerald-950 font-mono">
+          <div className="px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-xl text-center">
+            <div className="text-[9px] font-bold text-emerald-700 uppercase">Timer</div>
+            <div className="text-xs font-black text-emerald-950 font-mono">
               {formatTime(elapsedSeconds)}
             </div>
           </div>
 
           <button
             onClick={handleReset}
-            className="p-2.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
+            className="p-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
             title="Reset Simulator"
           >
             <RotateCcw className="w-4 h-4" />
@@ -357,44 +397,69 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
         </div>
       </div>
 
-      {/* First-Time User Quick-Start Guidance */}
-      <div className="bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-xs">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="space-y-1">
+      {/* "How to Use" Step-by-Step Guidance Banner (Expandable) */}
+      {showHowToUse && (
+        <div className="bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-xs space-y-3 animate-in fade-in">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="bg-blue-700 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-sm tracking-wider">
-                FIRST TIME USER GUIDE
+                HOW TO USE THE VIRTUAL PC LAB
               </span>
-              <span className="text-xs font-bold text-blue-950">
-                How to Complete the Simulation Workbench:
+              <span className="text-xs font-bold text-blue-950 hidden sm:inline">
+                Interactive PC Assembly &amp; Configuration Simulator Instructions:
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-blue-900 pt-1">
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">1</span>
-                <div>
-                  <strong className="block font-bold">Read the Stage Directive</strong>
-                  <span className="text-blue-800 text-[11px]">Review the highlighted prompt on the left to see which component or action is needed.</span>
-                </div>
+            <button
+              onClick={() => setShowHowToUse(false)}
+              className="text-[11px] text-blue-700 hover:text-blue-900 font-bold cursor-pointer"
+            >
+              Hide Guide ✕
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs text-blue-900">
+            <div className="p-2.5 bg-white/80 rounded-lg border border-blue-100">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0">1</span>
+                <strong className="font-bold text-blue-950 text-xs">Read Directive</strong>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">2</span>
-                <div>
-                  <strong className="block font-bold">Pick from Lab Inventory</strong>
-                  <span className="text-blue-800 text-[11px]">Select the correct tool, silicon part, or cable from the right-hand inventory shelf.</span>
-                </div>
+              <p className="text-blue-800 text-[11px] leading-relaxed">
+                Check the active stage box on the left for the component required and the engineering safety precautions.
+              </p>
+            </div>
+
+            <div className="p-2.5 bg-white/80 rounded-lg border border-blue-100">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0">2</span>
+                <strong className="font-bold text-blue-950 text-xs">Highlighted Target</strong>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">3</span>
-                <div>
-                  <strong className="block font-bold">Apply to Workbench</strong>
-                  <span className="text-blue-800 text-[11px]">Click the item to insert or execute, advancing toward full system certification!</span>
-                </div>
+              <p className="text-blue-800 text-[11px] leading-relaxed">
+                Notice the flashing glowing cyan/gold dashed borders on the motherboard diagram highlighting the exact installation slot.
+              </p>
+            </div>
+
+            <div className="p-2.5 bg-white/80 rounded-lg border border-blue-100">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0">3</span>
+                <strong className="font-bold text-blue-950 text-xs">Click to Install</strong>
               </div>
+              <p className="text-blue-800 text-[11px] leading-relaxed">
+                Click directly on the highlighted socket OR click the matching hardware in the right inventory shelf to mount it!
+              </p>
+            </div>
+
+            <div className="p-2.5 bg-white/80 rounded-lg border border-blue-100">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0">4</span>
+                <strong className="font-bold text-blue-950 text-xs">POST &amp; Verify</strong>
+              </div>
+              <p className="text-blue-800 text-[11px] leading-relaxed">
+                Watch the live debug LEDs switch from red to green and observe the real-time hardware telemetry log as the system boots.
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Simulation View or Final Certificate */}
       {!isFinished ? (
@@ -602,6 +667,88 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
                     <circle cx="30" cy="0" r="3" fill={completedStages.includes(9) ? '#22c55e' : '#ef4444'} />
                     <text x="15" y="12" fill="#64748b" fontSize="6" textAnchor="middle" fontFamily="monospace">DEBUG LEDs</text>
                   </g>
+
+                  {/* DYNAMIC HIGHLIGHTED CLICKABLE TARGET AREA (Guidance Overlay) */}
+                  {highlightAssistance && (
+                    <>
+                      {currentStage.id === 1 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('esd_strap')}>
+                          <rect x="22" y="12" width="50" height="30" rx="4" fill="#0284c7" fillOpacity="0.25" stroke="#38bdf8" strokeWidth="2.5" strokeDasharray="4,4" className="animate-pulse" />
+                          <text x="47" y="27" fill="#38bdf8" fontSize="7" fontWeight="bold" textAnchor="middle">👉 ESD CLIP</text>
+                          <text x="47" y="36" fill="#e0f2fe" fontSize="6" textAnchor="middle">CLICK TO GROUND</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 2 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('cpu')}>
+                          <rect x="76" y="56" width="78" height="78" rx="6" fill="#0284c7" fillOpacity="0.3" stroke="#38bdf8" strokeWidth="2.5" strokeDasharray="5,4" className="animate-pulse" />
+                          <text x="115" y="92" fill="#38bdf8" fontSize="8" fontWeight="bold" textAnchor="middle">👉 CLICK SOCKET</text>
+                          <text x="115" y="103" fill="#e0f2fe" fontSize="7" textAnchor="middle">INSERT CPU</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 3 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('thermal_paste')}>
+                          <circle cx="115" cy="95" r="28" fill="#f59e0b" fillOpacity="0.3" stroke="#fbbf24" strokeWidth="2.5" strokeDasharray="4,4" className="animate-pulse" />
+                          <text x="115" y="93" fill="#fbbf24" fontSize="7.5" fontWeight="bold" textAnchor="middle">👉 CLICK CPU</text>
+                          <text x="115" y="103" fill="#fef3c7" fontSize="6.5" textAnchor="middle">APPLY PASTE &amp; FAN</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 4 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('ram')}>
+                          <rect x="170" y="50" width="55" height="95" rx="4" fill="#10b981" fillOpacity="0.25" stroke="#34d399" strokeWidth="2.5" strokeDasharray="4,4" className="animate-pulse" />
+                          <text x="197" y="95" fill="#34d399" fontSize="7" fontWeight="bold" textAnchor="middle">👉 CLICK SLOTS</text>
+                          <text x="197" y="105" fill="#d1fae5" fontSize="6.5" textAnchor="middle">SEAT RAM A2/B2</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 5 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('motherboard_screws')}>
+                          <rect x="36" y="22" width="318" height="236" rx="8" fill="#059669" fillOpacity="0.15" stroke="#10b981" strokeWidth="2.5" strokeDasharray="6,4" className="animate-pulse" />
+                          <text x="195" y="140" fill="#6ee7b7" fontSize="9" fontWeight="bold" textAnchor="middle">👉 CLICK CHASSIS: FASTEN STANDOFF SCREWS</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 6 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('nvme_ssd')}>
+                          <rect x="76" y="152" width="88" height="22" rx="3" fill="#0d9488" fillOpacity="0.3" stroke="#2dd4bf" strokeWidth="2.5" strokeDasharray="4,4" className="animate-pulse" />
+                          <text x="120" y="166" fill="#5eead4" fontSize="7" fontWeight="bold" textAnchor="middle">👉 CLICK: INSERT M.2 SSD</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 7 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('psu_cables')}>
+                          <rect x="362" y="167" width="111" height="91" rx="6" fill="#eab308" fillOpacity="0.25" stroke="#facc15" strokeWidth="2.5" strokeDasharray="5,4" className="animate-pulse" />
+                          <text x="417" y="206" fill="#fef08a" fontSize="8" fontWeight="bold" textAnchor="middle">👉 CLICK: MOUNT PSU</text>
+                          <text x="417" y="217" fill="#fef9c3" fontSize="6.5" textAnchor="middle">&amp; ROUTE 24-PIN</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 8 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('gpu')}>
+                          <rect x="76" y="182" width="188" height="41" rx="6" fill="#6366f1" fillOpacity="0.3" stroke="#818cf8" strokeWidth="2.5" strokeDasharray="5,4" className="animate-pulse" />
+                          <text x="170" y="202" fill="#c7d2fe" fontSize="8" fontWeight="bold" textAnchor="middle">👉 CLICK: SEAT DISCRETE GPU</text>
+                          <text x="170" y="213" fill="#e0e7ff" fontSize="6.5" textAnchor="middle">PCIe x16 EXPANSION</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 9 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('bios_config')}>
+                          <rect x="312" y="28" width="76" height="35" rx="4" fill="#38bdf8" fillOpacity="0.3" stroke="#38bdf8" strokeWidth="2" strokeDasharray="4,4" className="animate-pulse" />
+                          <text x="350" y="44" fill="#bae6fd" fontSize="7" fontWeight="bold" textAnchor="middle">👉 CLICK: POST</text>
+                          <text x="350" y="53" fill="#e0f2fe" fontSize="6" textAnchor="middle">UEFI BIOS SETUP</text>
+                        </g>
+                      )}
+
+                      {currentStage.id === 10 && (
+                        <g className="cursor-pointer group" onClick={() => handleApplyItem('os_usb')}>
+                          <rect x="22" y="12" width="456" height="256" rx="8" fill="#a855f7" fillOpacity="0.15" stroke="#c084fc" strokeWidth="3" strokeDasharray="6,4" className="animate-pulse" />
+                          <text x="250" y="135" fill="#f3e8ff" fontSize="11" fontWeight="bold" textAnchor="middle">👉 CLICK CHASSIS: BOOT WINDOWS INSTALLATION MEDIA</text>
+                        </g>
+                      )}
+                    </>
+                  )}
                 </svg>
 
                 {/* Live Telemetry Overlay */}
@@ -678,6 +825,8 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
                 });
                 const isSelected = selectedItemId === item.id;
 
+                const isCurrentTarget = highlightAssistance && !isItemUsed && item.id === currentStage.requiredItem;
+
                 return (
                   <div
                     key={item.id}
@@ -690,6 +839,8 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
                     className={`p-3 rounded-xl border transition-all text-left flex flex-col justify-between cursor-pointer group ${
                       isItemUsed
                         ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
+                        : isCurrentTarget
+                        ? 'border-amber-500 bg-amber-50/80 shadow-md ring-2 ring-amber-400'
                         : isSelected
                         ? 'border-blue-600 bg-blue-50/50 shadow-xs ring-2 ring-blue-500/20'
                         : 'border-gray-200 hover:border-blue-400 hover:bg-gray-50 bg-white'
@@ -703,6 +854,11 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
                         {isItemUsed && (
                           <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded">
                             <Check className="w-3 h-3" /> Used
+                          </span>
+                        )}
+                        {isCurrentTarget && (
+                          <span className="flex items-center gap-0.5 text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded animate-pulse">
+                            🎯 OBJECTIVE
                           </span>
                         )}
                       </div>
@@ -806,6 +962,100 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
             >
               Return to Games Hub
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step-by-Step Objectives Roadmap Modal */}
+      {showObjectivesModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-blue-400" />
+                <h3 className="font-bold text-base">Laboratory Step-by-Step Objectives Roadmap</h3>
+              </div>
+              <button
+                onClick={() => setShowObjectivesModal(false)}
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-3 text-xs">
+              <p className="text-gray-600 text-xs leading-relaxed">
+                Review the 10 sequential technical benchmarks required to assemble, ground, and configure the ATX personal computer system:
+              </p>
+
+              <div className="space-y-2 pt-1">
+                {SIMULATION_STAGES.map((stg, sIdx) => {
+                  const isDone = completedStages.includes(stg.id);
+                  const isCurrent = currentStageIdx === sIdx && !isFinished;
+                  const reqItem = INVENTORY_ITEMS.find(i => i.id === stg.requiredItem);
+
+                  return (
+                    <div
+                      key={stg.id}
+                      className={`p-3 rounded-xl border transition-all ${
+                        isDone
+                          ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                          : isCurrent
+                          ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-500/20 shadow-xs'
+                          : 'bg-gray-50/70 border-gray-200 text-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                            isDone
+                              ? 'bg-emerald-600 text-white'
+                              : isCurrent
+                              ? 'bg-blue-600 text-white animate-pulse'
+                              : 'bg-gray-300 text-gray-700'
+                          }`}>
+                            {isDone ? '✓' : stg.id}
+                          </span>
+                          <span className="font-bold text-xs">
+                            Step {stg.id}: {stg.title}
+                          </span>
+                        </div>
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                          isDone
+                            ? 'bg-emerald-200/80 text-emerald-800'
+                            : isCurrent
+                            ? 'bg-blue-200 text-blue-800'
+                            : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {isDone ? 'Completed' : isCurrent ? 'Active Target' : 'Pending'}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-gray-600 pl-7 leading-normal">
+                        {stg.taskPrompt}
+                      </p>
+
+                      <div className="mt-2 pl-7 flex items-center gap-2 text-[10px]">
+                        <span className="text-gray-500 font-medium">Required Part:</span>
+                        <span className="font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-gray-200">
+                          {reqItem?.name || stg.requiredItem}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-3 text-right">
+                <button
+                  type="button"
+                  onClick={() => setShowObjectivesModal(false)}
+                  className="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Return to Simulation
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

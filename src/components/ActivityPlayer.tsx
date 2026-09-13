@@ -392,9 +392,19 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
                   <button
                     id="next-question-btn"
                     onClick={handleNext}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-xs transition-all cursor-pointer active:scale-95"
+                    className={`flex items-center gap-2 px-6 py-2.5 text-white text-xs font-black rounded-lg shadow-md transition-all cursor-pointer active:scale-95 animate-in zoom-in-95 duration-150 ${
+                      selectedOption === currentItem.shuffledCorrectIndex
+                        ? 'bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-300'
+                        : 'bg-red-600 hover:bg-red-700 ring-2 ring-red-300'
+                    }`}
                   >
+                    {selectedOption === currentItem.shuffledCorrectIndex ? (
+                      <CheckCircle className="w-4 h-4 shrink-0" />
+                    ) : (
+                      <XCircle className="w-4 h-4 shrink-0" />
+                    )}
                     <span>
+                      {selectedOption === currentItem.shuffledCorrectIndex ? 'CORRECT!' : 'INCORRECT'} —{' '}
                       {currentIndex < activity.items.length - 1 ? 'NEXT QUESTION' : 'VIEW FINAL RESULTS'}
                     </span>
                     <ChevronRight className="w-4 h-4" />

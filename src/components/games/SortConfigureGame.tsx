@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight, Play } from 'lucide-react';
+import { RotateCcw, Heart, Trophy, ArrowLeft, ArrowRight, Play, AlertTriangle } from 'lucide-react';
 import { SORT_ITEMS, SortItem } from '../../data/gamesData';
 import { api } from '../../services/api';
 
@@ -32,6 +32,7 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
   const [gameState, setGameState] = useState<'IDLE' | 'PLAYING' | 'GAMEOVER' | 'VICTORY'>('IDLE');
   const [feedback, setFeedback] = useState<{ text: string; isWrong: boolean } | null>(null);
   const [redFlashActive, setRedFlashActive] = useState(false);
+  const [recentWrongMessage, setRecentWrongMessage] = useState<string | null>(null);
 
   const startTimeRef = useRef<number>(Date.now());
 
@@ -59,8 +60,10 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
       if (gameState !== 'PLAYING') return;
       if (e.key === 'ArrowLeft' || e.key === 'a') {
         setBasketPos(prev => Math.max(10, prev - 8));
+        setRecentWrongMessage(null); // Clears when user acts
       } else if (e.key === 'ArrowRight' || e.key === 'd') {
         setBasketPos(prev => Math.min(90, prev + 8));
+        setRecentWrongMessage(null); // Clears when user acts
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -86,11 +89,16 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
             if (isCorrectCategory) {
               setScore(s => s + 20);
               setFeedback({ text: `✓ +20 Caught ${prev.item.name}! (${targetCategory})`, isWrong: false });
+              setRecentWrongMessage(null);
               // Progress level or change category
               if ((score + 20) % 60 === 0) {
                 setCurrentCategoryIndex(ci => (ci + 1) % categories.length);
                 setLevel(l => l + 1);
               }
+              setTimeout(() => {
+                setFeedback(null);
+                spawnItem();
+              }, 1000);
             } else {
               setLives(l => {
                 const nextLives = l - 1;
@@ -99,12 +107,20 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
                 }
                 return nextLives;
               });
+              const errorText = `✕ WRONG CATEGORY! "${prev.item.name}" is ${prev.item.category}, NOT ${targetCategory}! (-1 Life)`;
               setFeedback({
-                text: `✕ WRONG! ${prev.item.name} belongs to [${prev.item.category}], NOT [${targetCategory}] (-1 Life)`,
+                text: errorText,
                 isWrong: true
               });
+              setRecentWrongMessage(errorText);
               setRedFlashActive(true);
-              setTimeout(() => setRedFlashActive(false), 900);
+              setTimeout(() => setRedFlashActive(false), 3000);
+
+              // Pause 3 seconds so the student has ample time to read the mistake
+              setTimeout(() => {
+                setFeedback(null);
+                spawnItem();
+              }, 3000);
             }
           } else {
             // Missed item
@@ -117,20 +133,27 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
                 }
                 return nextLives;
               });
+              const errorText = `⚠️ MISSED TARGET! "${prev.item.name}" was a valid ${targetCategory}! (-1 Life)`;
               setFeedback({
-                text: `⚠️ MISSED! ${prev.item.name} was a valid ${targetCategory}! (-1 Life)`,
+                text: errorText,
                 isWrong: true
               });
+              setRecentWrongMessage(errorText);
               setRedFlashActive(true);
-              setTimeout(() => setRedFlashActive(false), 900);
+              setTimeout(() => setRedFlashActive(false), 3000);
+
+              // Pause 3 seconds so user can notice the missed item
+              setTimeout(() => {
+                setFeedback(null);
+                spawnItem();
+              }, 3000);
+            } else {
+              // Correctly let an irrelevant item pass
+              setTimeout(() => {
+                spawnItem();
+              }, 400);
             }
           }
-
-          // Spawn next with longer readable feedback
-          setTimeout(() => {
-            setFeedback(null);
-            spawnItem();
-          }, 1100);
 
           return null;
         }
@@ -198,8 +221,12 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
         </p>
       </div>
 
-      {/* Game Stage */}
-      <div className="relative w-full h-[380px] bg-slate-900 border border-slate-700 rounded-xl overflow-hidden select-none">
+      {/* Game Stage with Red Border for Incorrect Answers */}
+      <div className={`relative w-full h-[380px] bg-slate-900 border-2 rounded-xl overflow-hidden select-none transition-all duration-300 ${
+        redFlashActive || feedback?.isWrong
+          ? 'border-red-500 ring-4 ring-red-500/50 shadow-2xl shadow-red-950/60'
+          : 'border-slate-700'
+      }`}>
         
         {/* Background Grid */}
         <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] bg-[size:16px_16px]"></div>
@@ -300,6 +327,27 @@ export const SortConfigureGame: React.FC<SortConfigureGameProps> = ({
         </div>
 
       </div>
+
+      {/* Persistent Red Feedback Banner for Incorrect Answers */}
+      {recentWrongMessage && (
+        <div
+          id="sort-configure-wrong-banner"
+          className="p-3.5 bg-red-50 border-2 border-red-500 rounded-xl text-xs text-red-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-in fade-in slide-in-from-top-2"
+        >
+          <div className="flex items-center gap-2.5 font-bold">
+            <span className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 font-black text-xs">
+              ✕
+            </span>
+            <span>{recentWrongMessage}</span>
+          </div>
+          <button
+            onClick={() => setRecentWrongMessage(null)}
+            className="self-end sm:self-auto px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-md text-[11px] shrink-0 cursor-pointer active:scale-95"
+          >
+            DISMISS
+          </button>
+        </div>
+      )}
 
       {/* On-Screen Mobile / Click Controls */}
       <div className="flex items-center justify-center gap-4 pt-2">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, Download, Play, FileText, CheckCircle2, Film, Award, Printer } from 'lucide-react';
+import { Monitor, Download, Play, FileText, CheckCircle2, Film, Award, Printer, Plus, Upload, Trash2, ExternalLink, X, Video } from 'lucide-react';
 import { LESSONS_DATA } from '../data/curriculum';
-import { LessonContent } from '../types';
+import { LessonContent, CollectionVideo } from '../types';
 import { LessonViewerModal } from './LessonViewerModal';
 import { VideoModal } from './VideoModal';
 import { AcademicPrintModal } from './AcademicPrintModal';
@@ -30,6 +30,74 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
   const [selectedLessonForVideo, setSelectedLessonForVideo] = useState<LessonContent | null>(null);
   const [selectedLessonForPrint, setSelectedLessonForPrint] = useState<LessonContent | null>(null);
   const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
+
+  // Videos collection state
+  const [videos, setVideos] = useState<CollectionVideo[]>([]);
+  const [showAddVideoModal, setShowAddVideoModal] = useState(false);
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [newVideoTopic, setNewVideoTopic] = useState(1);
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [newVideoDuration, setNewVideoDuration] = useState('10:00');
+  const [newVideoInstructor, setNewVideoInstructor] = useState('CSSENTIAL Faculty Lead');
+  const [newVideoDesc, setNewVideoDesc] = useState('');
+
+  const loadVideos = async () => {
+    try {
+      const vids = await api.getCollectionVideos();
+      setVideos(vids);
+    } catch (err) {
+      console.error('Failed to load collection videos:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadVideos();
+  }, []);
+
+  const handleSaveNewVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVideoTitle.trim() || !newVideoUrl.trim()) return;
+
+    let cleanUrl = newVideoUrl.trim();
+    // Auto convert standard YouTube watch URL to embed URL if needed
+    if (cleanUrl.includes('youtube.com/watch?v=')) {
+      const vidId = cleanUrl.split('watch?v=')[1]?.split('&')[0];
+      if (vidId) cleanUrl = `https://www.youtube-nocookie.com/embed/${vidId}`;
+    } else if (cleanUrl.includes('youtu.be/')) {
+      const vidId = cleanUrl.split('youtu.be/')[1]?.split('?')[0];
+      if (vidId) cleanUrl = `https://www.youtube-nocookie.com/embed/${vidId}`;
+    }
+
+    try {
+      const saved = await api.saveCollectionVideo({
+        title: newVideoTitle.trim(),
+        topicNumber: Number(newVideoTopic),
+        url: cleanUrl,
+        duration: newVideoDuration.trim() || '10:00',
+        instructor: newVideoInstructor.trim() || 'CSSENTIAL Faculty Lead',
+        description: newVideoDesc.trim() || 'Laboratory practicum video demonstration.',
+        thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80'
+      });
+
+      setVideos(prev => [saved, ...prev]);
+      setShowAddVideoModal(false);
+      setNewVideoTitle('');
+      setNewVideoUrl('');
+      setNewVideoDesc('');
+      setDownloadNotice(`Added new video demonstration: "${saved.title}"`);
+      setTimeout(() => setDownloadNotice(null), 3500);
+    } catch (err) {
+      console.error('Error saving video:', err);
+    }
+  };
+
+  const handleDeleteVideo = async (vidId: string) => {
+    if (!confirm('Are you sure you want to remove this video material?')) return;
+    await api.deleteCollectionVideo(vidId);
+    setVideos(prev => prev.filter(v => v.id !== vidId));
+    setDownloadNotice('Video removed from collection.');
+    setTimeout(() => setDownloadNotice(null), 3000);
+  };
 
   // Auto-open or focus topic when navigated with initialTopicId
   useEffect(() => {
@@ -225,6 +293,220 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* SECTION 2: INSTRUCTIONAL VIDEO MATERIALS & LABORATORY RECORDINGS */}
+      <div className="space-y-4 pt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-black uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
+              <Film className="w-3.5 h-3.5" />
+              Instructional Video Demonstrations
+            </span>
+            <h3 className="text-lg sm:text-xl font-black text-gray-950">
+              Laboratory Practicum Video Collection
+            </h3>
+            <p className="text-xs text-gray-500">
+              Technical demonstrations, hardware diagnostics, and step-by-step physical assembly videos.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowAddVideoModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Upload / Add Video Material</span>
+          </button>
+        </div>
+
+        {/* Video Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {videos.map((vid) => (
+            <div
+              key={vid.id}
+              className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col group"
+            >
+              {/* Thumbnail / Video Preview Header */}
+              <div className="relative aspect-video bg-slate-950 overflow-hidden">
+                <img
+                  src={vid.thumbnail || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80'}
+                  alt={vid.title}
+                  className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-300"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex items-end p-3 justify-between">
+                  <span className="px-2 py-0.5 bg-blue-600/90 text-white rounded-md text-[10px] font-black uppercase tracking-wider">
+                    Topic {vid.topicNumber}
+                  </span>
+                  <span className="px-2 py-0.5 bg-black/70 text-white rounded-md text-[10px] font-mono font-bold">
+                    {vid.duration}
+                  </span>
+                </div>
+              </div>
+
+              {/* Video Info */}
+              <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                <div className="space-y-1.5">
+                  <h4 className="font-bold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                    {vid.title}
+                  </h4>
+                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                    {vid.description}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-[11px] text-gray-400 truncate max-w-[150px]">
+                    {vid.instructor || 'Faculty Lead'}
+                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => {
+                        const matchingLesson = LESSONS_DATA.find(l => l.topicNumber === vid.topicNumber) || LESSONS_DATA[0];
+                        setSelectedLessonForVideo({
+                          ...matchingLesson,
+                          title: vid.title,
+                          videoUrl: vid.url
+                        });
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <Play className="w-3 h-3 fill-white" />
+                      <span>Watch</span>
+                    </button>
+                    {vid.id.startsWith('vid_') && (
+                      <button
+                        onClick={() => handleDeleteVideo(vid.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Delete video"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Upload / Add Video Material Modal */}
+      {showAddVideoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 my-auto animate-in zoom-in-95 duration-200">
+            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="text-base font-black flex items-center gap-2">
+                <Upload className="w-5 h-5 text-blue-400" />
+                <span>Upload / Embed Video Material</span>
+              </h3>
+              <button
+                onClick={() => setShowAddVideoModal(false)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNewVideo} className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">Video Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={newVideoTitle}
+                  onChange={(e) => setNewVideoTitle(e.target.value)}
+                  placeholder="e.g., Motherboard Power Connections & Diagnostics"
+                  className="w-full px-3.5 py-2 border rounded-xl text-xs font-semibold focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Aligned Curriculum Topic</label>
+                  <select
+                    value={newVideoTopic}
+                    onChange={(e) => setNewVideoTopic(Number(e.target.value))}
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-semibold"
+                  >
+                    <option value={1}>Lesson 1: Planning & Prep</option>
+                    <option value={2}>Lesson 2: Hardware Assembly</option>
+                    <option value={3}>Lesson 3: OS & Drivers</option>
+                    <option value={4}>Lesson 4: Applications & Security</option>
+                    <option value={5}>Lesson 5: System Testing</option>
+                    <option value={6}>Lesson 6: Troubleshooting</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Estimated Duration</label>
+                  <input
+                    type="text"
+                    value={newVideoDuration}
+                    onChange={(e) => setNewVideoDuration(e.target.value)}
+                    placeholder="e.g. 14:20"
+                    className="w-full px-3.5 py-2 border rounded-xl text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">Video Link / Embed URL *</label>
+                <input
+                  type="url"
+                  required
+                  value={newVideoUrl}
+                  onChange={(e) => setNewVideoUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=... or MP4 URL"
+                  className="w-full px-3.5 py-2 border rounded-xl text-xs font-mono focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-[10px] text-gray-500">
+                  YouTube links, Vimeo, or direct MP4 URLs will be embedded securely.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">Instructor / Author Name</label>
+                <input
+                  type="text"
+                  value={newVideoInstructor}
+                  onChange={(e) => setNewVideoInstructor(e.target.value)}
+                  placeholder="e.g. Engr. Jhon Wesly Buban"
+                  className="w-full px-3.5 py-2 border rounded-xl text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">Description</label>
+                <textarea
+                  rows={2}
+                  value={newVideoDesc}
+                  onChange={(e) => setNewVideoDesc(e.target.value)}
+                  placeholder="Key concepts, lab safety guidelines, and equipment demonstrated in this video."
+                  className="w-full px-3.5 py-2 border rounded-xl text-xs"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowAddVideoModal(false)}
+                  className="px-4 py-2 border rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs"
+                >
+                  Save & Embed Video
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <LessonViewerModal
