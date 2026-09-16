@@ -29,6 +29,7 @@ export interface LocalDatabaseSchema {
   ai_usage?: any[];
   downloads: DownloadRecord[];
   activity_logs: any[];
+  users?: any[];
 }
 
 const LOCAL_DB_KEY = 'cssential_local_db_v2';
@@ -213,6 +214,170 @@ export const api = {
     } catch {
       // Ignore
     }
+  },
+
+  async registerUser(params: {
+    role: 'STUDENT' | 'INSTRUCTOR';
+    name: string;
+    tup_id?: string;
+    department?: string;
+    password: string;
+  }): Promise<StudentProfile> {
+    const cleanRole = params.role === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
+    const cleanName = params.name.trim();
+    const cleanPassword = params.password.trim();
+    const cleanTupId = params.tup_id?.trim().toUpperCase();
+    const cleanDept = params.department?.trim();
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: cleanRole,
+          name: cleanName,
+          tup_id: cleanTupId,
+          department: cleanDept,
+          password: cleanPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+      if (data.user) {
+        this.saveStudent(data.user);
+        return data.user;
+      }
+    } catch (err: any) {
+      if (err.message && !err.message.includes('fetch')) {
+        throw err;
+      }
+    }
+
+    // Local / Offline fallback
+    const db = loadLocalDatabase();
+    db.users = db.users || [];
+
+    const now = new Date().toISOString();
+    if (cleanRole === 'STUDENT') {
+      const studentId = cleanTupId || `TUPM-${Date.now().toString().slice(-6)}`;
+      const existing = db.users.find((u: any) => u.role === 'STUDENT' && u.tup_id === studentId);
+      if (existing) {
+        throw new Error(`An account with TUP ID "${studentId}" already exists. Please log in.`);
+      }
+
+      const profile: StudentProfile = {
+        student_id: studentId,
+        name: cleanName,
+        role: 'STUDENT',
+        tup_id: studentId,
+        year_section: 'TUP Student',
+        password: cleanPassword,
+        created_at: now,
+        last_active: now
+      };
+      db.users.push(profile);
+      db.students.unshift(profile);
+      saveLocalDatabase(db);
+      this.saveStudent(profile);
+      return profile;
+    } else {
+      const instructorId = `INST-${Date.now().toString().slice(-6)}`;
+      const profile: StudentProfile = {
+        student_id: instructorId,
+        name: cleanName,
+        role: 'INSTRUCTOR',
+        department: cleanDept || 'General Faculty',
+        year_section: cleanDept || 'General Faculty',
+        password: cleanPassword,
+        created_at: now,
+        last_active: now
+      };
+      db.users.push(profile);
+      saveLocalDatabase(db);
+      this.saveStudent(profile);
+      return profile;
+    }
+  },
+
+  async loginUser(params: {
+    role: 'STUDENT' | 'INSTRUCTOR';
+    identifier: string;
+    password: string;
+  }): Promise<StudentProfile> {
+    const cleanRole = params.role === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
+    const cleanId = params.identifier.trim();
+    const cleanPassword = params.password.trim();
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: cleanRole,
+          identifier: cleanId,
+          password: cleanPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+      if (data.user) {
+        this.saveStudent(data.user);
+        return data.user;
+      }
+    } catch (err: any) {
+      if (err.message && !err.message.includes('fetch')) {
+        throw err;
+      }
+    }
+
+    // Local / Offline fallback
+    const db = loadLocalDatabase();
+    db.users = db.users || [];
+
+    let user: any;
+    if (cleanRole === 'STUDENT') {
+      user = db.users.find((u: any) =>
+        u.role === 'STUDENT' &&
+        ((u.tup_id && u.tup_id.toUpperCase() === cleanId.toUpperCase()) ||
+         (u.student_id && u.student_id.toUpperCase() === cleanId.toUpperCase()) ||
+         (u.name && u.name.toLowerCase() === cleanId.toLowerCase()))
+      );
+      if (!user) {
+        const std = db.students.find((s: any) =>
+          (s.tup_id && s.tup_id.toUpperCase() === cleanId.toUpperCase()) ||
+          (s.student_id && s.student_id.toUpperCase() === cleanId.toUpperCase()) ||
+          (s.name && s.name.toLowerCase() === cleanId.toLowerCase())
+        );
+        if (std) user = std;
+      }
+    } else {
+      user = db.users.find((u: any) =>
+        u.role === 'INSTRUCTOR' &&
+        ((u.name && u.name.toLowerCase() === cleanId.toLowerCase()) ||
+         (u.student_id && u.student_id === cleanId))
+      );
+    }
+
+    if (!user) {
+      throw new Error(
+        cleanRole === 'STUDENT'
+          ? `No student account found for "${cleanId}". Please check your TUP ID or sign up.`
+          : `No instructor account found for "${cleanId}". Please check your name or sign up.`
+      );
+    }
+
+    if (user.password && user.password !== cleanPassword) {
+      throw new Error('Incorrect password. Please try again.');
+    }
+
+    user.last_active = new Date().toISOString();
+    saveLocalDatabase(db);
+    this.saveStudent(user);
+    return user;
   },
 
   async registerStudent(name: string, year_section: string = 'General Section'): Promise<StudentProfile> {
@@ -1243,54 +1408,38 @@ export const api = {
   // COLLECTION VIDEOS
   // ==========================================
   async getCollectionVideos(): Promise<CollectionVideo[]> {
+    const filterOutRemovedTopics = (list: any[]): CollectionVideo[] => {
+      return (list || []).filter(v => 
+        !['vid-1', 'vid-2', 'vid-3'].includes(v.id) &&
+        ![2, 4, 6].includes(Number(v.topicNumber))
+      );
+    };
+
     try {
       const res = await fetch('/api/videos');
       if (res.ok) {
         const vids = await res.json();
-        if (Array.isArray(vids) && vids.length > 0) {
-          localStorage.setItem('cssential_cached_videos', JSON.stringify(vids));
-          return vids;
+        if (Array.isArray(vids)) {
+          const cleaned = filterOutRemovedTopics(vids);
+          localStorage.setItem('cssential_cached_videos', JSON.stringify(cleaned));
+          return cleaned;
         }
       }
     } catch {}
 
     try {
       const cached = localStorage.getItem('cssential_cached_videos');
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          const cleaned = filterOutRemovedTopics(parsed);
+          localStorage.setItem('cssential_cached_videos', JSON.stringify(cleaned));
+          return cleaned;
+        }
+      }
     } catch {}
 
-    return [
-      {
-        id: 'vid-1',
-        title: 'PC Hardware Assembly & Component Installation Masterclass',
-        description: 'Comprehensive step-by-step physical demonstration of socket alignment, dual-channel RAM insertion, NVMe mounting, and thermal paste cross-pattern spread.',
-        topicNumber: 2,
-        duration: '14:20',
-        thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
-        url: 'https://www.youtube-nocookie.com/embed/BL4DCEp7blY',
-        instructor: 'CSSENTIAL Faculty Lead'
-      },
-      {
-        id: 'vid-2',
-        title: 'UEFI/BIOS Setup, XMP Profiles & Secure Boot Configuration',
-        description: 'Walkthrough of entering UEFI setup, enabling Intel XMP / AMD EXPO memory frequency profiles, AHCI SATA mode, and configuring boot drive priority.',
-        topicNumber: 4,
-        duration: '11:45',
-        thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80',
-        url: 'https://www.youtube-nocookie.com/embed/4pX1aM3JvQ4',
-        instructor: 'CSSENTIAL Faculty Lead'
-      },
-      {
-        id: 'vid-3',
-        title: 'CompTIA Systematic Diagnostics & Hardware Black-Screen Troubleshooting',
-        description: 'Diagnosing no-POST conditions, interpreting EZ Debug LEDs, testing PSU rails, and clearing CMOS safely using the 6-step CompTIA model.',
-        topicNumber: 6,
-        duration: '16:05',
-        thumbnail: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=800&auto=format&fit=crop&q=80',
-        url: 'https://www.youtube-nocookie.com/embed/x_oR8MvL5g4',
-        instructor: 'CSSENTIAL Faculty Lead'
-      }
-    ];
+    return [];
   },
 
   async saveCollectionVideo(video: Partial<CollectionVideo>): Promise<CollectionVideo> {
@@ -1520,8 +1669,8 @@ export const DEFAULT_RESEARCHERS: ResearcherProfile[] = [
     avatarUrl: ''
   },
   {
-    id: 'calaputpu',
-    name: 'Juliana Marizh B. Calaputpu',
+    id: 'calapputu',
+    name: 'Juliana Marizh B. Calapputu',
     role: 'Researcher',
     tag: 'Curriculum & Instructional Design',
     bio: 'Spearheaded curriculum alignment, educational lesson structuring, and instructional material synthesis for computer system installation and configuration.',
@@ -1595,6 +1744,6 @@ export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = [
     badgeColor: 'blue',
     date: '2026-03-05',
     content: 'All 6 competency units now feature full 16:9 interactive visual presentations with one-click offline HTML downloads and official academic laboratory manuals in PDF and Word (.docx) formats.',
-    author: 'Juliana Marizh B. Calaputpu'
+    author: 'Juliana Marizh B. Calapputu'
   }
 ];

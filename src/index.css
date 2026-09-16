@@ -210,14 +210,46 @@ footer,
   border-top: 2px solid var(--app-border) !important;
 }
 
-/* Media Print Styling for Academic Laboratory Handouts */
+/* Media Print Styling for Academic Laboratory Handouts & Landscape Certificates */
 @media print {
+  @page {
+    size: landscape;
+    margin: 6mm;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
   body * {
     visibility: hidden;
   }
   #academic-document-print-area,
-  #academic-document-print-area * {
+  #academic-document-print-area *,
+  #printable-certificate,
+  #printable-certificate * {
     visibility: visible;
+  }
+  #printable-certificate {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 10mm 14mm !important;
+    background: #fffdf8 !important;
+    border: 6px double #92400e !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    z-index: 99999;
   }
   #academic-document-print-area {
     position: absolute;

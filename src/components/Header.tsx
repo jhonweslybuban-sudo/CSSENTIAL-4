@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, ArrowLeft, User, ShieldCheck, Palette, Award, MessageSquare } from 'lucide-react';
+import { Monitor, ArrowLeft, User, ShieldCheck, Palette, Award, GraduationCap } from 'lucide-react';
 import { PageView, BrandingSettings } from '../types';
 import { api } from '../services/api';
 
@@ -11,10 +11,10 @@ interface HeaderProps {
   studentName?: string;
   onOpenResearcher?: () => void;
   onOpenDashboard?: () => void;
+  onOpenTeacherCMS?: (tab?: 'ACTIVITIES' | 'MATERIALS') => void;
   onOpenThemeModal?: () => void;
   onOpenStudentModal?: () => void;
   onOpenCertificate?: () => void;
-  onOpenChat?: () => void;
   sessionTimeFormatted?: string;
 }
 
@@ -24,10 +24,10 @@ export const Header: React.FC<HeaderProps> = ({
   studentName,
   onOpenResearcher,
   onOpenDashboard,
+  onOpenTeacherCMS,
   onOpenThemeModal,
   onOpenStudentModal,
   onOpenCertificate,
-  onOpenChat,
   sessionTimeFormatted = '00:00'
 }) => {
   const [branding, setBranding] = useState<BrandingSettings>(() => api.getBranding());
@@ -100,38 +100,27 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Student Session Info / Switcher */}
+            {/* User Session Info / Switcher */}
             {studentName ? (
               <button
+                id="header-user-profile-btn"
                 onClick={onOpenStudentModal}
-                title="Click to view or switch student profile"
+                title="Click to view or switch account"
                 className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-50/60 border border-blue-200/80 rounded-lg text-xs text-gray-700 hover:bg-blue-100/60 transition-colors cursor-pointer"
               >
                 <User className="w-3.5 h-3.5 text-blue-600" />
-                <span className="font-bold text-gray-900 max-w-[120px] truncate">{studentName}</span>
+                <span className="font-bold text-gray-900 max-w-[130px] truncate">{studentName}</span>
                 <span className="text-gray-300">|</span>
                 <span className="text-gray-500 font-mono">{sessionTimeFormatted}</span>
               </button>
             ) : (
               <button
+                id="header-login-signup-btn"
                 onClick={onOpenStudentModal}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg cursor-pointer"
               >
                 <User className="w-4 h-4" />
-                <span>Student Login</span>
-              </button>
-            )}
-
-            {/* Community Discussion Chat */}
-            {onOpenChat && (
-              <button
-                id="header-chat-btn"
-                onClick={onOpenChat}
-                title="Student & Faculty Discussion Chatroom"
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
-              >
-                <MessageSquare className="w-4 h-4 text-indigo-600" />
-                <span className="hidden md:inline">Discussion</span>
+                <span>Log In / Sign Up</span>
               </button>
             )}
 

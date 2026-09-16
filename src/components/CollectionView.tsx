@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, Download, Play, FileText, CheckCircle2, Film, Award, Printer, Plus, Upload, Trash2, ExternalLink, X, Video } from 'lucide-react';
+import { Monitor, Download, Play, FileText, CheckCircle2, Film, Award, Printer, Plus, Upload, Trash2, ExternalLink, X, Video, GraduationCap } from 'lucide-react';
 import { LESSONS_DATA } from '../data/curriculum';
-import { LessonContent, CollectionVideo } from '../types';
+import { LessonContent, CollectionVideo, TeacherMaterial } from '../types';
 import { LessonViewerModal } from './LessonViewerModal';
 import { VideoModal } from './VideoModal';
 import { AcademicPrintModal } from './AcademicPrintModal';
@@ -16,6 +16,7 @@ interface CollectionViewProps {
   yearSection?: string;
   initialTopicId?: string | null;
   onClearInitialTopic?: () => void;
+  onOpenTeacherCMS?: (tab?: 'ACTIVITIES' | 'MATERIALS') => void;
 }
 
 export const CollectionView: React.FC<CollectionViewProps> = ({
@@ -24,7 +25,8 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
   studentName = 'Registered Student',
   yearSection = 'General Section',
   initialTopicId,
-  onClearInitialTopic
+  onClearInitialTopic,
+  onOpenTeacherCMS
 }) => {
   const [selectedLessonForPresentation, setSelectedLessonForPresentation] = useState<LessonContent | null>(null);
   const [selectedLessonForVideo, setSelectedLessonForVideo] = useState<LessonContent | null>(null);
@@ -41,17 +43,42 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
   const [newVideoInstructor, setNewVideoInstructor] = useState('CSSENTIAL Faculty Lead');
   const [newVideoDesc, setNewVideoDesc] = useState('');
 
+  // Teacher authored materials state
+  const [teacherMaterials, setTeacherMaterials] = useState<TeacherMaterial[]>([]);
+  const [selectedMaterialForView, setSelectedMaterialForView] = useState<TeacherMaterial | null>(null);
+  const [showAddMaterialModal, setShowAddMaterialModal] = useState(false);
+  const [newMatTitle, setNewMatTitle] = useState('');
+  const [newMatTopic, setNewMatTopic] = useState(1);
+  const [newMatDesc, setNewMatDesc] = useState('');
+  const [newMatContent, setNewMatContent] = useState('');
+  const [newMatFileUrl, setNewMatFileUrl] = useState('');
+  const [newMatInstructor, setNewMatInstructor] = useState('CSSENTIAL Faculty Lead');
+
   const loadVideos = async () => {
     try {
       const vids = await api.getCollectionVideos();
-      setVideos(vids);
+      const filtered = (vids || []).filter(v => 
+        !['vid-1', 'vid-2', 'vid-3'].includes(v.id) &&
+        ![2, 4, 6].includes(Number(v.topicNumber))
+      );
+      setVideos(filtered);
     } catch (err) {
       console.error('Failed to load collection videos:', err);
     }
   };
 
+  const loadTeacherMaterials = async () => {
+    try {
+      const mats = await api.getTeacherMaterials();
+      setTeacherMaterials(mats.filter(m => m.is_published));
+    } catch (err) {
+      console.error('Failed to load teacher materials:', err);
+    }
+  };
+
   useEffect(() => {
     loadVideos();
+    loadTeacherMaterials();
   }, []);
 
   const handleSaveNewVideo = async (e: React.FormEvent) => {
@@ -96,6 +123,40 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
     await api.deleteCollectionVideo(vidId);
     setVideos(prev => prev.filter(v => v.id !== vidId));
     setDownloadNotice('Video removed from collection.');
+    setTimeout(() => setDownloadNotice(null), 3000);
+  };
+
+  const handleSaveNewMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMatTitle.trim()) return;
+    try {
+      const saved = await api.saveTeacherMaterial({
+        title: newMatTitle.trim(),
+        topicNumber: Number(newMatTopic),
+        description: newMatDesc.trim() || 'Curriculum handout and laboratory reference documentation.',
+        content: newMatContent.trim(),
+        file_url: newMatFileUrl.trim() || undefined,
+        instructor: newMatInstructor.trim() || 'CSSENTIAL Faculty Lead',
+        is_published: true
+      });
+      setTeacherMaterials(prev => [saved, ...prev]);
+      setShowAddMaterialModal(false);
+      setNewMatTitle('');
+      setNewMatDesc('');
+      setNewMatContent('');
+      setNewMatFileUrl('');
+      setDownloadNotice(`Published curriculum material: "${saved.title}"`);
+      setTimeout(() => setDownloadNotice(null), 3500);
+    } catch (err) {
+      console.error('Error saving curriculum material:', err);
+    }
+  };
+
+  const handleDeleteMaterial = async (matId: string) => {
+    if (!confirm('Are you sure you want to delete this curriculum handout?')) return;
+    await api.deleteTeacherMaterial(matId);
+    setTeacherMaterials(prev => prev.filter(m => m.id !== matId));
+    setDownloadNotice('Curriculum handout removed.');
     setTimeout(() => setDownloadNotice(null), 3000);
   };
 
@@ -164,7 +225,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
     <div className="space-y-6 animate-in fade-in duration-300">
       
       {/* Figure 3 Title & Subheading */}
-      <div className="text-center max-w-3xl mx-auto space-y-1">
+      <div className="text-center max-w-3xl mx-auto space-y-2">
         <span className="text-xs font-bold text-blue-700 uppercase tracking-widest block">
           CURRICULUM COLLECTION
         </span>
@@ -294,7 +355,94 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
         </div>
       </div>
 
-      {/* SECTION 2: INSTRUCTIONAL VIDEO MATERIALS & LABORATORY RECORDINGS */}
+      {/* SECTION 2: INSTRUCTOR-AUTHORED COURSE MATERIALS & HANDOUTS */}
+      <div className="space-y-4 pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-indigo-50/40 p-5 rounded-2xl border border-indigo-200/80 shadow-xs">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-black uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5" />
+              Faculty Published Handouts &amp; Curriculum Guides
+            </span>
+            <h3 className="text-lg sm:text-xl font-black text-indigo-950">
+              Instructor Reference Materials &amp; Notes
+            </h3>
+            <p className="text-xs text-indigo-900/70">
+              Supplementary study handouts, laboratory protocols, and safety checklists published by your professors.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <span className="text-xs font-black text-indigo-800 bg-white border border-indigo-200 px-3 py-1 rounded-full shadow-xs">
+              {teacherMaterials.length} {teacherMaterials.length === 1 ? 'Handout' : 'Handouts'} Available
+            </span>
+          </div>
+        </div>
+
+        {teacherMaterials.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-dashed border-indigo-200 p-8 text-center space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-gray-800">No Supplementary Handouts Published Yet</h4>
+              <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
+                Supplementary study handouts, lesson notes, and laboratory protocols published by your instructors will be displayed here for download.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teacherMaterials.map((mat) => (
+              <div
+                key={mat.id}
+                className="bg-white rounded-xl border border-indigo-100 hover:border-indigo-300 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200">
+                      Topic {mat.topicNumber || 1}
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-500 truncate max-w-[150px]">
+                      By {mat.instructor || 'Faculty'}
+                    </span>
+                  </div>
+
+                  <h4 className="text-sm font-black text-gray-900 line-clamp-2">
+                    {mat.title}
+                  </h4>
+
+                  <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">
+                    {mat.description}
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-gray-400">
+                    {mat.created_at ? new Date(mat.created_at).toLocaleDateString() : 'Active'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDeleteMaterial(mat.id)}
+                      className="p-1.5 text-gray-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Delete material"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedMaterialForView(mat)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-700 text-indigo-700 hover:text-white font-bold text-xs rounded-lg transition-all cursor-pointer shadow-xs active:scale-95"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>View Handout</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 3: INSTRUCTIONAL VIDEO MATERIALS & LABORATORY RECORDINGS */}
       <div className="space-y-4 pt-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
           <div className="space-y-0.5">
@@ -320,62 +468,68 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
         </div>
 
         {/* Video Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {videos.map((vid) => (
-            <div
-              key={vid.id}
-              className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col group"
-            >
-              {/* Thumbnail / Video Preview Header */}
-              <div className="relative aspect-video bg-slate-950 overflow-hidden">
-                <img
-                  src={vid.thumbnail || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80'}
-                  alt={vid.title}
-                  className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-300"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex items-end p-3 justify-between">
-                  <span className="px-2 py-0.5 bg-blue-600/90 text-white rounded-md text-[10px] font-black uppercase tracking-wider">
-                    Topic {vid.topicNumber}
-                  </span>
-                  <span className="px-2 py-0.5 bg-black/70 text-white rounded-md text-[10px] font-mono font-bold">
-                    {vid.duration}
-                  </span>
-                </div>
-              </div>
-
-              {/* Video Info */}
-              <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                <div className="space-y-1.5">
-                  <h4 className="font-bold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-700 transition-colors">
-                    {vid.title}
-                  </h4>
-                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                    {vid.description}
-                  </p>
+        {videos.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-8 sm:p-12 text-center shadow-xs">
+            <Film className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm font-bold text-gray-700">No videos in the collection yet</p>
+            <p className="text-xs text-gray-500 mt-1">Click "Upload / Add Video Material" above to embed or upload technical demonstration videos.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {videos.map((vid) => (
+              <div
+                key={vid.id}
+                className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col group"
+              >
+                {/* Thumbnail / Video Preview Header */}
+                <div className="relative aspect-video bg-slate-950 overflow-hidden">
+                  <img
+                    src={vid.thumbnail || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80'}
+                    alt={vid.title}
+                    className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-300"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex items-end p-3 justify-between">
+                    <span className="px-2 py-0.5 bg-blue-600/90 text-white rounded-md text-[10px] font-black uppercase tracking-wider">
+                      Topic {vid.topicNumber}
+                    </span>
+                    <span className="px-2 py-0.5 bg-black/70 text-white rounded-md text-[10px] font-mono font-bold">
+                      {vid.duration}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-[11px] text-gray-400 truncate max-w-[150px]">
-                    {vid.instructor || 'Faculty Lead'}
-                  </span>
+                {/* Video Info */}
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                  <div className="space-y-1.5">
+                    <h4 className="font-bold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                      {vid.title}
+                    </h4>
+                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                      {vid.description}
+                    </p>
+                  </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => {
-                        const matchingLesson = LESSONS_DATA.find(l => l.topicNumber === vid.topicNumber) || LESSONS_DATA[0];
-                        setSelectedLessonForVideo({
-                          ...matchingLesson,
-                          title: vid.title,
-                          videoUrl: vid.url
-                        });
-                      }}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      <Play className="w-3 h-3 fill-white" />
-                      <span>Watch</span>
-                    </button>
-                    {vid.id.startsWith('vid_') && (
+                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-[11px] text-gray-400 truncate max-w-[150px]">
+                      {vid.instructor || 'Faculty Lead'}
+                    </span>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          const matchingLesson = LESSONS_DATA.find(l => l.topicNumber === vid.topicNumber) || LESSONS_DATA[0];
+                          setSelectedLessonForVideo({
+                            ...matchingLesson,
+                            title: vid.title,
+                            videoUrl: vid.url
+                          });
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        <Play className="w-3 h-3 fill-white" />
+                        <span>Watch</span>
+                      </button>
                       <button
                         onClick={() => handleDeleteVideo(vid.id)}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
@@ -383,13 +537,13 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Upload / Add Video Material Modal */}
@@ -534,6 +688,200 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
         onClose={() => setSelectedLessonForPrint(null)}
         onRecordDownload={handleRecordPdfDownload}
       />
+
+      {/* Instructor Material Viewer Modal */}
+      {selectedMaterialForView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 my-auto animate-in zoom-in-95 duration-200">
+            <div className="bg-indigo-900 text-white px-6 py-4 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300">
+                  Topic {selectedMaterialForView.topicNumber || 1} • Faculty Handout
+                </span>
+                <h3 className="text-base font-black">
+                  {selectedMaterialForView.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedMaterialForView(null)}
+                className="text-indigo-200 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="flex items-center justify-between text-xs text-gray-500 border-b pb-3">
+                <span>Instructor: <strong className="text-gray-900">{selectedMaterialForView.instructor || 'Faculty'}</strong></span>
+                <span>Published: {selectedMaterialForView.created_at ? new Date(selectedMaterialForView.created_at).toLocaleDateString() : 'Active'}</span>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-xs font-black uppercase tracking-wider text-gray-500">Summary</h4>
+                <p className="text-xs text-gray-700 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                  {selectedMaterialForView.description}
+                </p>
+              </div>
+
+              {selectedMaterialForView.content && (
+                <div className="space-y-2 pt-2">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-500">Curriculum Handout Content</h4>
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-800 whitespace-pre-wrap leading-relaxed font-mono">
+                    {selectedMaterialForView.content}
+                  </div>
+                </div>
+              )}
+
+              {selectedMaterialForView.file_url && (
+                <div className="pt-2">
+                  <a
+                    href={selectedMaterialForView.file_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-700 text-white font-bold text-xs rounded-xl hover:bg-indigo-800 transition-colors"
+                  >
+                    <span>Open Attached File / External Reference</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <button
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg text-xs font-bold cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5 text-gray-500" />
+                <span>Print Handout</span>
+              </button>
+              <button
+                onClick={() => setSelectedMaterialForView(null)}
+                className="px-4 py-1.5 bg-gray-800 text-white hover:bg-gray-900 rounded-lg text-xs font-bold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Author / Upload Curriculum Material Modal */}
+      {showAddMaterialModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 my-auto animate-in zoom-in-95 duration-200">
+            <div className="bg-indigo-900 text-white px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-indigo-800 rounded-lg text-indigo-200">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black">Author Curriculum Material</h3>
+                  <p className="text-xs text-indigo-200">Publish supplementary handouts, notes, or laboratory protocols</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddMaterialModal(false)}
+                className="p-1 text-indigo-200 hover:text-white rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNewMaterial} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Handout / Document Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={newMatTitle}
+                  onChange={(e) => setNewMatTitle(e.target.value)}
+                  placeholder="e.g., Laboratory Guide: Static Discharge & ESD Wrist Strap Protocol"
+                  className="w-full px-3.5 py-2.5 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-gray-700">Target Curriculum Topic</label>
+                  <select
+                    value={newMatTopic}
+                    onChange={(e) => setNewMatTopic(Number(e.target.value))}
+                    className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {LESSONS_DATA.map((l) => (
+                      <option key={l.topicNumber} value={l.topicNumber}>
+                        Topic {l.topicNumber}: {l.title.slice(0, 30)}...
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-gray-700">Instructor Attribution</label>
+                  <input
+                    type="text"
+                    value={newMatInstructor}
+                    onChange={(e) => setNewMatInstructor(e.target.value)}
+                    placeholder="e.g. Prof. Jhon Wesly Buban"
+                    className="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Summary / Learning Objectives *</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={newMatDesc}
+                  onChange={(e) => setNewMatDesc(e.target.value)}
+                  placeholder="Brief overview of what students will learn from this supplementary material..."
+                  className="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">Handout / Document Full Text Content</label>
+                <textarea
+                  rows={6}
+                  value={newMatContent}
+                  onChange={(e) => setNewMatContent(e.target.value)}
+                  placeholder="Paste or write detailed curriculum notes, step-by-step lab procedures, safety checklists, or study notes..."
+                  className="w-full px-3 py-2 border rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-gray-700">External Document URL or PDF Link (Optional)</label>
+                <input
+                  type="url"
+                  value={newMatFileUrl}
+                  onChange={(e) => setNewMatFileUrl(e.target.value)}
+                  placeholder="https://drive.google.com/... or https://.../handout.pdf"
+                  className="w-full px-3.5 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMaterialModal(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs active:scale-95"
+                >
+                  Publish Material to Collection
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

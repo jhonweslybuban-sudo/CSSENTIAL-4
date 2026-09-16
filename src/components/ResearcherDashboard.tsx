@@ -745,7 +745,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             { id: 'QUIZZES', label: `Quizzes (${stats?.quizResults.length || 0})` },
             { id: 'GAMES', label: `Games Telemetry (${stats?.gameResults.length || 0})` },
             { id: 'LOGS', label: `Student Actions Log (${stats?.activityLogs?.length || 0})` },
-            { id: 'TEACHER_CMS', label: '🎓 Teacher CMS & Activity Authoring' },
+            { id: 'TEACHER_CMS', label: '🎓 Faculty CMS: Activities & Curriculum Materials' },
             { id: 'ANNOUNCEMENTS', label: '📢 Announcements & Notices' },
             { id: 'MANAGE_BRANDING', label: '🎨 Logo & Researcher Profiles' },
             { id: 'MANAGE_VIDEOS', label: 'Demonstration Videos' },

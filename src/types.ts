@@ -1,11 +1,28 @@
+export type UserRole = 'STUDENT' | 'INSTRUCTOR';
+
 export interface StudentProfile {
   student_id: string;
   name: string;
+  role?: UserRole;
+  tup_id?: string;
+  department?: string;
+  password?: string;
   year_section: string;
   created_at: string;
   last_active?: string;
   referral_source?: string;
   is_github_referral?: boolean;
+}
+
+export interface UserAccount {
+  id: string;
+  role: UserRole;
+  name: string;
+  tup_id?: string;
+  department?: string;
+  password: string;
+  created_at: string;
+  last_active: string;
 }
 
 export interface Student {
@@ -265,6 +282,10 @@ export interface CertificateInfo {
     quizzesCount: number;
     gamesCount: number;
     pcLabPassed: boolean;
+    averageScore?: number;
+    highestScore?: number;
+    hasPassingScore?: boolean;
+    minScoreRequired?: number;
   };
   certificate_id: string;
 }

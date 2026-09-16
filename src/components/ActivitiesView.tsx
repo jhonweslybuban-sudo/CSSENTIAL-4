@@ -13,28 +13,62 @@ import {
   Play,
   ArrowRight,
   GraduationCap,
-  RotateCcw
+  RotateCcw,
+  Sparkles,
+  Layers,
+  Award,
+  Plus
 } from 'lucide-react';
 import { ACTIVITIES_DATA, ActivityDefinition } from '../data/curriculum';
 import { api } from '../services/api';
+import { TeacherActivity } from '../types';
 
 interface ActivitiesViewProps {
   onSelectActivity: (activity: ActivityDefinition) => void;
   onOpenGames: () => void;
   studentId?: string;
+  onOpenTeacherAuthoring?: () => void;
 }
 
 export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
   onSelectActivity,
   onOpenGames,
-  studentId
+  studentId,
+  onOpenTeacherAuthoring
 }) => {
   const [completedActivities, setCompletedActivities] = useState<string[]>([]);
+  const [teacherActivities, setTeacherActivities] = useState<TeacherActivity[]>([]);
 
   useEffect(() => {
     const list = api.getCompletedActivities(studentId);
     setCompletedActivities(list);
+
+    api.getTeacherActivities().then(activities => {
+      setTeacherActivities(activities.filter(a => a.is_published));
+    }).catch(err => {
+      console.error('Error loading teacher activities:', err);
+    });
   }, [studentId]);
+
+  const convertTeacherActivityToDefinition = (t: TeacherActivity): ActivityDefinition => {
+    return {
+      id: t.id,
+      name: t.title,
+      type: `${t.category} (${t.difficulty || 'All Levels'})`,
+      iconName: 'GraduationCap',
+      lessonBadge: 'Faculty Exam',
+      description: t.description || 'Custom assessment authored and published by faculty instructor.',
+      totalItems: t.questions.length,
+      items: t.questions.map((q, idx) => ({
+        title: `Question ${idx + 1}`,
+        scenario: q.question,
+        options: q.options,
+        correctIndex: q.correct,
+        explanation: q.explanation || 'Verified correct answer by faculty instructor.',
+        hint: 'Apply diagnostic and hardware configuration guidelines.'
+      }))
+    };
+  };
 
   const isActivityCompleted = (actName: string) => {
     return completedActivities.includes(actName);
@@ -79,6 +113,104 @@ export const ActivitiesView: React.FC<ActivitiesViewProps> = ({
         <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
           The activities below are the <strong className="text-gray-900 font-semibold">Lesson Activity Quizzes</strong> directly tied to each module in the curriculum. Choose a lesson activity quiz to test your diagnostic and assembly knowledge.
         </p>
+      </div>
+
+      {/* SECTION: INSTRUCTOR-AUTHORED ACTIVITIES */}
+      <div className="bg-indigo-50/40 border border-indigo-200/80 rounded-2xl p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600"></span>
+              </span>
+              <h3 className="text-base sm:text-lg font-black text-indigo-950">
+                Instructor-Authored Activities &amp; Diagnostic Exams
+              </h3>
+            </div>
+            <p className="text-xs text-indigo-900/70 mt-0.5">
+              Custom evaluation quizzes published by your professors and technical instructors.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-[11px] font-black text-indigo-800 bg-white border border-indigo-200 px-3 py-1 rounded-full shadow-xs">
+              {teacherActivities.length} {teacherActivities.length === 1 ? 'Published Exam' : 'Published Exams'}
+            </span>
+          </div>
+        </div>
+
+        {teacherActivities.length === 0 ? (
+          <div className="bg-white rounded-xl border border-dashed border-indigo-200 p-6 text-center space-y-2">
+            <GraduationCap className="w-8 h-8 text-indigo-400 mx-auto" />
+            <h4 className="text-xs font-bold text-gray-800">No Custom Diagnostic Exams Published Yet</h4>
+            <p className="text-xs text-gray-500 max-w-sm mx-auto">
+              Custom evaluation quizzes published by instructors will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teacherActivities.map((act) => {
+              const def = convertTeacherActivityToDefinition(act);
+              const completed = isActivityCompleted(def.name);
+              return (
+                <div
+                  key={act.id}
+                  className={`bg-white rounded-xl border p-4.5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${
+                    completed ? 'border-emerald-300' : 'border-indigo-200 hover:border-indigo-400'
+                  }`}
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        {act.category || 'Hardware Diagnostic'}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        act.difficulty === 'Advanced' ? 'bg-rose-100 text-rose-800' :
+                        act.difficulty === 'Intermediate' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {act.difficulty || 'All Levels'}
+                      </span>
+                    </div>
+
+                    <h4 className="text-sm font-black text-gray-900 line-clamp-2">
+                      {act.title}
+                    </h4>
+
+                    <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                      {act.description || 'Custom technical diagnostic activity created by the course professor.'}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500">
+                      {act.questions.length} Questions
+                    </span>
+                    <button
+                      onClick={() => onSelectActivity(def)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer shadow-xs active:scale-95 ${
+                        completed
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          : 'bg-indigo-700 hover:bg-indigo-800 text-white'
+                      }`}
+                    >
+                      {completed ? (
+                        <>
+                          <span>COMPLETED</span>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </>
+                      ) : (
+                        <>
+                          <span>START EXAM</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* 8 Activity Cards Grid (Lesson Quizzes) */}

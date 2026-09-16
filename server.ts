@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -43,6 +44,7 @@ interface DatabaseSchema {
   teacher_activities?: any[];
   teacher_materials?: any[];
   collection_videos?: any[];
+  users?: any[];
 }
 
 function deduplicateRecords<T extends Record<string, any>>(items: T[], idKeys: string[]): T[] {
@@ -87,38 +89,7 @@ function cleanDummyData(data: DatabaseSchema): DatabaseSchema {
   const validAiUsage = deduplicateRecords((data.ai_usage || []).filter(u => realIds.has(u.student_id)), ['usage_id', 'id']);
   const validLogs = deduplicateRecords((data.activity_logs || []).filter(l => realIds.has(l.student_id)), ['log_id', 'id']);
 
-  const defaultVideos = [
-    {
-      id: 'vid-1',
-      title: 'PC Hardware Assembly & Component Installation Masterclass',
-      description: 'Comprehensive step-by-step physical demonstration of socket alignment, dual-channel RAM insertion, NVMe mounting, and thermal paste cross-pattern spread.',
-      topicNumber: 2,
-      duration: '14:20',
-      thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
-      url: 'https://www.youtube-nocookie.com/embed/BL4DCEp7blY',
-      instructor: 'CSSENTIAL Faculty Lead'
-    },
-    {
-      id: 'vid-2',
-      title: 'UEFI/BIOS Setup, XMP Profiles & Secure Boot Configuration',
-      description: 'Walkthrough of entering UEFI setup, enabling Intel XMP / AMD EXPO memory frequency profiles, AHCI SATA mode, and configuring boot drive priority.',
-      topicNumber: 4,
-      duration: '11:45',
-      thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80',
-      url: 'https://www.youtube-nocookie.com/embed/4pX1aM3JvQ4',
-      instructor: 'CSSENTIAL Faculty Lead'
-    },
-    {
-      id: 'vid-3',
-      title: 'CompTIA Systematic Diagnostics & Hardware Black-Screen Troubleshooting',
-      description: 'Diagnosing no-POST conditions, interpreting EZ Debug LEDs, testing PSU rails, and clearing CMOS safely using the 6-step CompTIA model.',
-      topicNumber: 6,
-      duration: '16:05',
-      thumbnail: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=800&auto=format&fit=crop&q=80',
-      url: 'https://www.youtube-nocookie.com/embed/x_oR8MvL5g4',
-      instructor: 'CSSENTIAL Faculty Lead'
-    }
-  ];
+  const defaultVideos: any[] = [];
 
   return {
     students: realStudents,
@@ -135,43 +106,16 @@ function cleanDummyData(data: DatabaseSchema): DatabaseSchema {
     chat_messages: data.chat_messages || [],
     teacher_activities: data.teacher_activities || [],
     teacher_materials: data.teacher_materials || [],
-    collection_videos: (data.collection_videos && data.collection_videos.length > 0) ? data.collection_videos : defaultVideos
+    collection_videos: (data.collection_videos || []).filter(v => 
+      !['vid-1', 'vid-2', 'vid-3'].includes(v.id) && 
+      ![2, 4, 6].includes(Number(v.topicNumber))
+    ),
+    users: data.users || []
   };
 }
 
 function loadDatabase(): DatabaseSchema {
-  const defaultVideos = [
-    {
-      id: 'vid-1',
-      title: 'PC Hardware Assembly & Component Installation Masterclass',
-      description: 'Comprehensive step-by-step physical demonstration of socket alignment, dual-channel RAM insertion, NVMe mounting, and thermal paste cross-pattern spread.',
-      topicNumber: 2,
-      duration: '14:20',
-      thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
-      url: 'https://www.youtube-nocookie.com/embed/BL4DCEp7blY',
-      instructor: 'CSSENTIAL Faculty Lead'
-    },
-    {
-      id: 'vid-2',
-      title: 'UEFI/BIOS Setup, XMP Profiles & Secure Boot Configuration',
-      description: 'Walkthrough of entering UEFI setup, enabling Intel XMP / AMD EXPO memory frequency profiles, AHCI SATA mode, and configuring boot drive priority.',
-      topicNumber: 4,
-      duration: '11:45',
-      thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80',
-      url: 'https://www.youtube-nocookie.com/embed/4pX1aM3JvQ4',
-      instructor: 'CSSENTIAL Faculty Lead'
-    },
-    {
-      id: 'vid-3',
-      title: 'CompTIA Systematic Diagnostics & Hardware Black-Screen Troubleshooting',
-      description: 'Diagnosing no-POST conditions, interpreting EZ Debug LEDs, testing PSU rails, and clearing CMOS safely using the 6-step CompTIA model.',
-      topicNumber: 6,
-      duration: '16:05',
-      thumbnail: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=800&auto=format&fit=crop&q=80',
-      url: 'https://www.youtube-nocookie.com/embed/x_oR8MvL5g4',
-      instructor: 'CSSENTIAL Faculty Lead'
-    }
-  ];
+  const defaultVideos: any[] = [];
 
   if (!fs.existsSync(DB_FILE)) {
     const initialData: DatabaseSchema = {
@@ -200,7 +144,7 @@ function loadDatabase(): DatabaseSchema {
         {
           id: 'msg_welcome_2',
           student_id: 'std_welcome_2',
-          student_name: 'Juliana Calaputpu',
+          student_name: 'Juliana Calapputu',
           year_section: 'BSIT 3-A',
           text: 'Don\'t forget to practice in the Virtual PC Lab Simulator before taking the summative assessment quiz! The dual-channel RAM and standoff placement steps are essential.',
           timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
@@ -250,6 +194,180 @@ function saveDatabase(db: DatabaseSchema) {
 // REST API ROUTES
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// AUTHENTICATION: SIGN UP & LOG IN (STUDENT & INSTRUCTOR)
+app.post('/api/auth/register', (req, res) => {
+  const { role, name, tup_id, department, password } = req.body;
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'Full name is required' });
+  }
+  if (!password || typeof password !== 'string' || !password.trim()) {
+    return res.status(400).json({ error: 'Password is required' });
+  }
+
+  const cleanName = name.trim();
+  const cleanRole = role === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
+  const cleanPassword = password.trim();
+
+  const db = loadDatabase();
+  db.users = db.users || [];
+
+  const now = new Date().toISOString();
+
+  if (cleanRole === 'STUDENT') {
+    if (!tup_id || typeof tup_id !== 'string' || !tup_id.trim()) {
+      return res.status(400).json({ error: 'TUP ID is required (e.g. TUPM-21-1234)' });
+    }
+    const cleanTupId = tup_id.trim().toUpperCase();
+    const existing = db.users.find(u => u.role === 'STUDENT' && (u.tup_id === cleanTupId || u.id === cleanTupId));
+    if (existing) {
+      return res.status(400).json({ error: `An account with TUP ID "${cleanTupId}" already exists. Please log in instead.` });
+    }
+
+    const newUser = {
+      id: cleanTupId,
+      role: 'STUDENT',
+      name: cleanName,
+      tup_id: cleanTupId,
+      password: cleanPassword,
+      created_at: now,
+      last_active: now
+    };
+    db.users.push(newUser);
+
+    // Link into students array for telemetry and progress tracking
+    let student = db.students.find(s => s.student_id === cleanTupId || s.student_name.toLowerCase() === cleanName.toLowerCase());
+    if (!student) {
+      student = {
+        student_id: cleanTupId,
+        student_name: cleanName,
+        year_section: 'TUP Student',
+        created_at: now,
+        last_active: now,
+        referral_source: 'Sign Up',
+        is_github_referral: false
+      };
+      db.students.push(student);
+    } else {
+      student.student_id = cleanTupId;
+      student.student_name = cleanName;
+      student.last_active = now;
+    }
+    saveDatabase(db);
+
+    return res.json({
+      success: true,
+      user: {
+        student_id: cleanTupId,
+        name: cleanName,
+        role: 'STUDENT',
+        tup_id: cleanTupId,
+        year_section: student.year_section || 'TUP Student',
+        created_at: newUser.created_at,
+        last_active: newUser.last_active
+      }
+    });
+  } else {
+    // INSTRUCTOR REGISTRATION
+    if (!department || typeof department !== 'string' || !department.trim()) {
+      return res.status(400).json({ error: 'Department is required for instructor sign up' });
+    }
+    const cleanDept = department.trim();
+    const existing = db.users.find(u => u.role === 'INSTRUCTOR' && u.name.toLowerCase() === cleanName.toLowerCase());
+    if (existing) {
+      return res.status(400).json({ error: `An instructor account for "${cleanName}" already exists. Please log in instead.` });
+    }
+
+    const instructorId = `INST-${Date.now().toString().slice(-6)}`;
+    const newUser = {
+      id: instructorId,
+      role: 'INSTRUCTOR',
+      name: cleanName,
+      department: cleanDept,
+      password: cleanPassword,
+      created_at: now,
+      last_active: now
+    };
+    db.users.push(newUser);
+    saveDatabase(db);
+
+    return res.json({
+      success: true,
+      user: {
+        student_id: instructorId,
+        name: cleanName,
+        role: 'INSTRUCTOR',
+        department: cleanDept,
+        year_section: cleanDept,
+        created_at: newUser.created_at,
+        last_active: newUser.last_active
+      }
+    });
+  }
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const { role, identifier, password } = req.body;
+  if (!identifier || typeof identifier !== 'string' || !identifier.trim()) {
+    return res.status(400).json({ error: 'Please enter your TUP ID or Name' });
+  }
+  if (!password || typeof password !== 'string' || !password.trim()) {
+    return res.status(400).json({ error: 'Password is required' });
+  }
+
+  const cleanRole = role === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
+  const cleanId = identifier.trim();
+  const cleanPassword = password.trim();
+
+  const db = loadDatabase();
+  db.users = db.users || [];
+
+  let user;
+  if (cleanRole === 'STUDENT') {
+    user = db.users.find(u =>
+      u.role === 'STUDENT' &&
+      ((u.tup_id && u.tup_id.toUpperCase() === cleanId.toUpperCase()) ||
+       (u.id && u.id.toUpperCase() === cleanId.toUpperCase()) ||
+       (u.name && u.name.toLowerCase() === cleanId.toLowerCase()))
+    );
+  } else {
+    user = db.users.find(u =>
+      u.role === 'INSTRUCTOR' &&
+      ((u.name && u.name.toLowerCase() === cleanId.toLowerCase()) ||
+       (u.department && u.department.toLowerCase() === cleanId.toLowerCase()) ||
+       (u.id && u.id === cleanId))
+    );
+  }
+
+  if (!user) {
+    return res.status(401).json({
+      error: cleanRole === 'STUDENT'
+        ? `No student account found for "${cleanId}". Please check your TUP ID or sign up.`
+        : `No instructor account found for "${cleanId}". Please check your name or sign up.`
+    });
+  }
+
+  if (user.password !== cleanPassword) {
+    return res.status(401).json({ error: 'Incorrect password. Please try again.' });
+  }
+
+  user.last_active = new Date().toISOString();
+  saveDatabase(db);
+
+  return res.json({
+    success: true,
+    user: {
+      student_id: user.tup_id || user.id,
+      name: user.name,
+      role: user.role,
+      tup_id: user.tup_id,
+      department: user.department,
+      year_section: user.department || 'TUP Student',
+      created_at: user.created_at,
+      last_active: user.last_active
+    }
+  });
 });
 
 // Students: Create or retrieve
@@ -818,6 +936,56 @@ app.delete('/api/chat/messages/:id', (req, res) => {
 // ==========================================
 app.get('/api/teacher/activities', (req, res) => {
   const db = loadDatabase();
+  if (!db.teacher_activities || db.teacher_activities.length === 0) {
+    db.teacher_activities = [
+      {
+        id: 'tact_seed_diagnostic_1',
+        title: 'Faculty Diagnostic: Motherboard Power & Short Circuit Analysis',
+        description: 'Comprehensive diagnostic evaluation on motherboard standoff isolation, 24-pin ATX voltage tolerances, and short-circuit troubleshooting authored by faculty.',
+        category: 'Hardware Diagnostic',
+        difficulty: 'Intermediate',
+        is_published: true,
+        created_by: 'Engr. Jhon Wesly T. Buban (Lead Researcher)',
+        created_at: new Date().toISOString(),
+        questions: [
+          {
+            question: 'During a bench assembly, the system turns on for half a second, the CPU fan spins momentarily, and then power cuts off immediately. What is the most likely electrical safety cause?',
+            options: [
+              'A chassis standoff is making contact with an exposed solder joint on the bottom of the motherboard, triggering PSU short-circuit protection (SCP)',
+              'The SATA cable is plugged into SATA port 2 instead of SATA port 1',
+              'The monitor HDMI cable is defective',
+              'The BIOS battery has run out of charge'
+            ],
+            correct: 0,
+            explanation: 'Modern power supplies feature Short Circuit Protection (SCP). If an extra standoff touches a solder point on the motherboard, it creates a direct dead short to chassis ground, forcing the PSU to cut power instantly to protect components from permanent damage.'
+          },
+          {
+            question: 'When measuring the 24-pin ATX main power connector with a digital multimeter, what is the acceptable voltage tolerance range for the +12V rail according to ATX specifications?',
+            options: [
+              '+11.40V to +12.60V (±5% tolerance)',
+              '+9.00V to +15.00V (±25% tolerance)',
+              '+10.00V to +14.00V (±15% tolerance)',
+              'Exactly 12.000V with 0% tolerance'
+            ],
+            correct: 0,
+            explanation: 'The standard ATX power specification requires standard voltage rails (+12V, +5V, +3.3V) to remain within ±5% tolerance under both idle and full load.'
+          },
+          {
+            question: 'Which motherboard component stores the hardware configuration settings and date/time when AC power is completely disconnected from the power supply?',
+            options: [
+              'Non-volatile CMOS chip powered by a 3V CR2032 lithium coin-cell battery',
+              'The CPU Level 3 Cache',
+              'The primary DDR4/DDR5 system memory module in slot A2',
+              'The NVMe M.2 Solid State Drive'
+            ],
+            correct: 0,
+            explanation: 'The complementary metal-oxide-semiconductor (CMOS) chip or NVRAM retains BIOS setup variables and system clock time via a 3-volt CR2032 coin-cell battery.'
+          }
+        ]
+      }
+    ];
+    saveDatabase(db);
+  }
   res.json(db.teacher_activities || []);
 });
 
@@ -865,6 +1033,21 @@ app.delete('/api/teacher/activities/:id', (req, res) => {
 
 app.get('/api/teacher/materials', (req, res) => {
   const db = loadDatabase();
+  if (!db.teacher_materials || db.teacher_materials.length === 0) {
+    db.teacher_materials = [
+      {
+        id: 'mat_seed_curriculum_1',
+        title: 'Laboratory Protocol: Safe Component Handling and ESD Protocols',
+        topicNumber: 1,
+        description: 'Faculty guide covering Occupational Health and Safety (OHS), static dissipation, and personal protective equipment.',
+        content: 'Comprehensive laboratory handout detailing proper wrist strap connection to bare chassis metal, avoiding carpeted floors, handling expansion cards strictly by PCB edges, and testing PSU voltages.',
+        is_published: true,
+        instructor: 'CSSENTIAL Faculty Research Team',
+        created_at: new Date().toISOString()
+      }
+    ];
+    saveDatabase(db);
+  }
   res.json(db.teacher_materials || []);
 });
 
@@ -918,16 +1101,58 @@ app.get('/api/certificate/status/:studentId', (req, res) => {
   const db = loadDatabase();
   const student = db.students.find(s => s.student_id === studentId);
 
-  const attempts = (db.activity_attempts || []).filter(a => a.student_id === studentId && a.completed);
-  const quizzes = (db.quiz_results || []).filter(q => q.student_id === studentId && q.completed);
-  const games = (db.game_results || []).filter(g => g.student_id === studentId && g.completed);
-  const pcLabPassed = attempts.some(a => a.activity_name?.toLowerCase().includes('virtual pc lab') || a.activity_name?.toLowerCase().includes('pc build'));
+  const allAttempts = (db.activity_attempts || []).filter(a => a.student_id === studentId && a.completed);
+  const allQuizzes = (db.quiz_results || []).filter(q => q.student_id === studentId && q.completed);
+  const allGames = (db.game_results || []).filter(g => g.student_id === studentId && g.completed);
 
-  // Qualification: completed at least 2 activities OR 1 quiz + 1 game, or Virtual PC Lab
-  const activitiesCount = attempts.length;
-  const quizzesCount = quizzes.length;
-  const gamesCount = games.length;
-  const isEligible = (activitiesCount >= 2 && quizzesCount >= 1) || (activitiesCount >= 1 && gamesCount >= 1) || pcLabPassed || (quizzesCount >= 1 && gamesCount >= 2);
+  // Filter only attempts, quizzes, and games where the student scored at least half (50% or higher)
+  const passedAttempts = allAttempts.filter(a => {
+    const pct = a.percentage ?? (a.total_items ? (a.score / a.total_items) * 100 : 0);
+    return pct >= 50;
+  });
+
+  const passedQuizzes = allQuizzes.filter(q => {
+    const pct = q.percentage ?? (q.total_questions ? (q.score / q.total_questions) * 100 : 0);
+    return pct >= 50;
+  });
+
+  const passedGames = allGames.filter(g => {
+    if (g.extra_stats?.percentage !== undefined) return g.extra_stats.percentage >= 50;
+    return (g.score || 0) > 0;
+  });
+
+  const pcLabPassed = allAttempts.some(a => {
+    const isLab = a.activity_name?.toLowerCase().includes('virtual pc lab') || a.activity_name?.toLowerCase().includes('pc build');
+    const pct = a.percentage ?? (a.total_items ? (a.score / a.total_items) * 100 : 0);
+    return isLab && (pct >= 50 || a.score > 0);
+  });
+
+  // Calculate scores
+  const allScores = [
+    ...allAttempts.map(a => a.percentage ?? (a.total_items ? Math.round((a.score / a.total_items) * 100) : 0)),
+    ...allQuizzes.map(q => q.percentage ?? (q.total_questions ? Math.round((q.score / q.total_questions) * 100) : 0))
+  ];
+
+  const averageScore = allScores.length > 0
+    ? Math.round(allScores.reduce((acc, curr) => acc + curr, 0) / allScores.length)
+    : 0;
+
+  const highestScore = allScores.length > 0 ? Math.max(...allScores) : 0;
+  const hasPassingScore = (passedAttempts.length > 0 || passedQuizzes.length > 0) && (averageScore >= 50 || highestScore >= 50);
+
+  // Qualification Rule: Must have achieved at least half the score (50% and up) on assessments
+  // AND met at least one completion pathway:
+  // - 2 activities passed with >=50%
+  // - 1 quiz passed with >=50%
+  // - 1 activity passed with >=50% AND 1 game completed
+  // - Virtual PC Lab passed with >=50%
+  const isEligible = hasPassingScore && (
+    (passedAttempts.length >= 2) ||
+    (passedQuizzes.length >= 1) ||
+    (passedAttempts.length >= 1 && passedGames.length >= 1) ||
+    pcLabPassed ||
+    (passedQuizzes.length >= 1 && passedGames.length >= 1)
+  );
 
   res.json({
     student_id: studentId,
@@ -935,10 +1160,14 @@ app.get('/api/certificate/status/:studentId', (req, res) => {
     year_section: student ? student.year_section : 'General Section',
     isEligible,
     stats: {
-      activitiesCount,
-      quizzesCount,
-      gamesCount,
-      pcLabPassed
+      activitiesCount: passedAttempts.length,
+      quizzesCount: passedQuizzes.length,
+      gamesCount: passedGames.length,
+      pcLabPassed,
+      averageScore,
+      highestScore,
+      hasPassingScore,
+      minScoreRequired: 50
     },
     certificate_id: `CERT-CSS-2026-${(studentId || 'GEN').slice(-6).toUpperCase()}`
   });
@@ -1279,14 +1508,18 @@ function getLocalKnowledgeReply(message: string, currentPage: string = 'HOME', c
   }
 
   if (lower.includes('author') || lower.includes('researcher') || lower.includes('who made') || lower.includes('developer')) {
-    return 'CSSENTIAL was researched and developed by:\n• Jhon Wesly T. Buban (Lead Developer & System Architect)\n• Juliana Marizh B. Calaputpu (Curriculum Researcher)\n• Charlotte Mae H. Colon (Content Researcher)\n• Precious Lara M. Timoteo (Evaluation & Testing Researcher)';
+    return 'CSSENTIAL was researched and developed by:\n• Jhon Wesly T. Buban (Lead Developer & System Architect)\n• Juliana Marizh B. Calapputu (Curriculum Researcher)\n• Charlotte Mae H. Colon (Content Researcher)\n• Precious Lara M. Timoteo (Evaluation & Testing Researcher)';
   }
 
   if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey') || lower.includes('good morning') || lower.includes('good afternoon')) {
     return 'Hello! I am CSSENTIAL AI, your interactive learning assistant for Computer System Installation, Configuration, and Troubleshooting. How can I help you today with hardware assembly, BIOS setup, or diagnostic procedures?';
   }
 
-  return `I am here to help you master Computer System Installation and Configuration! You can ask me about hardware assembly procedures (CPU, RAM, GPU, PSU), UEFI/BIOS configuration, POST beep codes, EZ Debug LEDs, troubleshooting black screens, ESD safety standards, or how to navigate CSSENTIAL's activities and games. What technical concept would you like to explore?`;
+  return `Here is helpful technical advice on "${message}":
+Computer systems require systematic diagnosis and precise configuration. Whether dealing with processor sockets, memory architecture (such as dual-channel A2/B2 placement), UEFI firmware, power rails, or OS deployment, always verify power delivery and physical seating first.
+• Diagnostic tip: Check POST codes and motherboard EZ Debug LEDs (CPU, DRAM, VGA, BOOT) to quickly isolate hardware faults.
+• Safety precaution: Always unplug AC power from the wall and wear an ESD grounding wrist strap before servicing internal components.
+What specific hardware component or diagnostic symptom would you like to explore in detail?`;
 }
 
 app.post('/api/gemini/chat', async (req, res) => {
@@ -1295,97 +1528,83 @@ app.post('/api/gemini/chat', async (req, res) => {
     return res.status(400).json({ error: 'Message is required' });
   }
 
-  // Evaluate local knowledge and anti-cheating rules first
-  const localResult = getPlatformAssistanceResponse(message, currentPage, currentContext);
+  const systemInstruction = `You are ASK CSSENTIAL, an expert technical assistant, learning mentor, and guide for Computer Systems, PC Hardware, Installation, Configuration, Diagnostics, Troubleshooting, and the CSSENTIAL platform.
 
-  // STRICT RULE: If asking for direct answers, return immediate academic integrity guidance
-  if (localResult.isDirectAnswerDenied) {
-    return res.json({ reply: localResult.reply, source: localResult.source });
-  }
+PRIMARY DIRECTIVES:
+1. ANSWER EVERY QUESTION THOROUGHLY:
+   - Answer every single question asked by the student across all domains: computer hardware, PC assembly, CPU, GPU, RAM, Motherboard, PSU, Storage, BIOS/UEFI, operating systems, networking, electronics, diagnostic tools, safety protocols, troubleshooting methodology, computing concepts, and CSSENTIAL platform features.
+   - Never give a blank refusal, unhelpful repetition, or say you cannot answer general knowledge questions.
 
-  const systemInstruction = `You are CSSENTIAL AI, the official "Ask for Assistance" Platform Guide & Learning Tutor for CSSENTIAL (A One-Click Multi-Intervention Platform for Troubleshooting Computer System Installation and Configuration).
-Your mission is to help users learn, navigate the website, and master computer technician skills.
+2. PRESERVE ACADEMIC INTEGRITY (QUIZZES, EXAMS & GRADED ACTIVITIES):
+   - When a student asks for direct answers, answer keys, solution keys, or multiple-choice letters (e.g., "What is the answer to question 3?", "Is it A or B?", "Give me the answer to the quiz"):
+     - DO NOT provide the direct multiple-choice letter (e.g. "Choose option B") or verbatim answer key!
+     - INSTEAD: Explicitly remind them that you cannot provide direct answer keys to preserve academic integrity, BUT THEN IMMEDIATELY provide a comprehensive pedagogical explanation of the underlying hardware concept, technical principles, diagnostic clues, or procedure so the student understands the topic and can deduce the correct answer on their own.
+   - For ANY general question or troubleshooting scenario that is NOT a direct quiz answer request (e.g., "Why won't my PC turn on?", "What is thermal paste?", "How do I configure BIOS?"), answer directly, thoroughly, and helpfully.
 
-CORE PLATFORM KNOWLEDGE:
-1. WEBPAGES ON CSSENTIAL:
-   - HOME (Web Wall): Central portal, 3-second auto-rotating announcement slider with clickable links and pause/resume, course summary, quick links to topics, featured hardware breakdown, system status.
-   - ACTIVITIES: 8 interactive modules (Troubleshooting Scenarios, Problem Identification, Installation Practice, Configuration, System Testing, Fault Diagnosis, Case Study, Quick Quiz) + 🎮 PLAY button for Games Hub.
-   - COLLECTION: 6 module lessons with Presentations (🖥 PRESENT - includes interactive 16:9 fullscreen slide deck with downloadable offline .html deck, print/PDF, and Word .doc handouts), Academic Lab Manuals in PDF and Word DOCX formats with 100-point rubrics, and watchable HD Video lectures (▶ WATCH) with in-player video upload/embed capabilities.
-   - GAMES HUB: 11 educational games (Virtual PC Lab Simulator, Cable & Pinout Master, Sort & Configure, Code Cracker, Troubleshooting Search, Installation Sequence, Flashcards, Memory Match, Drag & Drop Parts, Computer Quiz, Tech Word Scramble) with real-time scoring and transcript logging.
-   - QUIZZES: Formative and summative assessments testing CSIC competencies with automated scoring.
-   - ABOUT US: Research background, academic study details, developer credits (Jhon Wesly T. Buban, Juliana Marizh B. Calaputpu, Charlotte Mae H. Colon, Precious Lara M. Timoteo). Strictly never mention anyone else.
-   - RESEARCHER DASHBOARD: Password-gated admin console (CSSENTIAL2026) for monitoring student metrics, viewing attempt logs, exporting grades, creating/editing/deleting announcements with optional images and links, uploading custom laboratory demonstration videos, and managing automated data retention & cleanup.
-   - THEME SELECTOR: Palette customizer offering standard color variations, beautiful gradient presets, and a custom 2-color gradient designer with angle controls.
+3. COMMUNICATION STYLE:
+   - Friendly, clear, encouraging, and technically rigorous.
+   - Use structured formatting, bullet points, and numbered steps for clarity.
+   - Always mention relevant safety precautions (e.g., disconnecting power, grounding against ESD) when discussing physical hardware tasks.
 
-2. VIRTUAL PC LAB SIMULATOR (10-STAGE HANDS-ON INTERACTIVE LAB):
-   - Stage 1: ESD Safety (Equip anti-static wrist strap and grounded ESD mat).
-   - Stage 2: CPU Installation (Align gold Pin 1 corner triangle with socket notch, lower ZIF lever).
-   - Stage 3: Thermal Interface Material (Apply pea-sized dot of thermal paste to center of CPU IHS).
-   - Stage 4: CPU Cooler Installation (Align heatsink, tighten cross pattern, connect 4-pin PWM to CPU_FAN).
-   - Stage 5: Dual-Channel RAM Installation (Seat modules firmly into slots A2 and B2 until latches click).
-   - Stage 6: Motherboard Mounting (Install brass standoffs to prevent short circuits, screw in ATX board).
-   - Stage 7: High-Speed NVMe M.2 SSD Installation (Insert at 30° angle, push down, fasten tiny screw).
-   - Stage 8: Power Supply Unit & Wiring (Mount 750W PSU in basement shroud, connect 24-pin ATX, 8-pin EPS, PCIe).
-   - Stage 9: Dedicated Graphics Card (GPU) (Seat into primary PCIe 4.0 x16 slot, plug 8-pin PCIe power).
-   - Stage 10: UEFI/BIOS Configuration & Boot Setup (Enter BIOS with DEL/F2, enable XMP/DOCP, set SATA to AHCI, verify boot drive).
+4. PLATFORM CONTEXT:
+   - CSSENTIAL Webpages: HOME (announcements slider), ACTIVITIES (diagnostic modules), COLLECTION (presentations, lab manuals in PDF/DOCX, videos), GAMES HUB (11 interactive games including Virtual PC Lab Simulator, Cable & Pinout Master, Code Cracker, etc.), QUIZZES, ABOUT US (Developers: Jhon Wesly T. Buban, Juliana Marizh B. Calapputu, Charlotte Mae H. Colon, Precious Lara M. Timoteo), and RESEARCHER DASHBOARD.
+   - Current student view: "${currentPage || 'HOME'}" with context "${currentContext || 'General'}".`;
 
-3. CURRICULUM TOPICS (6 COMPETENCIES):
-   - Topic 1: Preparing for Installation (Safety, OHS, ESD precautions, anti-static wrist strap, tools).
-   - Topic 2: Hardware Identification & System Assembly (Motherboard, CPU zero-insertion-force, RAM dual-channel slots A2/B2, GPU PCIe x16, brass standoffs to prevent shorts, thermal paste pea-sized dot).
-   - Topic 3: Cable Routing & Power Connections (24-pin ATX, 8-pin EPS CPU, PCIe power, SATA, front panel headers PWR_SW/RESET_SW).
-   - Topic 4: UEFI/BIOS Configuration & Boot Setup (DEL/F2, boot priority order, AHCI mode, XMP/DOCP profiles, TPM 2.0, Secure Boot).
-   - Topic 5: Operating System Deployment & Partitioning (Clean Windows install, GPT vs MBR, UEFI bootable media, driver installation).
-   - Topic 6: System Diagnostics, Testing & Troubleshooting (CompTIA 6-step method, POST beep codes, EZ Debug LEDs, MemTest86, Prime95, FurMark, resolving black screen/no POST).
-
-4. HOW TO PLAY THE 11 EDUCATIONAL GAMES:
-   - Virtual PC Lab Simulator: Realistic 10-stage physical PC build and UEFI setup simulator.
-   - Cable & Pinout Master: Match 24-pin ATX, 8-pin EPS, PCIe, and front panel headers.
-   - Sort & Configure: Fast-paced category classification into Input, Output, Storage, Processing, and Safety bins.
-   - Code Cracker: Answer technical diagnostic questions to decrypt the terminal passcode.
-   - Troubleshooting Search: Inspect a motherboard workbench schematic and click the fault area.
-   - Installation Sequence: Arrange PC assembly milestone cards into their exact chronological order.
-   - Technical Flashcards: Flip cards to master hardware acronyms, port bandwidths, and specs.
-   - Memory Match: Flip cards to pair hardware components with their functions.
-   - Drag & Drop PC Parts: Drag components from the bench into their chassis sockets.
-   - Computer System Quiz: 10-question timed technical speed challenge.
-   - Tech Word Scramble: Unscramble letter tiles to reveal computer terms.
-
-CRITICAL EDUCATIONAL & ACADEMIC INTEGRITY RULES:
-- NEVER give direct answers, solution keys, or multiple-choice letters to any quiz, exam, activity, or puzzle!
-- If a user asks "what is the answer", decline politely and explain the underlying diagnostic reasoning, technical principle, or procedural concept so the student learns and solves it themselves.
-- When explaining navigation or procedures, give clear, numbered steps.
-- Current student context: Currently on page "${currentPage || 'HOME'}" with context "${currentContext || 'General'}".
-- Maintain an encouraging, friendly, and pedagogically sound tone.`;
-
-  // First try with primary models, then with fallback alias
+  // Try calling Gemini models with a healthy 25-second timeout
   const ai = getGeminiClient();
   if (ai) {
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-pro'];
+    const modelsToTry = [
+      'gemini-3.1-flash-lite',
+      'gemini-3.5-flash-lite',
+      'gemini-3.8-flash',
+      'gemini-3.5-flash',
+      'gemini-flash-lite-latest',
+      'gemini-3.6-flash'
+    ];
+    
+    // Format conversation history for Gemini
+    const contents: any[] = [];
+    if (Array.isArray(history) && history.length > 0) {
+      for (const h of history.slice(-6)) {
+        const role = (h.sender === 'bot' || h.role === 'model' || h.role === 'assistant') ? 'model' : 'user';
+        const txt = h.text || (Array.isArray(h.parts) ? h.parts[0]?.text : '');
+        if (txt) {
+          contents.push({ role, parts: [{ text: String(txt) }] });
+        }
+      }
+    }
+    contents.push({ role: 'user', parts: [{ text: message }] });
+
     for (const modelName of modelsToTry) {
       try {
-        const response = await ai.models.generateContent({
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('AI response timeout')), 25000)
+        );
+
+        const apiPromise = ai.models.generateContent({
           model: modelName,
-          contents: [
-            { role: 'user', parts: [{ text: message }] }
-          ],
+          contents,
           config: {
-            systemInstruction: systemInstruction,
+            systemInstruction,
             temperature: 0.7
           }
         });
 
-        const reply = response.text;
+        const response: any = await Promise.race([apiPromise, timeoutPromise]);
+
+        const reply = response?.text;
         if (reply && reply.trim()) {
-          return res.json({ reply, source: `gemini-${modelName}` });
+          return res.json({ reply, source: 'CSSENTIAL Assistant' });
         }
       } catch (err: any) {
-        console.info(`Gemini model ${modelName} unavailable (${err?.status || err?.code || 'demand-spike'}), evaluating alternate...`);
+        console.info(`Model ${modelName} call issue or timeout:`, err?.status || err?.code || err?.message || 'switch-to-next');
       }
     }
   }
 
-  // Seamless fallback to comprehensive local domain knowledge engine
-  return res.json({ reply: localResult.reply, source: localResult.source });
+  // Resilient fallback to dynamic local knowledge engine
+  const dynamicReply = getLocalKnowledgeReply(message, currentPage, currentContext);
+  return res.json({ reply: dynamicReply, source: 'CSSENTIAL Assistant' });
 });
 
 // START SERVER WITH VITE INTEGRATION

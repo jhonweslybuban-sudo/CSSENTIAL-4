@@ -107,11 +107,11 @@ export const CommunityChatModal: React.FC<CommunityChatModalProps> = ({
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-black tracking-tight flex items-center gap-2">
-                <span>Student &amp; Faculty Community Discussion</span>
+                <span>Chat Box</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               </h3>
               <p className="text-[11px] text-blue-200">
-                Live Technical Q&amp;A, Lab Collaborations &amp; Troubleshooting
+                Student &amp; Faculty Real-Time Technical Exchange
               </p>
             </div>
           </div>

@@ -14,13 +14,24 @@ import {
   Sparkles,
   Layers,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  X
 } from 'lucide-react';
 import { api } from '../services/api';
 import { TeacherActivity, TeacherMaterial, TeacherActivityQuestion } from '../types';
 
-export const TeacherContentManager: React.FC = () => {
-  const [subTab, setSubTab] = useState<'ACTIVITIES' | 'MATERIALS'>('ACTIVITIES');
+interface TeacherContentManagerProps {
+  initialTab?: 'ACTIVITIES' | 'MATERIALS';
+  onClose?: () => void;
+  isModal?: boolean;
+}
+
+export const TeacherContentManager: React.FC<TeacherContentManagerProps> = ({
+  initialTab = 'ACTIVITIES',
+  onClose,
+  isModal = false
+}) => {
+  const [subTab, setSubTab] = useState<'ACTIVITIES' | 'MATERIALS'>(initialTab);
   
   // Activities state
   const [activities, setActivities] = useState<TeacherActivity[]>([]);
@@ -69,6 +80,12 @@ export const TeacherContentManager: React.FC = () => {
   useEffect(() => {
     loadAll();
   }, []);
+
+  useEffect(() => {
+    if (initialTab) {
+      setSubTab(initialTab);
+    }
+  }, [initialTab]);
 
   const showFeedback = (msg: string) => {
     setNotice(msg);
@@ -192,7 +209,7 @@ export const TeacherContentManager: React.FC = () => {
     showFeedback('Course material deleted.');
   };
 
-  return (
+  const content = (
     <div className="space-y-6">
       
       {/* Header Banner */}
@@ -227,6 +244,16 @@ export const TeacherContentManager: React.FC = () => {
             >
               <Upload className="w-4 h-4" />
               <span>Upload Course Material</span>
+            </button>
+          )}
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              title="Close Teacher CMS"
+            >
+              <X className="w-5 h-5" />
             </button>
           )}
         </div>
@@ -665,4 +692,16 @@ export const TeacherContentManager: React.FC = () => {
 
     </div>
   );
+
+  if (isModal) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xs overflow-y-auto">
+        <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl p-6 border border-gray-200 my-auto max-h-[92vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return content;
 };

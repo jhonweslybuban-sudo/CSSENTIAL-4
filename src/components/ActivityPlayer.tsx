@@ -97,14 +97,10 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
   const handleSelectOption = (index: number) => {
     if (isAnswerChecked) return;
     setSelectedOption(index);
-  };
-
-  const handleCheckAnswer = () => {
-    if (selectedOption === null || !currentItem) return;
-    const isCorrect = selectedOption === currentItem.shuffledCorrectIndex;
+    const isCorrect = index === currentItem.shuffledCorrectIndex;
     setIsAnswerChecked(true);
 
-    const newAnswers = [...answersState, { isCorrect, selected: selectedOption }];
+    const newAnswers = [...answersState, { isCorrect, selected: index }];
     setAnswersState(newAnswers);
 
     api.logAction(
@@ -112,49 +108,6 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
       sessionId,
       `Answered Question ${currentIndex + 1}/${randomizedItems.length} in "${activity.name}": ${isCorrect ? 'CORRECT' : 'INCORRECT'}`
     );
-  };
-
-  // One-click submit and direct advance to next question
-  const handleSubmitAndAdvance = async (idxToSubmit?: number) => {
-    const finalSelected = idxToSubmit !== undefined ? idxToSubmit : selectedOption;
-    if (finalSelected === null || !currentItem) return;
-
-    const isCorrect = finalSelected === currentItem.shuffledCorrectIndex;
-    const newAnswers = [...answersState, { isCorrect, selected: finalSelected }];
-    setAnswersState(newAnswers);
-
-    api.logAction(
-      studentId,
-      sessionId,
-      `Submitted Question ${currentIndex + 1}/${randomizedItems.length} in "${activity.name}": ${isCorrect ? 'CORRECT' : 'INCORRECT'}`
-    );
-
-    if (currentIndex < randomizedItems.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setSelectedOption(null);
-      setIsAnswerChecked(false);
-      setShowHint(false);
-    } else {
-      // Completed activity quiz!
-      setIsCompleted(true);
-      const correctCount = newAnswers.filter(a => a.isCorrect).length;
-      const total = randomizedItems.length;
-      const pct = Math.round((correctCount / total) * 100);
-
-      await api.recordActivityAttempt({
-        student_id: studentId,
-        session_id: sessionId,
-        activity_name: activity.name,
-        activity_type: activity.type,
-        start_time: new Date(startTime).toISOString(),
-        end_time: new Date().toISOString(),
-        duration_seconds: elapsedSeconds,
-        score: correctCount,
-        total_items: total,
-        percentage: pct,
-        completed: true
-      });
-    }
   };
 
   const handleNext = async () => {
@@ -277,17 +230,15 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
               </span>
               <div className="space-y-2.5">
                 {currentItem.shuffledOptions.map((option, idx) => {
-                  let optionClass = 'border-gray-200 hover:border-blue-300 bg-white text-gray-800';
+                  let optionClass = 'border-gray-200 hover:border-blue-400 hover:bg-blue-50/30 bg-white text-gray-800 cursor-pointer';
 
-                  if (selectedOption === idx && !isAnswerChecked) {
-                    optionClass = 'border-blue-600 bg-blue-50/70 text-blue-950 ring-1 ring-blue-600';
-                  } else if (isAnswerChecked) {
+                  if (isAnswerChecked) {
                     if (idx === currentItem.shuffledCorrectIndex) {
-                      optionClass = 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold';
+                      optionClass = 'border-2 border-emerald-600 bg-emerald-50 text-emerald-950 font-bold shadow-xs';
                     } else if (selectedOption === idx) {
-                      optionClass = 'border-red-500 bg-red-50 text-red-900 line-through';
+                      optionClass = 'border-2 border-red-500 bg-red-50 text-red-950 font-medium shadow-xs';
                     } else {
-                      optionClass = 'border-gray-200 opacity-60 bg-gray-50';
+                      optionClass = 'border-gray-200 opacity-50 bg-gray-50 text-gray-500';
                     }
                   }
 
@@ -297,17 +248,29 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
                       id={`option-choice-${idx}`}
                       onClick={() => handleSelectOption(idx)}
                       disabled={isAnswerChecked}
-                      className={`w-full text-left p-3.5 rounded-lg border text-sm transition-all flex items-start gap-3 ${optionClass}`}
+                      className={`w-full text-left p-4 rounded-xl border text-sm transition-all flex items-start gap-3.5 ${optionClass}`}
                     >
-                      <span className="w-6 h-6 rounded-full bg-gray-100 border border-gray-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      <span className={`w-7 h-7 rounded-full text-xs font-black flex items-center justify-center shrink-0 mt-0.5 border ${
+                        isAnswerChecked && idx === currentItem.shuffledCorrectIndex
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : isAnswerChecked && selectedOption === idx
+                          ? 'bg-red-600 text-white border-red-600'
+                          : 'bg-gray-100 text-gray-700 border-gray-300'
+                      }`}>
                         {String.fromCharCode(65 + idx)}
                       </span>
-                      <span className="flex-1 leading-snug">{option}</span>
+                      <span className="flex-1 leading-relaxed text-sm pt-0.5">{option}</span>
                       {isAnswerChecked && idx === currentItem.shuffledCorrectIndex && (
-                        <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-full text-xs font-black shrink-0 animate-in fade-in">
+                          <CheckCircle className="w-4 h-4 text-emerald-700" />
+                          <span>CORRECT</span>
+                        </div>
                       )}
                       {isAnswerChecked && selectedOption === idx && idx !== currentItem.shuffledCorrectIndex && (
-                        <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-100 border border-red-300 text-red-800 rounded-full text-xs font-black shrink-0 animate-in fade-in">
+                          <XCircle className="w-4 h-4 text-red-700" />
+                          <span>WRONG</span>
+                        </div>
                       )}
                     </button>
                   );
@@ -320,14 +283,14 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
               {!showHint && !isAnswerChecked && (
                 <button
                   onClick={() => setShowHint(true)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800 transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800 transition-colors cursor-pointer"
                 >
                   <HelpCircle className="w-3.5 h-3.5" />
                   <span>Need a conceptual hint?</span>
                 </button>
               )}
               {showHint && !isAnswerChecked && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-900 flex items-start gap-2">
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-900 flex items-start gap-2 animate-in fade-in">
                   <HelpCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold">Pedagogical Hint: </span>
@@ -337,29 +300,32 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
               )}
             </div>
 
-            {/* Feedback Rationale Box (Shown after checking answer) */}
+            {/* Feedback Rationale Box (Immediately shown upon selecting option) */}
             {isAnswerChecked && (
               <div
-                className={`p-4 rounded-lg border text-xs leading-relaxed animate-in fade-in duration-200 ${
+                className={`p-4 rounded-xl border text-xs leading-relaxed animate-in fade-in duration-200 space-y-1.5 ${
                   selectedOption === currentItem.shuffledCorrectIndex
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
-                    : 'bg-red-50 border-red-300 text-red-950'
+                    ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
+                    : 'bg-red-50/90 border-red-300 text-red-950'
                 }`}
               >
-                <div className="flex items-center gap-2 font-bold mb-1 text-sm">
+                <div className="flex items-center gap-2 font-black text-sm">
                   {selectedOption === currentItem.shuffledCorrectIndex ? (
                     <>
-                      <CheckCircle className="w-4 h-4 text-emerald-700" />
+                      <CheckCircle className="w-4.5 h-4.5 text-emerald-700 shrink-0" />
                       <span>CORRECT ACTION!</span>
                     </>
                   ) : (
                     <>
-                      <XCircle className="w-4 h-4 text-red-700" />
-                      <span>INCORRECT ACTION</span>
+                      <XCircle className="w-4.5 h-4.5 text-red-700 shrink-0" />
+                      <span>INCORRECT CHOICE</span>
                     </>
                   )}
                 </div>
-                <p>{currentItem.explanation}</p>
+                <div className="text-xs pt-1 border-t border-black/10">
+                  <strong className="font-bold">Diagnostic Rationale: </strong>
+                  <span>{currentItem.explanation}</span>
+                </div>
               </div>
             )}
 
@@ -374,37 +340,20 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
               <div className="flex items-center gap-2">
                 {!isAnswerChecked ? (
                   <button
-                    id="submit-advance-btn"
-                    onClick={() => handleSubmitAndAdvance()}
-                    disabled={selectedOption === null}
-                    className={`flex items-center gap-1.5 px-6 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                      selectedOption !== null
-                        ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer shadow-xs active:scale-95'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
+                    id="select-option-prompt-btn"
+                    disabled
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
                   >
-                    <span>
-                      {currentIndex < activity.items.length - 1 ? 'SUBMIT & NEXT QUESTION' : 'SUBMIT & FINISH'}
-                    </span>
-                    <ChevronRight className="w-4 h-4" />
+                    <span>Click any answer above to check</span>
+                    <ChevronRight className="w-4 h-4 opacity-40" />
                   </button>
                 ) : (
                   <button
                     id="next-question-btn"
                     onClick={handleNext}
-                    className={`flex items-center gap-2 px-6 py-2.5 text-white text-xs font-black rounded-lg shadow-md transition-all cursor-pointer active:scale-95 animate-in zoom-in-95 duration-150 ${
-                      selectedOption === currentItem.shuffledCorrectIndex
-                        ? 'bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-300'
-                        : 'bg-red-600 hover:bg-red-700 ring-2 ring-red-300'
-                    }`}
+                    className="flex items-center gap-2 px-7 py-2.5 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-xs font-black rounded-lg shadow-md transition-all cursor-pointer ring-2 ring-blue-300 animate-in zoom-in-95 duration-150"
                   >
-                    {selectedOption === currentItem.shuffledCorrectIndex ? (
-                      <CheckCircle className="w-4 h-4 shrink-0" />
-                    ) : (
-                      <XCircle className="w-4 h-4 shrink-0" />
-                    )}
                     <span>
-                      {selectedOption === currentItem.shuffledCorrectIndex ? 'CORRECT!' : 'INCORRECT'} —{' '}
                       {currentIndex < activity.items.length - 1 ? 'NEXT QUESTION' : 'VIEW FINAL RESULTS'}
                     </span>
                     <ChevronRight className="w-4 h-4" />

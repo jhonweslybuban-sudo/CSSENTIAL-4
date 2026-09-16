@@ -13,6 +13,7 @@ import { ResearcherDashboard } from './components/ResearcherDashboard';
 import { AIAssistant } from './components/AIAssistant';
 import { CertificateModal } from './components/CertificateModal';
 import { CommunityChatModal } from './components/CommunityChatModal';
+import { TeacherContentManager } from './components/TeacherContentManager';
 
 import { SortConfigureGame } from './components/games/SortConfigureGame';
 import { CodeCrackerGame } from './components/games/CodeCrackerGame';
@@ -48,6 +49,10 @@ export default function App() {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [showCertificateModal, setShowCertificateModal] = useState<boolean>(false);
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
+  const [teacherCMSState, setTeacherCMSState] = useState<{ isOpen: boolean; initialTab: 'ACTIVITIES' | 'MATERIALS' }>({
+    isOpen: false,
+    initialTab: 'MATERIALS'
+  });
 
   // Apply theme palette whenever it changes or on load
   useEffect(() => {
@@ -74,6 +79,12 @@ export default function App() {
   }, []);
 
   const handleStudentRegistered = (registeredStudent: StudentProfile) => {
+    if (!registeredStudent.student_id) {
+      setStudent(null);
+      setSessionId('');
+      setShowEntryModal(false);
+      return;
+    }
     setStudent(registeredStudent);
     setShowEntryModal(false);
     api.createSession(registeredStudent.student_id).then(s => setSessionId(s.id));
@@ -132,10 +143,10 @@ export default function App() {
         canReturn={pageHistory.length > 1 || currentPage !== 'HOME'}
         studentName={student?.name}
         onOpenDashboard={() => navigateTo('RESEARCHER_DASHBOARD')}
+        onOpenTeacherCMS={(tab) => setTeacherCMSState({ isOpen: true, initialTab: tab || 'MATERIALS' })}
         onOpenThemeModal={() => setShowThemeModal(true)}
         onOpenStudentModal={() => setShowEntryModal(true)}
         onOpenCertificate={() => setShowCertificateModal(true)}
-        onOpenChat={() => setShowChatModal(true)}
       />
 
       {/* 2. Wireframe Navbar */}
@@ -166,6 +177,7 @@ export default function App() {
             studentId={student?.student_id}
             onSelectActivity={handleSelectActivity}
             onOpenGames={() => navigateTo('GAMES_HUB')}
+            onOpenTeacherAuthoring={() => setTeacherCMSState({ isOpen: true, initialTab: 'ACTIVITIES' })}
           />
         )}
 
@@ -293,6 +305,7 @@ export default function App() {
             yearSection={student?.year_section}
             initialTopicId={selectedTopicId}
             onClearInitialTopic={() => setSelectedTopicId(null)}
+            onOpenTeacherCMS={(tab) => setTeacherCMSState({ isOpen: true, initialTab: tab || 'MATERIALS' })}
           />
         )}
 
@@ -356,23 +369,25 @@ export default function App() {
             CSSENTIAL: One-Click Multi-Intervention Learning Platform for Computer System Installation and Configuration
           </p>
           <p className="text-[11px] text-gray-400">
-            Designed for all students, technicians, and educators. Developed by Jhon Wesly T. Buban, Juliana Marizh B. Calaputpu, Charlotte Mae H. Colon, and Precious Lara M. Timoteo.
+            Designed for all students, technicians, and educators. Developed by Jhon Wesly T. Buban, Juliana Marizh B. Calapputu, Charlotte Mae H. Colon, and Precious Lara M. Timoteo.
           </p>
         </div>
       </footer>
 
-      {/* Floating "Ask for Assistance" Platform Guide & Learning Tutor */}
+      {/* Dual Floating Circular Action Buttons: ASK CSSENTIAL & CHAT BOX */}
       <AIAssistant
         initialPrompt={aiInitialPrompt}
         onClearInitialPrompt={() => setAiInitialPrompt(null)}
         currentPage={currentPage}
+        onOpenCommunityChat={() => setShowChatModal(true)}
+        hideAIAssistant={currentPage === 'ACTIVITY_PLAYER' || currentPage === 'ACTIVE_GAME' || currentPage === 'GAMES_HUB'}
       />
 
       {/* Student Entry / Registration Modal */}
       <StudentEntryModal
         isOpen={showEntryModal}
         initialStudent={student}
-        onClose={student ? () => setShowEntryModal(false) : undefined}
+        onClose={() => setShowEntryModal(false)}
         onRegister={handleStudentRegistered}
       />
 
@@ -406,6 +421,15 @@ export default function App() {
         studentName={student?.name || 'Student'}
         yearSection={student?.year_section || 'General Section'}
       />
+
+      {/* Faculty CMS Modal: Curriculum Materials, Handouts & Diagnostic Activities */}
+      {teacherCMSState.isOpen && (
+        <TeacherContentManager
+          isModal={true}
+          initialTab={teacherCMSState.initialTab}
+          onClose={() => setTeacherCMSState(prev => ({ ...prev, isOpen: false }))}
+        />
+      )}
 
     </div>
   );

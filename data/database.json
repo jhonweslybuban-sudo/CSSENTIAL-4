@@ -1,0 +1,660 @@
+{
+  "students": [
+    {
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "year_section": "shjfgsrj",
+      "created_at": "2026-09-13T09:45:29.943Z",
+      "last_active": "2026-09-16T15:25:23.596Z",
+      "referral_source": "ais-dev-uqlu42a3ri4ijk62o72uij-922008615360.asia-southeast1.run.app",
+      "is_github_referral": false
+    }
+  ],
+  "sessions": [
+    {
+      "session_id": "sess_1789292730400_f8gu8u",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T09:45:30.400Z",
+      "session_end": "2026-09-13T09:45:30.400Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789293402991_1gqie2",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T09:56:42.991Z",
+      "session_end": "2026-09-13T09:56:42.991Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789293403030_qmfivh",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T09:56:43.030Z",
+      "session_end": "2026-09-13T09:56:43.030Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789295397263_8fr5ch",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T10:29:57.263Z",
+      "session_end": "2026-09-13T10:29:57.263Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789295397268_el5o9h",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T10:29:57.268Z",
+      "session_end": "2026-09-13T10:29:57.268Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789305527836_kxplue",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T13:18:47.836Z",
+      "session_end": "2026-09-13T13:18:47.836Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789305527876_5vvihb",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T13:18:47.876Z",
+      "session_end": "2026-09-13T13:18:47.876Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789306189318_8dnp95",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T13:29:49.318Z",
+      "session_end": "2026-09-13T13:29:49.318Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789306189321_3e3m3m",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-13T13:29:49.321Z",
+      "session_end": "2026-09-13T13:29:49.321Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789567376792_7g4jo6",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-16T14:02:56.792Z",
+      "session_end": "2026-09-16T14:02:56.792Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789567376796_k1p9o7",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-16T14:02:56.796Z",
+      "session_end": "2026-09-16T14:02:56.796Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789568164418_80rgox",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-16T14:16:04.418Z",
+      "session_end": "2026-09-16T14:16:04.418Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789568164421_wlth67",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-16T14:16:04.421Z",
+      "session_end": "2026-09-16T14:16:04.421Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789571097477_0qmgfs",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-16T15:04:57.477Z",
+      "session_end": "2026-09-16T15:04:57.477Z",
+      "total_session_time": 0
+    },
+    {
+      "session_id": "sess_1789571097479_129c5t",
+      "student_id": "CSS-729567",
+      "session_start": "2026-09-16T15:04:57.479Z",
+      "session_end": "2026-09-16T15:04:57.479Z",
+      "total_session_time": 0
+    }
+  ],
+  "activity_attempts": [
+    {
+      "attempt_id": "att_1789294247674_mzt1yf",
+      "student_id": "CSS-729567",
+      "session_id": "sess_1789293402607",
+      "activity_name": "Lesson 1 Activity Quiz: Preparing for Installation",
+      "activity_type": "Safety & Tools Assessment",
+      "start_time": "2026-09-13T10:08:42.297Z",
+      "end_time": "2026-09-13T10:10:47.210Z",
+      "duration_seconds": 124,
+      "score": 2,
+      "total_items": 10,
+      "percentage": 20,
+      "completed": true,
+      "created_at": "2026-09-13T10:10:47.674Z"
+    }
+  ],
+  "quiz_results": [],
+  "game_results": [
+    {
+      "game_result_id": "gm_1789293685222_ltmgqk",
+      "student_id": "CSS-729567",
+      "session_id": "sess_1789293402607",
+      "game_name": "Sort & Configure",
+      "start_time": "2026-09-13T10:01:19.753Z",
+      "end_time": "2026-09-13T10:01:24.842Z",
+      "duration_seconds": 5,
+      "score": 0,
+      "level": 1,
+      "attempts": 1,
+      "completed": true,
+      "created_at": "2026-09-13T10:01:25.222Z",
+      "extra_stats": {}
+    },
+    {
+      "game_result_id": "gm_1789293685255_qrgkxb",
+      "student_id": "CSS-729567",
+      "session_id": "sess_1789293402607",
+      "game_name": "Sort & Configure",
+      "start_time": "2026-09-13T10:01:19.753Z",
+      "end_time": "2026-09-13T10:01:24.842Z",
+      "duration_seconds": 5,
+      "score": 0,
+      "level": 1,
+      "attempts": 1,
+      "completed": true,
+      "created_at": "2026-09-13T10:01:25.255Z",
+      "extra_stats": {}
+    },
+    {
+      "game_result_id": "gm_1789293693203_6qzoaq",
+      "student_id": "CSS-729567",
+      "session_id": "sess_1789293402607",
+      "game_name": "Sort & Configure",
+      "start_time": "2026-09-13T10:01:27.872Z",
+      "end_time": "2026-09-13T10:01:32.818Z",
+      "duration_seconds": 5,
+      "score": 0,
+      "level": 1,
+      "attempts": 1,
+      "completed": true,
+      "created_at": "2026-09-13T10:01:33.203Z",
+      "extra_stats": {}
+    },
+    {
+      "game_result_id": "gm_1789293693237_i86a63",
+      "student_id": "CSS-729567",
+      "session_id": "sess_1789293402607",
+      "game_name": "Sort & Configure",
+      "start_time": "2026-09-13T10:01:27.872Z",
+      "end_time": "2026-09-13T10:01:32.818Z",
+      "duration_seconds": 5,
+      "score": 0,
+      "level": 1,
+      "attempts": 1,
+      "completed": true,
+      "created_at": "2026-09-13T10:01:33.237Z",
+      "extra_stats": {}
+    },
+    {
+      "game_result_id": "gm_1789293710399_speb12",
+      "student_id": "CSS-729567",
+      "session_id": "sess_1789293402607",
+      "game_name": "Sort & Configure",
+      "start_time": "2026-09-13T10:01:36.692Z",
+      "end_time": "2026-09-13T10:01:50.021Z",
+      "duration_seconds": 13,
+      "score": 80,
+      "level": 3,
+      "attempts": 1,
+      "completed": true,
+      "created_at": "2026-09-13T10:01:50.399Z",
+      "extra_stats": {}
+    },
+    {
+      "game_result_id": "gm_1789293710431_1zp2bs",
+      "student_id": "CSS-729567",
+      "session_id": "sess_1789293402607",
+      "game_name": "Sort & Configure",
+      "start_time": "2026-09-13T10:01:36.692Z",
+      "end_time": "2026-09-13T10:01:50.022Z",
+      "duration_seconds": 13,
+      "score": 80,
+      "level": 3,
+      "attempts": 1,
+      "completed": true,
+      "created_at": "2026-09-13T10:01:50.431Z",
+      "extra_stats": {}
+    }
+  ],
+  "lesson_views": [],
+  "ai_usage": [],
+  "activity_logs": [
+    {
+      "log_id": "log_1789571182933_gxw870",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789571099013",
+      "timestamp": "2026-09-16T15:06:22.933Z",
+      "action_text": "Answered Question 3/10 in \"Lesson 2 Activity Quiz: Installing Computer Systems\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789571173821_bjm6qw",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789571099013",
+      "timestamp": "2026-09-16T15:06:13.821Z",
+      "action_text": "Answered Question 2/10 in \"Lesson 2 Activity Quiz: Installing Computer Systems\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789571165410_d60d7n",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789571099013",
+      "timestamp": "2026-09-16T15:06:05.410Z",
+      "action_text": "Answered Question 1/10 in \"Lesson 2 Activity Quiz: Installing Computer Systems\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789571162845_60hlj6",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789571099013",
+      "timestamp": "2026-09-16T15:06:02.845Z",
+      "action_text": "Started Activity: \"Lesson 2 Activity Quiz: Installing Computer Systems\" (1 to 10 questions, randomized options)"
+    },
+    {
+      "log_id": "log_1789571162812_s2h1hl",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789571099013",
+      "timestamp": "2026-09-16T15:06:02.812Z",
+      "action_text": "Started Activity: \"Lesson 2 Activity Quiz: Installing Computer Systems\" (1 to 10 questions, randomized options)"
+    },
+    {
+      "log_id": "log_1789571097479_i5sp095",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789571097479_129c5t",
+      "timestamp": "2026-09-16T15:04:57.479Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789571097477_67079gn",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789571097477_0qmgfs",
+      "timestamp": "2026-09-16T15:04:57.477Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789568753202_l0opfj",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789568165990",
+      "timestamp": "2026-09-16T14:25:53.202Z",
+      "action_text": "Started Activity: \"Lesson 2 Activity Quiz: Installing Computer Systems\" (1 to 10 questions, randomized options)"
+    },
+    {
+      "log_id": "log_1789568753164_1f3kev",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789568165990",
+      "timestamp": "2026-09-16T14:25:53.164Z",
+      "action_text": "Started Activity: \"Lesson 2 Activity Quiz: Installing Computer Systems\" (1 to 10 questions, randomized options)"
+    },
+    {
+      "log_id": "log_1789568400517_barmou",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789568165990",
+      "timestamp": "2026-09-16T14:20:00.517Z",
+      "action_text": "Submitted Question 1/10 in \"Lesson 2 Activity Quiz: Installing Computer Systems\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789568395976_r0ju2r",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789568165990",
+      "timestamp": "2026-09-16T14:19:55.976Z",
+      "action_text": "Started Activity: \"Lesson 2 Activity Quiz: Installing Computer Systems\" (1 to 10 questions, randomized options)"
+    },
+    {
+      "log_id": "log_1789568395943_3ek68w",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789568165990",
+      "timestamp": "2026-09-16T14:19:55.943Z",
+      "action_text": "Started Activity: \"Lesson 2 Activity Quiz: Installing Computer Systems\" (1 to 10 questions, randomized options)"
+    },
+    {
+      "log_id": "log_1789568164421_igprbgr",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789568164421_wlth67",
+      "timestamp": "2026-09-16T14:16:04.421Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789568164418_159ln7w",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789568164418_80rgox",
+      "timestamp": "2026-09-16T14:16:04.418Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789567376796_txdyihk",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789567376796_k1p9o7",
+      "timestamp": "2026-09-16T14:02:56.796Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789567376792_1dha6mt",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789567376792_7g4jo6",
+      "timestamp": "2026-09-16T14:02:56.792Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789306189321_vkf63ew",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789306189321_3e3m3m",
+      "timestamp": "2026-09-13T13:29:49.321Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789306189318_8szi6wi",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789306189318_8dnp95",
+      "timestamp": "2026-09-13T13:29:49.318Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789305527876_4uwj4lw",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789305527876_5vvihb",
+      "timestamp": "2026-09-13T13:18:47.876Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789305527836_dgdq13m",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789305527836_kxplue",
+      "timestamp": "2026-09-13T13:18:47.836Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789295397268_3u6j6u4",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789295397268_el5o9h",
+      "timestamp": "2026-09-13T10:29:57.268Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789295397263_hbl4bj1",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789295397263_8fr5ch",
+      "timestamp": "2026-09-13T10:29:57.263Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789294247675_jr8b9xb",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:10:47.674Z",
+      "action_text": "Completed activity: Lesson 1 Activity Quiz: Preparing for Installation (Score: 2/10, 20%)"
+    },
+    {
+      "log_id": "log_1789294247625_2doz2r",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:10:47.625Z",
+      "action_text": "Submitted Question 10/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": CORRECT"
+    },
+    {
+      "log_id": "log_1789294243140_2bhgaz",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:10:43.140Z",
+      "action_text": "Submitted Question 9/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789294241515_2wh8o4",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:10:41.515Z",
+      "action_text": "Submitted Question 8/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789294239397_cl7882",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:10:39.397Z",
+      "action_text": "Submitted Question 7/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": CORRECT"
+    },
+    {
+      "log_id": "log_1789294237174_jw8yj4",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:10:37.174Z",
+      "action_text": "Submitted Question 6/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789294235276_0ak62l",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:10:35.276Z",
+      "action_text": "Submitted Question 5/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789294230629_c7plhb",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:10:30.629Z",
+      "action_text": "Submitted Question 4/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789294171384_ha6vyb",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:09:31.384Z",
+      "action_text": "Submitted Question 3/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789294137417_ls29e6",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:08:57.417Z",
+      "action_text": "Submitted Question 2/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789294126687_imczw3",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:08:46.687Z",
+      "action_text": "Submitted Question 1/10 in \"Lesson 1 Activity Quiz: Preparing for Installation\": INCORRECT"
+    },
+    {
+      "log_id": "log_1789294122767_ld5oaz",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:08:42.767Z",
+      "action_text": "Started Activity: \"Lesson 1 Activity Quiz: Preparing for Installation\" (1 to 10 questions, randomized options)"
+    },
+    {
+      "log_id": "log_1789294122716_2x6hgv",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:08:42.716Z",
+      "action_text": "Started Activity: \"Lesson 1 Activity Quiz: Preparing for Installation\" (1 to 10 questions, randomized options)"
+    },
+    {
+      "log_id": "log_1789293710431_injveqs",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:01:50.431Z",
+      "action_text": "Played Game: Sort & Configure (Score: 80, Level: 3)"
+    },
+    {
+      "log_id": "log_1789293710399_dlgzs82",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:01:50.399Z",
+      "action_text": "Played Game: Sort & Configure (Score: 80, Level: 3)"
+    },
+    {
+      "log_id": "log_1789293693237_5lgaolh",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:01:33.237Z",
+      "action_text": "Played Game: Sort & Configure (Score: 0, Level: 1)"
+    },
+    {
+      "log_id": "log_1789293693203_pck5tgo",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:01:33.203Z",
+      "action_text": "Played Game: Sort & Configure (Score: 0, Level: 1)"
+    },
+    {
+      "log_id": "log_1789293685256_4gv0g25",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:01:25.255Z",
+      "action_text": "Played Game: Sort & Configure (Score: 0, Level: 1)"
+    },
+    {
+      "log_id": "log_1789293685223_6a4nzwn",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402607",
+      "timestamp": "2026-09-13T10:01:25.222Z",
+      "action_text": "Played Game: Sort & Configure (Score: 0, Level: 1)"
+    },
+    {
+      "log_id": "log_1789293403030_zu6le9x",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293403030_qmfivh",
+      "timestamp": "2026-09-13T09:56:43.030Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789293402992_8muhlq2",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789293402991_1gqie2",
+      "timestamp": "2026-09-13T09:56:42.991Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789292730400_c3k2wek",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_1789292730400_f8gu8u",
+      "timestamp": "2026-09-13T09:45:30.400Z",
+      "action_text": "Started learning session"
+    },
+    {
+      "log_id": "log_1789292730346_2bdwku",
+      "student_id": "CSS-729567",
+      "student_name": "advga",
+      "session_id": "sess_initial",
+      "timestamp": "2026-09-13T09:45:30.346Z",
+      "action_text": "Student signed in: advga (shjfgsrj)"
+    }
+  ],
+  "announcements": [],
+  "branding": null,
+  "researchers": null,
+  "chat_messages": [],
+  "teacher_activities": [
+    {
+      "id": "tact_1789305320938_k51mt5",
+      "title": "this is a test",
+      "description": "this is a test",
+      "category": "Hardware Diagnostics",
+      "difficulty": "Beginner",
+      "questions": [
+        {
+          "question": "this is a test",
+          "options": [
+            "this is a test",
+            "this is a test",
+            "this is a test",
+            "this is a test"
+          ],
+          "correct": 0,
+          "explanation": ""
+        },
+        {
+          "question": "this is a test1",
+          "options": [
+            "this is a test1",
+            "this is a test123",
+            "this is a test12",
+            "this is a test1234"
+          ],
+          "correct": 0,
+          "explanation": ""
+        }
+      ],
+      "is_published": true,
+      "created_by": "Professor / Instructor",
+      "created_at": "2026-09-13T13:15:20.938Z"
+    }
+  ],
+  "teacher_materials": [
+    {
+      "id": "mat_1789305333555_ki2jv3",
+      "title": "this is a test",
+      "topicNumber": 1,
+      "description": "this is a test",
+      "content": "this is a test",
+      "file_url": null,
+      "is_published": true,
+      "instructor": "Faculty Member",
+      "created_at": "2026-09-13T13:15:33.555Z"
+    }
+  ],
+  "collection_videos": [
+    {
+      "id": "vid_1789306058159_5tivp0",
+      "title": "this is a test",
+      "description": "this is a test",
+      "url": "https://www.youtube-nocookie.com/embed/RGviYlaqRFc",
+      "thumbnail": "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80",
+      "duration": "10:00",
+      "topicNumber": 1,
+      "instructor": "CSSENTIAL Faculty Lead",
+      "created_at": "2026-09-13T13:27:38.159Z"
+    }
+  ]
+}

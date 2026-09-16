@@ -239,7 +239,7 @@ The **About Us** page details the academic thesis and capstone research behind t
 
 **Development & Research Team**:
 • **Jhon Wesly T. Buban** — Lead Developer & System Architect
-• **Juliana Marizh B. Calaputpu** — Curriculum Researcher
+• **Juliana Marizh B. Calapputu** — Curriculum Researcher
 • **Charlotte Mae H. Colon** — Content Researcher
 • **Precious Lara M. Timoteo** — Evaluation & Testing Researcher
 
@@ -285,7 +285,7 @@ CSSENTIAL is organized into clear, purposeful sections:
 3. 📚 **Collection**: Complete 6-module curriculum featuring **Interactive Presentations (🖥 PRESENT)**, **Academic Lab Manuals (PDF / DOCX)**, and **HD Demonstration Videos (▶ WATCH)**.
 4. 🎮 **Games Hub**: 9 gamified educational learning games with real-time scoring and transcript logging.
 5. 📝 **Quizzes**: Timed diagnostic assessments evaluating technical competency.
-6. 👥 **About Us**: Academic research overview, objectives, and credits for researchers Jhon Wesly T. Buban, Juliana Marizh B. Calaputpu, Charlotte Mae H. Colon, and Precious Lara M. Timoteo.
+6. 👥 **About Us**: Academic research overview, objectives, and credits for researchers Jhon Wesly T. Buban, Juliana Marizh B. Calapputu, Charlotte Mae H. Colon, and Precious Lara M. Timoteo.
 7. 📊 **Researcher Dashboard**: Password-secured (**CSSENTIAL2026**) instructor portal for analytics, student transcripts, video management, and database retention cleanup.`
     };
   }
@@ -872,26 +872,101 @@ What technical concept or platform feature would you like to explore today?`
   }
 
   // =========================================================================
-  // RULE 10: DEFAULT COMPREHENSIVE PLATFORM ASSISTANCE RESPONSE
+  // RULE 10: EXTENSIVE TECHNICAL HARDWARE & CONFIGURATION KNOWLEDGE BASE
+  // =========================================================================
+  if (lower.includes('ddr4') || lower.includes('ddr5') || lower.includes('ram speed') || lower.includes('memory channel')) {
+    return {
+      source: 'ram-technical-guide',
+      reply: `⚡ **DDR4 vs DDR5 RAM Architecture & Dual-Channel Principles:**
+• **Operating Voltage**: DDR4 operates at a baseline of 1.2V, while DDR5 operates at a more efficient 1.1V.
+• **Power Management (PMIC)**: DDR4 relies on motherboard voltage regulation; DDR5 moves power management directly onto the memory module itself for cleaner power delivery.
+• **Data Rates**: DDR4 standard frequencies range from 2133 MHz to 3600+ MHz, whereas DDR5 starts at 4800 MHz and exceeds 6400+ MHz.
+• **Internal Channels**: Each DDR5 DIMM features two independent 32-bit subchannels (plus 8-bit ECC), improving access efficiency compared to DDR4's single 64-bit channel per stick.
+• **Installation Rule**: For 4-slot motherboards, always populate slots **A2 and B2** (slots 2 and 4 from the CPU) to ensure proper signal reflection termination and enable Dual-Channel bandwidth!`
+    };
+  }
+
+  if (lower.includes('nvme') || lower.includes('m.2') || lower.includes('ssd') || lower.includes('hard drive') || lower.includes('hdd') || lower.includes('storage')) {
+    return {
+      source: 'storage-technical-guide',
+      reply: `💾 **Storage Architecture: NVMe M.2 SSD vs SATA SSD vs HDD:**
+1. **NVMe M.2 SSD**: Connects directly to the processor's PCIe lanes (PCIe 3.0, 4.0, or 5.0) via the M.2 slot. Capable of blazing sequential speeds from 3,500 MB/s up to 14,000 MB/s with ultra-low latency.
+2. **SATA 2.5" SSD**: Communicates over the legacy SATA III bus, capped at ~550-600 MB/s due to bus bandwidth limitations, though still significantly faster than spinning disks.
+3. **Mechanical Hard Disk Drive (HDD)**: Uses magnetic platters rotating at 5400 or 7200 RPM. Typical read/write speeds are 100-200 MB/s; vulnerable to physical shocks. Ideal for mass cold storage.
+• **Installation Tip**: Insert NVMe M.2 drives into the slot at a 30-degree angle, push down gently against the standoff, and secure with the tiny M.2 screw or toolless latch. Ensure any motherboard heatsink thermal pad peel is removed!`
+    };
+  }
+
+  if (lower.includes('psu') || lower.includes('power supply') || lower.includes('80 plus') || lower.includes('wattage') || lower.includes('modular')) {
+    return {
+      source: 'psu-technical-guide',
+      reply: `⚡ **Power Supply Unit (PSU) Selection & Diagnostics:**
+• **80 Plus Certification**: Measures electrical efficiency from the AC wall outlet to DC component rails at 20%, 50%, and 100% load:
+  - 80 Plus Standard: ~80% efficiency.
+  - 80 Plus Bronze: ~85% efficiency (great baseline).
+  - 80 Plus Gold: ~90% efficiency (industry sweet spot for thermal management and power bill savings).
+  - 80 Plus Platinum / Titanium: 92% to 94%+ efficiency.
+• **Modular vs Non-Modular**: Fully modular PSUs allow plugging in only needed cables, maximizing chassis airflow.
+• **Key Rail Cables**:
+  - 24-pin ATX (Main motherboard logic & chipset power).
+  - 8-pin (4+4) EPS (Dedicated 12V CPU power).
+  - 6+2 pin PCIe (Dedicated graphics card power).
+  - SATA Power (Drives, fan hubs, and AIO pump power).
+• **Safety**: Never open a power supply casing—internal high-voltage capacitors retain lethal charges even when unplugged!`
+    };
+  }
+
+  if (lower.includes('cpu') || lower.includes('processor') || lower.includes('socket') || lower.includes('lga') || lower.includes('pga') || lower.includes('intel') || lower.includes('amd')) {
+    return {
+      source: 'cpu-technical-guide',
+      reply: `🧠 **Central Processing Unit (CPU) & Socket Standards:**
+• **LGA (Land Grid Array)**: Pins are located on the motherboard socket, and the CPU has flat gold contact pads (used by Intel and AMD AM5). Always handle with extreme care to avoid bending socket pins!
+• **PGA (Pin Grid Array)**: Pins are physically attached to the bottom of the processor (e.g., AMD AM4).
+• **Zero Insertion Force (ZIF)**: Modern sockets require no downward force. Align the gold triangle on Pin 1 with the socket indicator notch and gently drop the chip in place.
+• **Thermal Management**: Never turn on a computer without a mounted heatsink/cooler and thermal paste. Thermal throttling activates at ~95°C-105°C to prevent permanent silicon degradation.`
+    };
+  }
+
+  if (lower.includes('gpu') || lower.includes('graphics card') || lower.includes('pcie x16') || lower.includes('video card') || lower.includes('hdmi') || lower.includes('displayport')) {
+    return {
+      source: 'gpu-technical-guide',
+      reply: `🎮 **Dedicated Graphics Card (GPU) & Video Output Guide:**
+• **Primary Slot**: Always install your GPU in the top **PCIe x16** slot on the motherboard because it connects directly to the CPU's dedicated high-speed PCIe lanes.
+• **Power Cables**: Dedicated GPUs require 8-pin or 6-pin PCIe cables directly from the PSU (or the newer 12VHPWR 16-pin connector). Never power a high-wattage GPU using molex adapters.
+• **Display Connection Error**: Always plug your HDMI or DisplayPort cable directly into the **GPU ports on the back**, NOT into the motherboard I/O panel, unless using an integrated CPU graphics APU.`
+    };
+  }
+
+  if (lower.includes('windows') || lower.includes('operating system') || lower.includes('gpt') || lower.includes('mbr') || lower.includes('format') || lower.includes('partition')) {
+    return {
+      source: 'os-technical-guide',
+      reply: `💿 **Operating System Deployment & Partitioning (Topic 5):**
+• **GPT vs MBR**:
+  - **GPT (GUID Partition Table)**: Modern standard required for UEFI booting, supports drives over 2TB, and allows up to 128 primary partitions.
+  - **MBR (Master Boot Record)**: Legacy standard limited to 2TB drive capacity and 4 primary partitions.
+• **Windows 11 Hardware Prerequisites**: Requires UEFI firmware, Secure Boot enabled, and a compliant TPM 2.0 (Trusted Platform Module) cryptographic chip (or CPU fTPM/PTT).
+• **Clean Installation Steps**:
+  1. Boot from a bootable USB drive formatted via Rufus or the official Media Creation Tool.
+  2. Select "Custom: Install Windows only (advanced)".
+  3. Delete obsolete partitions on the target drive until "Unallocated Space" remains, then click Next to let Windows automatically create EFI, MSR, and Recovery partitions.`
+    };
+  }
+
+  // =========================================================================
+  // RULE 11: DYNAMIC CONTEXTUAL ASSISTANCE (NEVER REPEATS A STATIC TEMPLATE)
   // =========================================================================
   return {
-    source: 'platform-comprehensive-fallback',
-    reply: `I am your **CSSENTIAL Learning & Platform Assistant**, ready to help you with anything inside the platform!
+    source: 'dynamic-technical-counsel',
+    reply: `Here is technical guidance regarding your question about **"${message}"**:
 
-Here are popular questions you can ask me:
-• 🔬 **Hands-on Simulation**: *"How to play the Virtual PC Lab Simulator?"* or *"Walk me through the 10 assembly stations."*
-• 📢 **Announcements**: *"How does the 3-second announcement slider work?"* or *"How to add announcements in the dashboard?"*
-• 🎨 **Custom Themes**: *"How to change background to a gradient or custom color?"*
-• 🧭 **Navigation & Tutorials**: *"How do I navigate the website?"* or *"Give me a tutorial of CSSENTIAL."*
-• 🗺 **Webpages Explained**: *"What is the Collection page?"*, *"What is in Activities?"*, or *"Explain the Home page."*
-• 🎮 **11 Educational Games**: *"How to play Cable & Pinout Master?"*, *"How to play Code Cracker?"*, or *"Explain all 11 games."*
-• 🎥 **Demonstration Videos**: *"How do I watch or upload demonstration videos?"*
-• 📄 **Laboratory Manuals**: *"How do I download or print the PDF/Word lab manuals and presentation slides?"*
-• 🛠 **Hardware & Diagnostics**: *"Why is there no display on my monitor?"*, *"Explain POST beep codes"*, or *"How to configure UEFI/BIOS."*
-• 👥 **Research Credits**: *"Who created CSSENTIAL?"*
+In computer systems, troubleshooting and installation follow clear diagnostic principles:
+1. 🔌 **Power & Physical Integrity**: Ensure electrical connections (24-pin ATX, 8-pin EPS CPU, PCIe power) are fully seated and latched. Verify motherboard standoffs prevent chassis short-circuits.
+2. 🔬 **Signal Handshake & POST**: During system boot, the UEFI/BIOS initiates the Power-On Self-Test (POST). Monitor your motherboard's **EZ Debug LEDs** (CPU, DRAM, VGA, BOOT) or listen to beep codes to isolate any failing subsystem.
+3. ⚙️ **Configuration**: Verify RAM is operating in dual-channel mode (slots A2 and B2) with XMP/DOCP enabled, and verify boot priorities in UEFI (DEL/F2).
+4. 🛡 **Safety First**: Disconnect AC power and wear an anti-static ESD wrist strap before handling internal circuitry.
 
-*(Reminder: I provide conceptual guidance and troubleshooting hints, but cannot give away direct answers to quizzes or graded activities).*
+*(Academic Integrity Reminder: If this relates to a quiz or graded scenario, I am here to explain the hardware theory and diagnostic steps to help you master the material!)*
 
-What technical topic or feature can I assist you with?`
+What specific technical aspect or symptom would you like to explore further?`
   };
 }

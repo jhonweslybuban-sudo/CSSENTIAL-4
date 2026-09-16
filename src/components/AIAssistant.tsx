@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Send, X, Sparkles, Minimize2, Maximize2, RotateCcw, HelpCircle, ShieldCheck, Compass, BookOpen, Film, Gamepad2, Wrench } from 'lucide-react';
+import { Bot, MessageSquare, Send, X, RotateCcw, Minimize2, Maximize2 } from 'lucide-react';
 import { api } from '../services/api';
 
 interface Message {
@@ -14,12 +14,16 @@ interface AIAssistantProps {
   initialPrompt?: string | null;
   onClearInitialPrompt?: () => void;
   currentPage?: string;
+  onOpenCommunityChat?: () => void;
+  hideAIAssistant?: boolean;
 }
 
 export const AIAssistant: React.FC<AIAssistantProps> = ({
   initialPrompt,
   onClearInitialPrompt,
-  currentPage = 'HOME'
+  currentPage = 'HOME',
+  onOpenCommunityChat,
+  hideAIAssistant = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -27,24 +31,31 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     {
       id: 'welcome',
       sender: 'ai',
-      text: `👋 **Welcome! Need assistance with CSSENTIAL?**\n\nI am your official **"Asks for Assistance" Platform Guide & Learning Tutor**. You can ask me almost anything about:\n\n• 🧭 **Website Navigation**: How to navigate Home, Activities, Collection, Games Hub, About Us, and the Researcher Dashboard.\n• 🎮 **How to Play the 10 Games**: Rules and walkthroughs for Sort & Configure, Code Cracker, Sequence, Flashcards, Memory Match, Cable & Pinout Master, and more.\n• 🎥 **Videos & Manuals**: How to watch demonstration videos, upload your own videos, and print/download academic lab manuals (PDF/Word DOCX).\n• 🛠 **Computer Technician Concepts**: Hardware assembly, POST beep codes, EZ Debug LEDs, RAM dual-channel setup, BIOS/UEFI options, and black-screen troubleshooting.\n\n⚠️ *Academic Integrity Policy: Direct quiz or test answers are restricted so you can genuinely master the skills. I will happily explain the underlying concepts, diagnostic logic, and hints!*`,
+      text: `Hello! I am your **ASK CSSENTIAL** technical assistant. You can ask me questions about hardware assembly, BIOS/UEFI configuration, diagnostic troubleshooting, laboratory manuals, or platform navigation!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      source: 'CSSENTIAL Knowledge Engine'
+      source: 'CSSENTIAL Assistant'
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Trigger from external component (e.g. Activity hint)
+  // If on activity player or games hub, automatically close if it was open
   useEffect(() => {
-    if (initialPrompt) {
+    if (hideAIAssistant && isOpen) {
+      setIsOpen(false);
+    }
+  }, [hideAIAssistant, isOpen]);
+
+  // Trigger from external component
+  useEffect(() => {
+    if (initialPrompt && !hideAIAssistant) {
       setIsOpen(true);
       setIsMinimized(false);
       handleSendPrompt(`I need assistance regarding this scenario: ${initialPrompt}`);
       if (onClearInitialPrompt) onClearInitialPrompt();
     }
-  }, [initialPrompt]);
+  }, [initialPrompt, hideAIAssistant]);
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
@@ -79,15 +90,16 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         sender: 'ai',
         text: response.reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        source: response.source
+        source: response.source || 'CSSENTIAL Assistant'
       };
       setMessages(prev => [...prev, aiMessage]);
-    } catch (err: any) {
+    } catch {
       const errorMessage: Message = {
         id: `err-${Date.now()}`,
         sender: 'ai',
-        text: 'I encountered a brief connection delay. Please try asking again or select one of the quick assistance topics below.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        text: 'I encountered a brief connection delay. Please ask your question again.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        source: 'CSSENTIAL Assistant'
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -105,98 +117,64 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       {
         id: 'welcome-reset',
         sender: 'ai',
-        text: 'Assistance chat history cleared. What topic, game, or navigation tutorial can I help you with today?',
+        text: 'Chat history cleared. How can I assist you today with computer hardware or CSSENTIAL modules?',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        source: 'CSSENTIAL Knowledge Engine'
+        source: 'CSSENTIAL Assistant'
       }
     ]);
   };
 
   const quickPrompts = [
-    { label: '🔬 Virtual PC Simulator', query: 'How do I play the Virtual PC Hardware Assembly & Configuration Lab Simulator?' },
-    { label: '📢 3-Sec Announcement Slider', query: 'How does the 3-second auto-rotating announcement slider work and how can researchers manage it?' },
-    { label: '🎨 Custom Themes & Gradients', query: 'How do I change the website background to normal colors, gradients, or create my own custom design?' },
-    { label: '🧭 How to navigate website?', query: 'How do I navigate and use the different pages and tools of this website?' },
-    { label: '🎮 How to play all 11 games?', query: 'How do I play the 11 games in the Games Hub, including Cable & Pinout Master and Virtual PC Lab?' },
-    { label: '🖥️ Troubleshoot: Black screen / No display', query: 'My computer turns on but there is no display on the monitor. What should I check step-by-step?' },
-    { label: '💡 EZ Debug LEDs & Beep Codes', query: 'Explain motherboard POST beep codes and what the 4 EZ Debug LEDs (CPU, DRAM, VGA, BOOT) indicate.' },
-    { label: '🛠️ Why RAM in slots A2 & B2?', query: 'Why must dual-channel RAM be installed in slots A2 and B2 instead of A1 and B1?' },
-    { label: '💻 UEFI/BIOS & Boot Priority', query: 'How do I enter UEFI/BIOS, enable XMP, set SATA to AHCI, and configure boot priority for Windows installation?' },
-    { label: '📄 Offline Slides & Word Manuals', query: 'How do I download standalone 16:9 presentation slides and official lab manuals in PDF or Word DOCX format?' },
-    { label: '🚫 Quiz Answer Policy Test', query: 'Can you give me the direct answer to question 1 in the quiz?' },
-    { label: '👥 Who made CSSENTIAL?', query: 'Who are the researchers and developers behind CSSENTIAL?' }
+    { label: 'Virtual PC Simulator', query: 'How do I play the Virtual PC Hardware Assembly Lab Simulator?' },
+    { label: 'Black Screen / No POST', query: 'How do I troubleshoot a PC with power but no display?' },
+    { label: 'EZ Debug LEDs', query: 'What do the motherboard EZ Debug LEDs (CPU, DRAM, VGA, BOOT) indicate?' },
+    { label: 'RAM Slots A2 & B2', query: 'Why install dual-channel RAM in slots A2 and B2?' },
+    { label: 'UEFI / BIOS Setup', query: 'How do I configure boot priority and enable XMP in BIOS?' }
   ];
 
   return (
     <>
-      {/* Floating Launcher Button with "Ask for Assistance" styling */}
-      {!isOpen && (
-        <button
-          id="open-ai-assistant-btn"
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-5 right-5 z-40 bg-linear-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white rounded-full py-3 px-4.5 shadow-xl flex items-center gap-3 transition-all transform hover:scale-105 active:scale-95 cursor-pointer group border-2 border-white/20"
-          title="Click to ask for assistance with website navigation, games, lessons, or troubleshooting"
-        >
-          <div className="relative flex items-center justify-center">
-            <HelpCircle className="w-5 h-5 text-yellow-300" />
-            <span className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-1 -right-1 animate-ping"></span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-1 -right-1"></span>
-          </div>
-          <div className="flex flex-col text-left">
-            <span className="text-xs font-black tracking-wide leading-tight uppercase flex items-center gap-1.5">
-              <span>Ask for Assistance</span>
-              <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" />
-            </span>
-            <span className="text-[10px] text-blue-200 font-medium hidden sm:inline-block">
-              Navigation • Games • Lessons • Diagnostics
-            </span>
-          </div>
-        </button>
-      )}
-
-      {/* Floating Chat Modal */}
-      {isOpen && (
+      {/* AI ASSISTANT POPUP WINDOW */}
+      {isOpen && !hideAIAssistant && (
         <div
-          className={`fixed bottom-4 right-4 z-50 w-[94vw] sm:w-[460px] bg-white rounded-2xl shadow-2xl border border-blue-300 overflow-hidden flex flex-col transition-all duration-200 ${
-            isMinimized ? 'h-14' : 'h-[580px]'
+          className={`fixed bottom-28 right-4 z-50 w-[92vw] sm:w-[420px] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col transition-all duration-200 animate-in fade-in zoom-in-95 ${
+            isMinimized ? 'h-14' : 'h-[520px] max-h-[80vh]'
           }`}
         >
           {/* Header */}
-          <div className="bg-linear-to-r from-blue-900 via-blue-800 to-indigo-900 text-white px-4 py-3 flex items-center justify-between shadow-xs select-none">
+          <div className="bg-linear-to-r from-blue-900 to-indigo-900 text-white px-4 py-3 flex items-center justify-between shadow-xs shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-blue-700/80 flex items-center justify-center border border-blue-400 shadow-xs">
-                <Bot className="w-5 h-5 text-yellow-300" />
+              <div className="w-8 h-8 rounded-lg bg-blue-700/80 flex items-center justify-center text-yellow-300">
+                <Bot className="w-4.5 h-4.5" />
               </div>
               <div>
-                <h3 className="text-xs font-black tracking-wide flex items-center gap-1.5 text-white">
-                  <span>ASK FOR ASSISTANCE</span>
+                <h3 className="text-xs font-black tracking-wider text-white uppercase flex items-center gap-1.5">
+                  <span>ASK CSSENTIAL</span>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 </h3>
-                <span className="text-[10px] text-blue-200 block font-medium">
-                  CSSENTIAL Platform Guide & Learning Tutor
-                </span>
+                <p className="text-[10px] text-blue-200">Hardware &amp; Platform Learning Assistant</p>
               </div>
             </div>
 
             <div className="flex items-center gap-1 text-blue-200">
               <button
                 onClick={handleClearHistory}
-                className="p-1.5 hover:text-white hover:bg-blue-700/60 rounded-md transition-colors cursor-pointer"
-                title="Reset conversation"
+                className="p-1.5 hover:text-white hover:bg-blue-800 rounded-lg transition-colors cursor-pointer"
+                title="Clear conversation"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
-                className="p-1.5 hover:text-white hover:bg-blue-700/60 rounded-md transition-colors cursor-pointer"
+                className="p-1.5 hover:text-white hover:bg-blue-800 rounded-lg transition-colors cursor-pointer"
                 title={isMinimized ? 'Expand' : 'Minimize'}
               >
                 {isMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 hover:text-white hover:bg-blue-700/60 rounded-md transition-colors cursor-pointer"
-                title="Close chat"
+                className="p-1.5 hover:text-white hover:bg-blue-800 rounded-lg transition-colors cursor-pointer"
+                title="Close assistant"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -205,19 +183,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
           {!isMinimized && (
             <>
-              {/* Guidance & Academic Integrity Banner */}
-              <div className="bg-blue-50 border-b border-blue-200/80 px-3.5 py-1.5 flex items-center justify-between gap-2 text-[11px] text-blue-900 font-medium">
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-700 shrink-0" />
-                  <span>Ask about anything in the site! Direct quiz answers restricted.</span>
-                </div>
-                <span className="text-[10px] px-1.5 py-0.5 bg-blue-200/60 text-blue-800 rounded-sm font-semibold uppercase tracking-wider shrink-0">
-                  {currentPage}
-                </span>
-              </div>
-
-              {/* Messages Scroll Area */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50 text-xs">
+              {/* Messages Discussion List */}
+              <div className="flex-1 p-3.5 overflow-y-auto space-y-3 bg-slate-50 text-xs">
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
@@ -226,21 +193,21 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                     }`}
                   >
                     <div
-                      className={`max-w-[90%] p-3.5 rounded-2xl leading-relaxed whitespace-pre-wrap ${
+                      className={`max-w-[88%] p-3 rounded-xl leading-relaxed whitespace-pre-wrap ${
                         msg.sender === 'user'
-                          ? 'bg-blue-700 text-white rounded-br-xs shadow-xs'
-                          : 'bg-white border border-gray-200 text-gray-800 rounded-bl-xs shadow-xs'
+                          ? 'bg-blue-700 text-white rounded-br-xs'
+                          : 'bg-white border border-gray-200 text-gray-800 rounded-bl-xs'
                       }`}
                     >
                       {msg.text}
                     </div>
-                    <div className="flex items-center gap-2 mt-1 px-1">
+                    <div className="flex items-center gap-1.5 mt-0.5 px-1">
                       <span className="text-[9px] text-gray-400 font-mono">
                         {msg.timestamp}
                       </span>
                       {msg.source && msg.sender === 'ai' && (
-                        <span className="text-[9px] text-blue-600 font-medium bg-blue-50 px-1.5 py-0.2 rounded-xs border border-blue-100">
-                          {msg.source.includes('gemini') ? 'AI Model' : 'Platform Guide'}
+                        <span className="text-[9px] text-blue-600 font-medium">
+                          • {msg.source}
                         </span>
                       )}
                     </div>
@@ -248,58 +215,99 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                 ))}
 
                 {isLoading && (
-                  <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 border border-blue-200 p-3 rounded-2xl rounded-bl-xs w-fit shadow-xs animate-pulse">
-                    <Bot className="w-3.5 h-3.5 text-blue-600 animate-spin" />
-                    <span>Searching CSSENTIAL platform knowledge & curriculum...</span>
+                  <div className="flex items-center gap-2 text-xs text-blue-900 bg-blue-50 border border-blue-200 px-3 py-2 rounded-xl w-fit">
+                    <span className="flex gap-1 items-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:-0.3s]"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:-0.15s]"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce"></span>
+                    </span>
+                    <span className="font-medium text-xs">Assistant is thinking...</span>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Quick Prompts Chips */}
-              <div className="px-3 py-2 bg-white border-t border-gray-200 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              {/* Quick suggestions */}
+              <div className="px-2.5 py-1.5 bg-white border-t border-gray-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 {quickPrompts.map((item, i) => (
                   <button
                     key={i}
                     onClick={() => handleSendPrompt(item.query)}
                     disabled={isLoading}
-                    className="shrink-0 text-[10px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full border border-blue-200 transition-colors cursor-pointer whitespace-nowrap"
+                    className="shrink-0 text-[10px] font-medium bg-gray-100 hover:bg-blue-50 hover:text-blue-800 text-gray-700 px-2.5 py-1 rounded-full border border-gray-200 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     {item.label}
                   </button>
                 ))}
               </div>
 
-              {/* Input Form */}
+              {/* Simple Input Form */}
               <form
                 onSubmit={handleFormSubmit}
-                className="p-3 bg-white border-t border-gray-200 flex items-center gap-2"
+                className="p-2.5 bg-white border-t border-gray-200 flex items-center gap-1.5"
               >
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask for assistance with navigation, games, lessons, or hardware..."
+                  placeholder="Ask CSSENTIAL about computer hardware..."
                   disabled={isLoading}
-                  className="flex-1 px-3.5 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-hidden bg-gray-50 text-gray-900 placeholder:text-gray-400"
+                  className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-600 outline-hidden bg-gray-50 text-gray-900 placeholder:text-gray-400"
                 />
                 <button
                   type="submit"
                   disabled={!inputValue.trim() || isLoading}
-                  className={`p-2.5 rounded-xl text-white transition-all ${
+                  className={`p-2 rounded-lg text-white transition-all ${
                     inputValue.trim() && !isLoading
-                      ? 'bg-blue-700 hover:bg-blue-800 cursor-pointer shadow-xs'
+                      ? 'bg-blue-700 hover:bg-blue-800 cursor-pointer'
                       : 'bg-gray-300 cursor-not-allowed'
                   }`}
                   title="Send message"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </form>
             </>
           )}
         </div>
       )}
+
+      {/* TWO CIRCULAR BUTTONS IN BOTTOM RIGHT CORNER BESIDE EACH OTHER */}
+      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 select-none pointer-events-auto">
+        {/* BUTTON 1: "ASK CSSENTIAL" CIRCLE (HIDDEN DURING ACTIVITIES / GAMES) */}
+        {!hideAIAssistant && (
+          <button
+            id="ask-cssential-circle-btn"
+            onClick={() => setIsOpen(prev => !prev)}
+            className={`w-20 h-20 rounded-full bg-blue-700 hover:bg-blue-800 text-white shadow-xl flex flex-col items-center justify-center p-1.5 text-center border-4 border-white cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 shrink-0 relative group ${
+              isOpen ? 'ring-4 ring-blue-300 ring-offset-2' : ''
+            }`}
+            title="ASK CSSENTIAL"
+            aria-label="ASK CSSENTIAL"
+          >
+            <Bot className="w-5 h-5 text-yellow-300 mb-0.5 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="text-[9px] font-black uppercase tracking-wider text-white leading-tight text-center">
+              ASK<br />CSSENTIAL
+            </span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 absolute top-1 right-1 border-2 border-white"></span>
+          </button>
+        )}
+
+        {/* BUTTON 2: "CHAT BOX" CIRCLE (SAME DESIGN BESIDE IT) */}
+        <button
+          id="chat-box-circle-btn"
+          onClick={onOpenCommunityChat}
+          className="w-20 h-20 rounded-full bg-indigo-700 hover:bg-indigo-800 text-white shadow-xl flex flex-col items-center justify-center p-1.5 text-center border-4 border-white cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 shrink-0 relative group"
+          title="Chat Box"
+          aria-label="Chat Box"
+        >
+          <MessageSquare className="w-5 h-5 text-indigo-200 mb-0.5 group-hover:scale-110 transition-transform shrink-0" />
+          <span className="text-[9px] font-black uppercase tracking-wider text-white leading-tight text-center">
+            CHAT<br />BOX
+          </span>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 absolute top-1 right-1 border-2 border-white animate-pulse"></span>
+        </button>
+      </div>
     </>
   );
 };
