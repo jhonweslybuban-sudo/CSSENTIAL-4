@@ -17,7 +17,10 @@ import {
   Wrench,
   Sliders,
   Terminal,
-  Gauge
+  Gauge,
+  Laptop,
+  Network,
+  Server
 } from 'lucide-react';
 
 export type GameType =
@@ -33,7 +36,11 @@ export type GameType =
   | 'CABLE_PINOUT_MASTER'
   | 'VIRTUAL_PC_LAB'
   | 'PC_BUILD_SIMULATOR'
-  | 'BIOS_SIMULATOR';
+  | 'BIOS_SIMULATOR'
+  | 'OS_INSTALL_SIMULATOR'
+  | 'NETWORK_CONFIG_SIMULATOR'
+  | 'SERVER_CLIENT_SETUP'
+  | 'HARDWARE_COMPATIBILITY';
 
 interface GamesHubProps {
   onSelectGame: (game: GameType) => void;
@@ -148,6 +155,38 @@ export const GamesHub: React.FC<GamesHubProps> = ({
       desc: 'A realistic recreation of an actual BIOS/UEFI setup utility screen. Practice changing XMP, Secure Boot, TPM 2.0, CPU Multipliers, and Boot Priority with zero risk.',
       icon: <Terminal className="w-6 h-6 text-cyan-700" />,
       badge: 'NEW • Zero-Risk Practice'
+    },
+    {
+      id: 'OS_INSTALL_SIMULATOR' as GameType,
+      title: 'Windows OS Installation & Media Lab',
+      category: 'OS Deployment',
+      desc: 'Interactive Windows 11 installation simulator (Boot selection, custom partition management, OOBE setup), installation media troubleshooting (Rufus, GPT/FAT32, Intel VMD drivers), and post-install driver checklist.',
+      icon: <Laptop className="w-6 h-6 text-blue-700" />,
+      badge: 'Items #5 & #14 • Interactive OS'
+    },
+    {
+      id: 'NETWORK_CONFIG_SIMULATOR' as GameType,
+      title: 'Network Configuration & Diagnostics',
+      category: 'Network Administration',
+      desc: 'Interactive Windows IPv4 Adapter Properties (ncpa.cpl) with gateway validation, Command-Line Diagnostics Terminal (ipconfig, ping, tracert, nslookup, netstat), and T568A/B RJ45 cabling pinouts with animated cable tester.',
+      icon: <Network className="w-6 h-6 text-indigo-700" />,
+      badge: 'Item #12 • Network Lab'
+    },
+    {
+      id: 'SERVER_CLIENT_SETUP' as GameType,
+      title: 'Server/Client Setup & Sharing Lab',
+      category: 'Infrastructure & Security',
+      desc: 'Peer-to-Peer Workgroups vs. Active Directory Domains, DHCP & DNS server role configurations, client workstation domain join simulator, and network folder Share vs. NTFS permissions calculator.',
+      icon: <Server className="w-6 h-6 text-purple-700" />,
+      badge: 'Item #13 • Server/Client'
+    },
+    {
+      id: 'HARDWARE_COMPATIBILITY' as GameType,
+      title: 'Hardware & OS Compatibility Calculator',
+      category: 'Hardware Engineering',
+      desc: 'Interactive compatibility matrix testing physical CPU socket matching (LGA1700/AM5), DDR4 vs DDR5 RAM keying, cooler thermal TDP headroom, PSU wattage overhead, and Windows 11 TPM 2.0/Secure Boot compliance.',
+      icon: <Cpu className="w-6 h-6 text-emerald-700" />,
+      badge: 'Item #7 • Compatibility Engine'
     }
   ];
 

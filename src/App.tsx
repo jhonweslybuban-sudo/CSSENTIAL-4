@@ -28,6 +28,10 @@ import { CablePinoutMasterGame } from './components/games/CablePinoutMasterGame'
 import { VirtualPCLabSimulator } from './components/VirtualPCLabSimulator';
 import { PCBuildSimulator } from './components/PCBuildSimulator';
 import { BiosSimulator } from './components/BiosSimulator';
+import { OSInstallationSimulator } from './components/OSInstallationSimulator';
+import { NetworkConfigSimulator } from './components/NetworkConfigSimulator';
+import { ServerClientSetupView } from './components/ServerClientSetupView';
+import { HardwareCompatibilityCalculator } from './components/HardwareCompatibilityCalculator';
 
 import { PageView, StudentProfile } from './types';
 import { ActivityDefinition, ACTIVITIES_DATA } from './data/curriculum';
@@ -288,6 +292,34 @@ export default function App() {
             )}
             {selectedGame === 'BIOS_SIMULATOR' && (
               <BiosSimulator
+                studentId={student?.student_id || 'STU-GUEST'}
+                sessionId={sessionId || 'SESS-TEMP'}
+                onBack={() => navigateTo('GAMES_HUB')}
+              />
+            )}
+            {selectedGame === 'OS_INSTALL_SIMULATOR' && (
+              <OSInstallationSimulator
+                studentId={student?.student_id || 'STU-GUEST'}
+                sessionId={sessionId || 'SESS-TEMP'}
+                onBack={() => navigateTo('GAMES_HUB')}
+              />
+            )}
+            {selectedGame === 'NETWORK_CONFIG_SIMULATOR' && (
+              <NetworkConfigSimulator
+                studentId={student?.student_id || 'STU-GUEST'}
+                sessionId={sessionId || 'SESS-TEMP'}
+                onBack={() => navigateTo('GAMES_HUB')}
+              />
+            )}
+            {selectedGame === 'SERVER_CLIENT_SETUP' && (
+              <ServerClientSetupView
+                studentId={student?.student_id || 'STU-GUEST'}
+                sessionId={sessionId || 'SESS-TEMP'}
+                onBack={() => navigateTo('GAMES_HUB')}
+              />
+            )}
+            {selectedGame === 'HARDWARE_COMPATIBILITY' && (
+              <HardwareCompatibilityCalculator
                 studentId={student?.student_id || 'STU-GUEST'}
                 sessionId={sessionId || 'SESS-TEMP'}
                 onBack={() => navigateTo('GAMES_HUB')}

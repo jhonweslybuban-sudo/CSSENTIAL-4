@@ -167,8 +167,14 @@ export const LESSONS: LessonContent[] = [
         body: 'Ensure the storage controller is set to AHCI (Advanced Host Controller Interface) or native NVMe mode rather than legacy IDE mode for optimal performance and SSD TRIM support.'
       },
       {
-        heading: '3. Operating System Deployment',
-        body: 'Create UEFI-compliant boot media (FAT32/NTFS with GPT schema). During Windows/Linux setup, partition storage properly (EFI system partition, MSR, and Primary NTFS/EXT4).'
+        heading: '3. Operating System Deployment & Media Troubleshooting',
+        body: 'Create UEFI-compliant boot media using Rufus or official Media Creation Tools with GPT partitioning. Troubleshoot common media barriers such as the FAT32 4GB file size limit (which prevents copying modern install.wim files unless split using DISM into .swm files), Secure Boot digital signature rejections, and missing NVMe storage controllers on Intel 11th-14th Gen systems requiring Intel VMD/RST driver injection.',
+        keyPoints: [
+          'FAT32 4GB Single-File Limit: Use Rufus with UEFI/NTFS or split image using DISM /Split-Image.',
+          'Missing NVMe Drives in Setup: Extract Intel RST VMD drivers onto USB and click "Load driver".',
+          'Disk Partitioning: Clean install creates EFI System Partition (100MB), MSR (16MB), Primary OS (NTFS), and Recovery (500MB).',
+          'Driver Installation Hierarchy: Always install Motherboard Chipset drivers first before graphics or peripheral drivers.'
+        ]
       }
     ],
     steps: [
@@ -198,7 +204,8 @@ export const LESSONS: LessonContent[] = [
       'Use GPT (GUID Partition Table) partitioning for modern UEFI systems.'
     ],
     troubleshootingTips: [
-      'If bootable USB is not detected, disable "Fast Boot" in BIOS and check USB format.'
+      'If bootable USB is not detected, disable "Fast Boot" in BIOS and check USB format (ensure GPT/UEFI).',
+      'If Windows Setup displays "We couldn\'t find any drives", load the Intel RST VMD controller driver from USB.'
     ],
     videoUrl: 'https://www.youtube-nocookie.com/embed/hQc_Y3K7ZlU'
   },
@@ -378,6 +385,148 @@ export const LESSONS: LessonContent[] = [
       'If CPU immediately hits 95°C+ within 10 seconds of starting a stress test, the cooler protective plastic peel was likely left on!'
     ],
     videoUrl: 'https://www.youtube-nocookie.com/embed/0X6vY1-8g68'
+  },
+  {
+    id: 'lesson-7',
+    topicNumber: 7,
+    title: 'Network Configuration and Ethernet Cabling',
+    shortDesc: 'IPv4 addressing, subnet masks, default gateways, DNS resolution, RJ45 T568A/B crimping, and CLI diagnostics.',
+    objectives: [
+      'Configure static and dynamic (DHCP) IPv4 parameters on network adapters.',
+      'Understand subnet masks, broadcast domains, and default gateway routing.',
+      'Terminate Cat5e/Cat6 twisted pair cabling using TIA/EIA-568A and 568B pinout standards.',
+      'Diagnose connectivity issues using ping, ipconfig, tracert, nslookup, and netstat.'
+    ],
+    contentSections: [
+      {
+        heading: '1. IPv4 Addressing & Subnet Architecture',
+        body: 'An IPv4 address is a 32-bit numerical label divided into four 8-bit octets (e.g. 192.168.1.50). The subnet mask distinguishes the Network ID from the Host ID. Class C (/24 or 255.255.255.0) provides 254 usable host addresses.',
+        keyPoints: [
+          'Subnet Mask: Determines which portion of the IP is local network vs external host.',
+          'Default Gateway: The local IP of the router that routes packets to external networks (e.g. 192.168.1.1).',
+          'Loopback Address: 127.0.0.1 tests whether the local TCP/IP protocol stack is functioning.',
+          'APIPA (169.254.x.x): Indicates the computer could not reach a DHCP server to acquire an IP.'
+        ]
+      },
+      {
+        heading: '2. TIA/EIA-568A and 568B Ethernet Pinouts',
+        body: 'Cat5e/Cat6 8P8C (RJ45) modular connectors use standardized color pairs: White/Orange, Orange, White/Green, Blue, White/Blue, Green, White/Brown, Brown. Straight-through cables use the same standard on both ends (standard modern uses T568B). Crossover cables use T568A on one end and T568B on the other.',
+        keyPoints: [
+          'T568B Color Order: W/Orange, Orange, W/Green, Blue, W/Blue, Green, W/Brown, Brown.',
+          'T568A Color Order: W/Green, Green, W/Orange, Blue, W/Blue, Orange, W/Brown, Brown.',
+          'Cable Tester: Uses 8 sequential LEDs to verify end-to-end pin continuity and detect split pairs.'
+        ]
+      },
+      {
+        heading: '3. Command-Line Network Diagnostics',
+        body: 'Technicians rely on Windows CMD and PowerShell commands to rapidly isolate network dropouts and misconfigurations.',
+        keyPoints: [
+          'ipconfig /all: Reveals full adapter configuration including MAC address, DHCP server, and DNS lease.',
+          'ping: Sends ICMP echo requests to measure latency and packet loss.',
+          'tracert: Identifies router hops along the pathway to an external server.',
+          'ipconfig /flushdns: Purges corrupted or outdated cached DNS entries.'
+        ]
+      }
+    ],
+    steps: [
+      {
+        step: 1,
+        title: 'Physical Link Verification',
+        details: 'Inspect RJ45 Ethernet port LED activity lights (Solid Amber/Green indicates link, flashing indicates data traffic).'
+      },
+      {
+        step: 2,
+        title: 'Open Network Connections (ncpa.cpl)',
+        details: 'Press Win+R, type ncpa.cpl, right-click Ethernet adapter, choose Properties, and open IPv4 settings.'
+      },
+      {
+        step: 3,
+        title: 'Configure IP and Gateway',
+        details: 'Verify that static IP matches the router subnet (e.g., 192.168.1.x with gateway 192.168.1.1).'
+      },
+      {
+        step: 4,
+        title: 'Command Line Ping Test',
+        details: 'Open cmd.exe, ping the loopback (127.0.0.1), then default gateway (192.168.1.1), then external DNS (8.8.8.8).'
+      }
+    ],
+    reminders: [
+      'Never run Ethernet cables parallel to 220V AC electrical power conduits without shielding to avoid EMI (Electromagnetic Interference).',
+      'Always test newly crimped patch cables with a continuity tester before deployment into production switches.'
+    ],
+    troubleshootingTips: [
+      'If pinging 127.0.0.1 fails, reinstall network adapter drivers or reset TCP/IP stack with netsh int ip reset.'
+    ],
+    videoUrl: 'https://www.youtube-nocookie.com/embed/jZ_EaGz62rY'
+  },
+  {
+    id: 'lesson-8',
+    topicNumber: 8,
+    title: 'Server-Client Infrastructure & Resource Sharing',
+    shortDesc: 'Workgroup vs Active Directory domains, DHCP & DNS roles, workstation domain joining, and Share vs NTFS permissions.',
+    objectives: [
+      'Compare decentralized Workgroup networks with enterprise Active Directory Domain Services.',
+      'Configure essential server roles including DHCP scopes and DNS forward lookup zones.',
+      'Execute client workstation domain joins using Domain Administrator credentials.',
+      'Calculate effective permissions on network shares using the Most Restrictive Rule between Share and NTFS permissions.'
+    ],
+    contentSections: [
+      {
+        heading: '1. Peer-to-Peer Workgroups vs. Centralized Domains',
+        body: 'In a Workgroup, each PC maintains its own local Security Accounts Manager (SAM) database. In an Active Directory Domain, accounts, security policies, and computer trusts are centralized on Domain Controllers running ntds.dit.',
+        keyPoints: [
+          'Workgroup: Limited to 10-15 PCs; no centralized GPO enforcement or single sign-on.',
+          'Active Directory Domain: Scalable to thousands of endpoints with centralized Group Policy (GPO).'
+        ]
+      },
+      {
+        heading: '2. Core Server Roles: DHCP & DNS',
+        body: 'Windows Server runs enterprise roles that manage network orchestration. DHCP dispenses IP leases, while DNS resolves hostnames and registers SRV records essential for Active Directory domain discovery.',
+        keyPoints: [
+          'DORA Process: Discover -> Offer -> Request -> Acknowledge.',
+          'DNS Forward Lookup: Resolves hostnames to IP addresses; Active Directory requires AD-Integrated DNS.'
+        ]
+      },
+      {
+        heading: '3. Network File Sharing & Permissions Matrix',
+        body: 'When sharing files over SMB (Server Message Block), two distinct security layers apply: Network Share Permissions and Local NTFS File System Permissions. The effective permission is always the MOST RESTRICTIVE combination.',
+        keyPoints: [
+          'Share Permissions: Applied over the network (Read, Change, Full Control).',
+          'NTFS Permissions: Applied locally and across the network (Read, Modify, Full Control, Write).',
+          'Most Restrictive Rule: If Share is Read and NTFS is Full Control, the network user has only Read access.'
+        ]
+      }
+    ],
+    steps: [
+      {
+        step: 1,
+        title: 'Configure Server Static IP & Name',
+        details: 'Assign a static IPv4 address to the server and set a descriptive hostname (e.g. SERVER-01).'
+      },
+      {
+        step: 2,
+        title: 'Install Server Roles via Server Manager',
+        details: 'Launch Server Manager, add AD DS, DNS Server, and DHCP Server roles.'
+      },
+      {
+        step: 3,
+        title: 'Configure Client Workstation DNS',
+        details: 'On the client PC, set the Preferred DNS Server to the Domain Controller IP address.'
+      },
+      {
+        step: 4,
+        title: 'Join Workstation to Domain',
+        details: 'Open System Properties -> Computer Name/Domain Changes, select Domain, input domain name, and authenticate with Domain Admin credentials.'
+      }
+    ],
+    reminders: [
+      'Client machines will fail to join an Active Directory domain if their DNS server is pointing to an external public DNS (like 8.8.8.8) instead of the local Domain Controller.',
+      'Always use NTFS permissions for fine-grained security control rather than relying solely on Share permissions.'
+    ],
+    troubleshootingTips: [
+      'If domain join returns "The specified domain either does not exist or could not be contacted", test DNS resolution with nslookup <domain_name> and verify port 53 / 389 are reachable.'
+    ],
+    videoUrl: 'https://www.youtube-nocookie.com/embed/S_TpH2oZ3yA'
   }
 ];
 

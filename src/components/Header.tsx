@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Monitor, ArrowLeft, User, ShieldCheck, Palette, Award, GraduationCap } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Monitor, ArrowLeft, User, ShieldCheck, Palette, Award, GraduationCap, Settings, ChevronDown, Sparkles } from 'lucide-react';
 import { PageView, BrandingSettings } from '../types';
 import { api } from '../services/api';
 
@@ -31,6 +31,8 @@ export const Header: React.FC<HeaderProps> = ({
   sessionTimeFormatted = '00:00'
 }) => {
   const [branding, setBranding] = useState<BrandingSettings>(() => api.getBranding());
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Initial fetch from server to get persistent database branding
@@ -47,6 +49,30 @@ export const Header: React.FC<HeaderProps> = ({
     window.addEventListener('cssential_branding_updated', handleUpdate);
     return () => window.removeEventListener('cssential_branding_updated', handleUpdate);
   }, []);
+
+  // Close Settings dropdown on click outside or Escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSettingsOpen(false);
+      }
+    };
+
+    if (isSettingsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSettingsOpen]);
 
   return (
     <header className="w-full bg-white border-b border-gray-200 shadow-xs sticky top-0 z-40">
@@ -84,69 +110,192 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Right Action Controls: Return Button, Theme Picker, Student Badge, Researcher link */}
+          {/* Right Action Controls: Clean & Uncluttered layout */}
           <div className="flex items-center gap-2 self-end sm:self-center">
             
-            {/* Color Palette Switcher */}
-            {onOpenThemeModal && (
-              <button
-                id="header-theme-btn"
-                onClick={onOpenThemeModal}
-                title="Choose from 4 Custom Color Palettes"
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
-              >
-                <Palette className="w-4 h-4 text-purple-600" />
-                <span className="hidden md:inline">Color Palettes</span>
-              </button>
-            )}
-
             {/* User Session Info / Switcher */}
             {studentName ? (
               <button
                 id="header-user-profile-btn"
                 onClick={onOpenStudentModal}
                 title="Click to view or switch account"
-                className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-50/60 border border-blue-200/80 rounded-lg text-xs text-gray-700 hover:bg-blue-100/60 transition-colors cursor-pointer"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50/70 border border-blue-200 rounded-lg text-xs text-gray-700 hover:bg-blue-100/70 transition-colors cursor-pointer"
               >
                 <User className="w-3.5 h-3.5 text-blue-600" />
-                <span className="font-bold text-gray-900 max-w-[130px] truncate">{studentName}</span>
+                <span className="font-bold text-gray-900 max-w-[120px] truncate">{studentName}</span>
                 <span className="text-gray-300">|</span>
-                <span className="text-gray-500 font-mono">{sessionTimeFormatted}</span>
+                <span className="text-gray-500 font-mono text-[11px]">{sessionTimeFormatted}</span>
               </button>
             ) : (
               <button
                 id="header-login-signup-btn"
                 onClick={onOpenStudentModal}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg cursor-pointer"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 cursor-pointer"
               >
-                <User className="w-4 h-4" />
-                <span>Log In / Sign Up</span>
+                <User className="w-3.5 h-3.5" />
+                <span>Log In</span>
               </button>
             )}
 
-            {/* Academic Certificate */}
-            {onOpenCertificate && (
+            {/* UNIFIED SETTINGS DROPDOWN: Houses Color Palettes, CSSENTIAL Portal Certificate, and Telemetry Dashboard */}
+            <div className="relative" ref={settingsRef}>
               <button
-                id="header-certificate-btn"
-                onClick={onOpenCertificate}
-                title="View Academic Certificate of Competency"
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-900 bg-amber-50 border border-amber-300 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
+                id="header-settings-btn"
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                title="Platform Settings & Tools"
+                aria-haspopup="true"
+                aria-expanded={isSettingsOpen}
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border transition-all cursor-pointer shadow-xs ${
+                  isSettingsOpen
+                    ? 'bg-blue-50 border-blue-400 text-blue-800 ring-2 ring-blue-100'
+                    : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:text-gray-900'
+                }`}
               >
-                <Award className="w-4 h-4 text-amber-600" />
-                <span className="hidden md:inline">Certificate</span>
+                <Settings className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isSettingsOpen ? 'rotate-90 text-blue-600' : ''}`} />
+                <span>Settings</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isSettingsOpen ? 'rotate-180' : ''}`} />
               </button>
-            )}
 
-            {/* Telemetry Dashboard Access */}
-            <button
-              id="header-researcher-btn"
-              onClick={onOpenDashboard || onOpenResearcher}
-              title="Student Activity & Telemetry Dashboard"
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-900 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4 text-blue-700" />
-              <span className="hidden sm:inline">Telemetry Dashboard</span>
-            </button>
+              {/* Dropdown Panel */}
+              {isSettingsOpen && (
+                <div
+                  id="header-settings-menu"
+                  role="menu"
+                  className="absolute right-0 mt-2 w-80 sm:w-88 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 ring-1 ring-black/5"
+                >
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-xs font-black uppercase tracking-wider text-gray-500">Platform Settings</p>
+                    <p className="text-[11px] text-gray-400">Personalization, Credentials &amp; Telemetry</p>
+                  </div>
+
+                  <div className="p-1.5 space-y-1">
+                    {/* 1. Color Palettes */}
+                    {onOpenThemeModal && (
+                      <button
+                        id="settings-theme-btn"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsSettingsOpen(false);
+                          onOpenThemeModal();
+                        }}
+                        className="w-full flex items-start gap-3 p-2.5 rounded-lg hover:bg-purple-50/70 text-left transition-colors cursor-pointer group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-purple-200 group-hover:scale-105 transition-all">
+                          <Palette className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-800 group-hover:text-purple-900">Color Palettes</span>
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded">Theme</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1">
+                            Switch between 4 curated colorways or custom colors
+                          </p>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* 2. CSSENTIAL Portal Certificate */}
+                    {onOpenCertificate && (
+                      <button
+                        id="settings-certificate-btn"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsSettingsOpen(false);
+                          onOpenCertificate();
+                        }}
+                        className="w-full flex items-start gap-3 p-2.5 rounded-lg hover:bg-amber-50/70 text-left transition-colors cursor-pointer group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-amber-200 group-hover:scale-105 transition-all">
+                          <Award className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-800 group-hover:text-amber-900">CSSENTIAL Portal Certificate</span>
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded">Academic</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1">
+                            Academic Certificate of Technical Competency
+                          </p>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* 3. Telemetry Dashboard */}
+                    <button
+                      id="settings-telemetry-btn"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsSettingsOpen(false);
+                        if (onOpenDashboard) onOpenDashboard();
+                        else if (onOpenResearcher) onOpenResearcher();
+                      }}
+                      className="w-full flex items-start gap-3 p-2.5 rounded-lg hover:bg-blue-50/70 text-left transition-colors cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-blue-200 group-hover:scale-105 transition-all">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-800 group-hover:text-blue-900">Telemetry Dashboard</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded">Analytics</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1">
+                          Student activity tracking &amp; intervention metrics
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* 4. Teacher CMS (if applicable) */}
+                    {onOpenTeacherCMS && (
+                      <button
+                        id="settings-teacher-cms-btn"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsSettingsOpen(false);
+                          onOpenTeacherCMS('MATERIALS');
+                        }}
+                        className="w-full flex items-start gap-3 p-2.5 rounded-lg hover:bg-emerald-50/70 text-left transition-colors cursor-pointer group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-200 group-hover:scale-105 transition-all">
+                          <GraduationCap className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-800 group-hover:text-emerald-900">Teacher Authoring CMS</span>
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded">Instructor</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1">
+                            Curriculum management &amp; assessment editor
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Account / User Section Footer */}
+                  <div className="mt-1 pt-2 px-3 pb-1 border-t border-gray-100 bg-gray-50/70 rounded-b-xl flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <span className="text-[11px] text-gray-600 truncate">
+                        {studentName ? `Active: ${studentName}` : 'Guest Session'}
+                      </span>
+                    </div>
+                    {onOpenStudentModal && (
+                      <button
+                        onClick={() => {
+                          setIsSettingsOpen(false);
+                          onOpenStudentModal();
+                        }}
+                        className="text-[11px] font-bold text-blue-700 hover:text-blue-900 transition-colors cursor-pointer shrink-0 ml-2"
+                      >
+                        {studentName ? 'Switch Profile' : 'Log In / Register'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Return Button */}
             <button

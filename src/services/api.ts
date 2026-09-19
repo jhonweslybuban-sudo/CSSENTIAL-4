@@ -666,6 +666,10 @@ export const api = {
     return completeGame;
   },
 
+  async saveGameResult(result: Partial<GameResult>): Promise<GameResult> {
+    return this.recordGameResult(result);
+  },
+
   async recordLessonView(view: Partial<LessonView>): Promise<LessonView> {
     const id = generateClientUniqueId('lv');
     const completeView: LessonView = {

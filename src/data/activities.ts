@@ -1184,5 +1184,295 @@ export const ACTIVITIES_DATA: ActivityDefinition[] = [
         hint: 'What thorough steps ensure both physical and operational quality before delivery?'
       }
     ]
+  },
+  // =========================================================================
+  // ACTIVITY 7: NETWORK CONFIGURATION & CABLING (10 QUESTIONS)
+  // =========================================================================
+  {
+    id: 'act-lesson-7',
+    name: 'Lesson 7 Activity Quiz: Network Configuration & Cabling',
+    type: 'Networking & Cabling Assessment',
+    iconName: 'Network',
+    lessonId: 'topic-7',
+    lessonBadge: 'Lesson 7 Quiz',
+    description: 'Activity quiz evaluating IPv4 addressing, default gateways, DNS, T568A/B Ethernet pinouts, and network troubleshooting commands.',
+    totalItems: 10,
+    items: [
+      {
+        title: 'Question 1: Subnet Mask Purpose',
+        scenario: 'An IT technician configures an IPv4 address of 192.168.1.100 with a subnet mask of 255.255.255.0. What is the fundamental function of the subnet mask?',
+        options: [
+          'Differentiating the Network ID portion from the Host ID portion of the IP address',
+          'Encrypting web traffic across the public internet',
+          'Preventing malware from infecting the network card',
+          'Assigning physical MAC addresses to the Ethernet adapter'
+        ],
+        correctIndex: 0,
+        explanation: 'The subnet mask performs a bitwise logical AND operation with the IP address to distinguish which bits belong to the network identifier and which identify the specific host device.',
+        hint: 'Think about how a network splits the address into the neighborhood (network) and street number (host).'
+      },
+      {
+        title: 'Question 2: Default Gateway Role',
+        scenario: 'A workstation can ping other computers in the same office lab (192.168.1.x), but cannot reach the internet (e.g., 8.8.8.8). What configuration setting is most likely missing or incorrect?',
+        options: [
+          'Default Gateway address',
+          'Computer case fan speed',
+          'SATA controller mode',
+          'Monitor refresh rate'
+        ],
+        correctIndex: 0,
+        explanation: 'The Default Gateway is the router interface IP on the local subnet responsible for forwarding packets destined for external remote networks. Without it, local packets cannot leave the local broadcast domain.',
+        hint: 'Which IP address routes traffic outside of the local subnet?'
+      },
+      {
+        title: 'Question 3: APIPA Automatic Private IP Addressing',
+        scenario: 'When running ipconfig on a Windows PC configured for DHCP, the IP address displays 169.254.45.12. What does this indicate?',
+        options: [
+          'The computer failed to obtain a DHCP lease from the network router and self-assigned an APIPA address',
+          'The computer is connected to a high-speed fiber backbone',
+          'The network adapter has suffered permanent hardware destruction',
+          'The computer has been hacked by an external adversary'
+        ],
+        correctIndex: 0,
+        explanation: 'The 169.254.0.0/16 range is reserved for APIPA (Automatic Private IP Addressing). Windows self-assigns an APIPA address when DHCP Discover packets go unanswered by a DHCP server.',
+        hint: 'What does 169.254.x.x mean when DHCP is enabled?'
+      },
+      {
+        title: 'Question 4: T568B Pinout Standard Color Sequence',
+        scenario: 'When terminating an RJ45 modular plug using the T568B standard, what is the exact color sequence of the conductors from left to right (clip facing down)?',
+        options: [
+          'White/Orange, Orange, White/Green, Blue, White/Blue, Green, White/Brown, Brown',
+          'White/Green, Green, White/Orange, Blue, White/Blue, Orange, White/Brown, Brown',
+          'White/Brown, Brown, White/Blue, Blue, White/Green, Green, White/Orange, Orange',
+          'Solid Orange, Solid Green, Solid Blue, Solid Brown, Solid Red, Solid Black, Solid Yellow, Solid Violet'
+        ],
+        correctIndex: 0,
+        explanation: 'The T568B industry standard sequence is White/Orange (Pin 1), Orange (Pin 2), White/Green (Pin 3), Blue (Pin 4), White/Blue (Pin 5), Green (Pin 6), White/Brown (Pin 7), Brown (Pin 8).',
+        hint: 'T568B starts with White/Orange and Orange on Pins 1 and 2.'
+      },
+      {
+        title: 'Question 5: Straight-Through vs. Crossover Cable Usage',
+        scenario: 'Which Ethernet cable configuration is historically required to connect two identical devices directly together (such as PC to PC or switch to switch) without a router?',
+        options: [
+          'Crossover Cable (T568A on one end, T568B on the other)',
+          'Straight-Through Cable (T568B on both ends)',
+          'Coaxial RG-6 Cable',
+          'USB 2.0 extension cable'
+        ],
+        correctIndex: 0,
+        explanation: 'A crossover cable maps the transmit pins (TX) on one end directly to the receive pins (RX) on the other end, allowing two peer devices to communicate without an intermediary switch.',
+        hint: 'Connecting two identical devices directly requires crossing transmit and receive pairs.'
+      },
+      {
+        title: 'Question 6: Auto-MDIX Technology',
+        scenario: 'Why can modern Gigabit network switches and computer network cards communicate using straight-through cables even when connecting two switches together?',
+        options: [
+          'Auto-MDIX electronically detects and configures the transmit and receive lines automatically',
+          'Modern Ethernet cables bend their copper wires inside the insulation',
+          'Gigabit networks no longer use electricity',
+          'Modern computers bypass Ethernet using satellite uplinks'
+        ],
+        correctIndex: 0,
+        explanation: 'Automatic Medium-Dependent Interface Crossover (Auto-MDIX) automatically detects whether a connection requires a crossover or straight-through cable and configures the internal PHY transceiver accordingly.',
+        hint: 'What automatic feature eliminates the need for physical crossover cables?'
+      },
+      {
+        title: 'Question 7: TCP/IP Stack Diagnostics',
+        scenario: 'To test whether the computer internal TCP/IP software stack and network driver are functioning correctly without sending traffic across physical cables, what IP address should you ping?',
+        options: [
+          '127.0.0.1 (Loopback address)',
+          '192.168.1.1',
+          '8.8.8.8',
+          '255.255.255.255'
+        ],
+        correctIndex: 0,
+        explanation: 'Pinging 127.0.0.1 (or localhost) tests the internal loopback adapter and validates that the operating system TCP/IP stack is initialized and operational.',
+        hint: 'Which IP address is the designated local loopback address?'
+      },
+      {
+        title: 'Question 8: DNS Cache Purging Command',
+        scenario: 'A website recently changed servers, but a technician computer still attempts to load the outdated IP address. Which Windows command clears cached DNS records?',
+        options: [
+          'ipconfig /flushdns',
+          'ipconfig /release',
+          'netstat -ano',
+          'chkdsk /f'
+        ],
+        correctIndex: 0,
+        explanation: 'The ipconfig /flushdns command purges and resets the contents of the DNS client resolver cache in Windows, forcing the OS to query DNS servers for updated records.',
+        hint: 'Look for the ipconfig parameter specifically named for clearing DNS.'
+      },
+      {
+        title: 'Question 9: Route Pathway Diagnostics (tracert)',
+        scenario: 'Which command line utility displays every intermediate router (hop) and measuring latency between a workstation and a remote destination server?',
+        options: [
+          'tracert',
+          'ping',
+          'nslookup',
+          'getmac'
+        ],
+        correctIndex: 0,
+        explanation: 'tracert (Trace Route) sends packets with incrementing TTL (Time to Live) values to identify each router interface along the network path to the destination.',
+        hint: 'Which command traces the route taken by packets across multiple hops?'
+      },
+      {
+        title: 'Question 10: Twisted Pair Ethernet Maximum Distance',
+        scenario: 'According to the TIA/EIA-568 standard, what is the maximum recommended physical distance for a single run of unshielded twisted pair (UTP Cat5e/Cat6) cable between a switch and a workstation?',
+        options: [
+          '100 meters (approx. 328 feet)',
+          '500 meters (approx. 1,640 feet)',
+          '25 meters (approx. 82 feet)',
+          '1,000 meters (approx. 1 kilometer)'
+        ],
+        correctIndex: 0,
+        explanation: 'Standard twisted-pair Ethernet (1000BASE-T) is strictly certified for a maximum total channel length of 100 meters (90 meters horizontal solid cabling plus 10 meters stranded patch cables) to prevent signal attenuation.',
+        hint: 'What is the classic 100-meter rule for UTP cabling?'
+      }
+    ]
+  },
+  // =========================================================================
+  // ACTIVITY 8: SERVER-CLIENT INFRASTRUCTURE & DOMAIN SECURITY (10 QUESTIONS)
+  // =========================================================================
+  {
+    id: 'act-lesson-8',
+    name: 'Lesson 8 Activity Quiz: Server/Client Infrastructure & Domain Security',
+    type: 'Server & Directory Assessment',
+    iconName: 'Server',
+    lessonId: 'topic-8',
+    lessonBadge: 'Lesson 8 Quiz',
+    description: 'Activity quiz evaluating Active Directory Domain Services, DHCP/DNS server roles, workstation domain joining, and Share vs NTFS security permissions.',
+    totalItems: 10,
+    items: [
+      {
+        title: 'Question 1: Workgroup vs Active Directory Domain Scalability',
+        scenario: 'An organization is expanding from 5 computers to 150 workstations. Why must they migrate from a peer-to-peer Workgroup to an Active Directory Domain?',
+        options: [
+          'To centralize user accounts, computer trusts, and security Group Policies (GPO) in a single database rather than managing 150 local SAM databases',
+          'Because Workgroup computers cannot connect to the internet',
+          'Because Active Directory increases monitor display resolution',
+          'Because Windows Server eliminates the need for power supplies'
+        ],
+        correctIndex: 0,
+        explanation: 'Workgroups require local account creation on each machine. Active Directory centralizes identity and authentication in ntds.dit across Domain Controllers, allowing centralized administration and Group Policy enforcement.',
+        hint: 'Think about the administrative nightmare of creating 150 separate local user accounts on 150 separate PCs.'
+      },
+      {
+        title: 'Question 2: DHCP Lease Allocation Sequence (DORA)',
+        scenario: 'What is the correct 4-step communication protocol between a client computer and a DHCP server when acquiring an IP address?',
+        options: [
+          'Discover, Offer, Request, Acknowledge (DORA)',
+          'Download, Open, Read, Archive',
+          'Direct, Organize, Replicate, Authorize',
+          'Detect, Overwrite, Restart, Authenticate'
+        ],
+        correctIndex: 0,
+        explanation: 'DHCP leasing operates via DORA: Client broadcasts DHCP Discover; Server responds with DHCP Offer; Client sends DHCP Request; Server concludes with DHCP Acknowledged (ACK).',
+        hint: 'Remember the famous acronym DORA.'
+      },
+      {
+        title: 'Question 3: DNS Requirement for Active Directory',
+        scenario: 'Why is a functioning DNS server mandatory for an Active Directory Domain Services environment?',
+        options: [
+          'Client computers query DNS for SRV (Service) records to locate Domain Controllers and authentication services',
+          'DNS is required to power on the server motherboard',
+          'DNS generates computer serial numbers',
+          'DNS replaces the need for hard disk drives'
+        ],
+        correctIndex: 0,
+        explanation: 'Active Directory relies on DNS to register and resolve SRV (Service Location) records (such as _ldap._tcp and _kerberos._tcp) that workstations need to find authenticating Domain Controllers.',
+        hint: 'How do client computers find the Domain Controller on the network?'
+      },
+      {
+        title: 'Question 4: Workstation Domain Join Prerequisite',
+        scenario: 'When attempting to join a client workstation to "cssential.local", the error message states "The specified domain either does not exist or could not be contacted". What is the most common cause?',
+        options: [
+          'The client network adapter DNS is pointing to an external public DNS (e.g. 8.8.8.8) instead of the local Domain Controller IP',
+          'The client monitor is turned off',
+          'The client computer has too much RAM installed',
+          'The client computer keyboard is unplugged'
+        ],
+        correctIndex: 0,
+        explanation: 'To resolve domain SRV records, the client Preferred DNS Server must point to the Active Directory DNS server. Public DNS servers like Google (8.8.8.8) have no record of local private domains.',
+        hint: 'Where must the client send DNS queries to locate the private domain name?'
+      },
+      {
+        title: 'Question 5: Domain Joining Authentication Requirements',
+        scenario: 'What credentials are required by default on a client computer to successfully bind the machine account to an Active Directory domain?',
+        options: [
+          'Domain Administrator credentials or a domain user account with delegated rights to add workstations',
+          'The local standard user account password of the client PC',
+          'The Wi-Fi router WPS PIN',
+          'The monitor manufacturer serial code'
+        ],
+        correctIndex: 0,
+        explanation: 'Joining a computer to a domain requires creating a computer object in the Active Directory database, which requires Domain Administrator credentials or delegated administrative permissions.',
+        hint: 'Who has permission to create new computer objects in the domain directory?'
+      },
+      {
+        title: 'Question 6: Share Permissions vs. NTFS Permissions Hierarchy',
+        scenario: 'A user accesses a network shared folder. The Network Share permission is set to "Read", but the local NTFS Security permission is set to "Full Control". What is the effective permission for the network user?',
+        options: [
+          'Read-Only access (The Most Restrictive permission wins)',
+          'Full Control access (NTFS always overrides Share permissions)',
+          'No access at all (The conflict crashes Windows Server)',
+          'Write access only'
+        ],
+        correctIndex: 0,
+        explanation: 'When connecting over a network share, Windows calculates the intersection of Share and NTFS permissions: the MOST RESTRICTIVE permission always takes precedence. Here, Share Read limits the user.',
+        hint: 'Remember the fundamental rule: the most restrictive permission always wins.'
+      },
+      {
+        title: 'Question 7: Local Access vs. Network Access Permissions',
+        scenario: 'If a user logs onto the file server directly at the local physical console, which permission layer is evaluated?',
+        options: [
+          'Only NTFS permissions apply (Share permissions only apply to network connections)',
+          'Only Share permissions apply',
+          'Neither permission applies to local users',
+          'Only BIOS passwords apply'
+        ],
+        correctIndex: 0,
+        explanation: 'Share permissions only govern connections made over SMB network shares. When a user logs in locally at the machine console, only NTFS permissions are enforced by the operating system kernel.',
+        hint: 'Do network share permissions apply when you are sitting physically in front of the server?'
+      },
+      {
+        title: 'Question 8: Mapping a Network Drive CLI Command',
+        scenario: 'Which Windows command-line syntax permanently maps network share "\\\\SERVER-01\\StudentProjects" to drive letter Z:?',
+        options: [
+          'net use Z: \\\\SERVER-01\\StudentProjects /persistent:yes',
+          'ping \\\\SERVER-01\\StudentProjects /drive:Z',
+          'ipconfig /map Z: \\\\SERVER-01\\StudentProjects',
+          'format Z: /fs:ntfs \\\\SERVER-01'
+        ],
+        correctIndex: 0,
+        explanation: 'The net use command connects a computer to a shared resource. Specifying /persistent:yes ensures the drive mapping reconnects automatically upon user logon.',
+        hint: 'Look for the "net use" command with the persistent flag.'
+      },
+      {
+        title: 'Question 9: Server Static IP Requirement',
+        scenario: 'Why must infrastructure servers (such as Domain Controllers, DHCP Servers, and DNS Servers) always be assigned static IP addresses?',
+        options: [
+          'To ensure client devices and network services can reliably find and communicate with them at a permanent, unchanging IP address',
+          'Because servers cannot physically run dynamic IP protocols',
+          'Because static IP addresses run at twice the speed of DHCP',
+          'Because dynamic IP addresses are banned by international law'
+        ],
+        correctIndex: 0,
+        explanation: 'Clients and network infrastructure devices must have dependable, fixed addresses for DNS resolution, gateway routing, and domain authentication; changing server IPs would disrupt network connectivity.',
+        hint: 'What would happen to clients if the server IP address kept changing randomly?'
+      },
+      {
+        title: 'Question 10: Group Policy Object (GPO) Capabilities',
+        scenario: 'Which centralized management capability is uniquely possible in an Active Directory domain environment?',
+        options: [
+          'Enforcing security baselines, password complexity rules, and automated software installations across thousands of workstations via Group Policy (GPO)',
+          'Increasing the physical wattage output of laptop batteries',
+          'Upgrading DDR4 memory sticks into DDR5 sticks over the network',
+          'Repairing cracked monitor glass remotely'
+        ],
+        correctIndex: 0,
+        explanation: 'Group Policy Objects (GPO) allow system administrators to centrally configure operating system settings, registry keys, security policies, script deployments, and desktop lockdown for all domain computers.',
+        hint: 'What tool allows IT administrators to push policies and software across all workstations at once?'
+      }
+    ]
   }
 ];
