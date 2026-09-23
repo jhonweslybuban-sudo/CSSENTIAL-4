@@ -15,7 +15,8 @@ import {
   TeacherActivity,
   TeacherMaterial,
   CollectionVideo,
-  CertificateInfo
+  CertificateInfo,
+  HardwareOverviewSlide
 } from '../types';
 import { getPlatformAssistanceResponse } from './aiKnowledge';
 
@@ -221,6 +222,7 @@ export const api = {
     name: string;
     tup_id?: string;
     department?: string;
+    year_section?: string;
     password: string;
   }): Promise<StudentProfile> {
     const cleanRole = params.role === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
@@ -228,6 +230,7 @@ export const api = {
     const cleanPassword = params.password.trim();
     const cleanTupId = params.tup_id?.trim().toUpperCase();
     const cleanDept = params.department?.trim();
+    const cleanSection = params.year_section?.trim();
 
     try {
       const res = await fetch('/api/auth/register', {
@@ -238,6 +241,7 @@ export const api = {
           name: cleanName,
           tup_id: cleanTupId,
           department: cleanDept,
+          year_section: cleanSection,
           password: cleanPassword
         })
       });
@@ -272,7 +276,7 @@ export const api = {
         name: cleanName,
         role: 'STUDENT',
         tup_id: studentId,
-        year_section: 'TUP Student',
+        year_section: cleanSection || 'General Section',
         password: cleanPassword,
         created_at: now,
         last_active: now
@@ -1341,7 +1345,7 @@ export const api = {
       {
         id: 'msg_default_1',
         student_id: 'inst_faculty_1',
-        student_name: 'Engr. Jhon Wesly Buban',
+        student_name: 'Lead Instructor / Faculty Lead',
         year_section: 'Faculty Lead / System Architect',
         text: 'Welcome to the CSSENTIAL Community Forum! Ask questions about Computer System Installation and Configuration, share lab discoveries, and assist your fellow classmates.',
         timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
@@ -1412,10 +1416,9 @@ export const api = {
   // COLLECTION VIDEOS
   // ==========================================
   async getCollectionVideos(): Promise<CollectionVideo[]> {
-    const filterOutRemovedTopics = (list: any[]): CollectionVideo[] => {
+    const filterOutLegacy = (list: any[]): CollectionVideo[] => {
       return (list || []).filter(v => 
-        !['vid-1', 'vid-2', 'vid-3'].includes(v.id) &&
-        ![2, 4, 6].includes(Number(v.topicNumber))
+        !['vid-1', 'vid-2', 'vid-3'].includes(v.id)
       );
     };
 
@@ -1424,7 +1427,7 @@ export const api = {
       if (res.ok) {
         const vids = await res.json();
         if (Array.isArray(vids)) {
-          const cleaned = filterOutRemovedTopics(vids);
+          const cleaned = filterOutLegacy(vids);
           localStorage.setItem('cssential_cached_videos', JSON.stringify(cleaned));
           return cleaned;
         }
@@ -1436,7 +1439,7 @@ export const api = {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
-          const cleaned = filterOutRemovedTopics(parsed);
+          const cleaned = filterOutLegacy(parsed);
           localStorage.setItem('cssential_cached_videos', JSON.stringify(cleaned));
           return cleaned;
         }
@@ -1444,6 +1447,60 @@ export const api = {
     } catch {}
 
     return [];
+  },
+
+  async uploadCollectionVideo(params: {
+    title: string;
+    description: string;
+    fileName: string;
+    fileData: string;
+    topicNumber: number;
+    duration?: string;
+    instructor?: string;
+  }): Promise<CollectionVideo> {
+    try {
+      const res = await fetch('/api/videos/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.video) {
+          const vids = await this.getCollectionVideos();
+          const existingIdx = vids.findIndex(v => v.id === data.video.id);
+          if (existingIdx >= 0) {
+            vids[existingIdx] = data.video;
+          } else {
+            vids.unshift(data.video);
+          }
+          localStorage.setItem('cssential_cached_videos', JSON.stringify(vids));
+          return data.video;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to upload video to backend:', err);
+    }
+
+    // Local fallback
+    const fallbackVideo: CollectionVideo = {
+      id: `vid_local_${Date.now()}`,
+      title: params.title || params.fileName,
+      description: params.description || 'Laboratory practicum video demonstration.',
+      url: params.fileData,
+      thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+      duration: params.duration || '10:00',
+      topicNumber: params.topicNumber || 1,
+      instructor: params.instructor || 'CSSENTIAL Faculty Lead',
+      isUploadedMp4: true,
+      isPracticum: true,
+      fileName: params.fileName,
+      created_at: new Date().toISOString()
+    };
+    const vids = await this.getCollectionVideos();
+    vids.unshift(fallbackVideo);
+    localStorage.setItem('cssential_cached_videos', JSON.stringify(vids));
+    return fallbackVideo;
   },
 
   async saveCollectionVideo(video: Partial<CollectionVideo>): Promise<CollectionVideo> {
@@ -1455,7 +1512,17 @@ export const api = {
       });
       if (res.ok) {
         const data = await res.json();
-        return data.video;
+        if (data.video) {
+          const vids = await this.getCollectionVideos();
+          const existingIdx = vids.findIndex(v => v.id === data.video.id);
+          if (existingIdx >= 0) {
+            vids[existingIdx] = data.video;
+          } else {
+            vids.unshift(data.video);
+          }
+          localStorage.setItem('cssential_cached_videos', JSON.stringify(vids));
+          return data.video;
+        }
       }
     } catch {}
 
@@ -1468,7 +1535,11 @@ export const api = {
       thumbnail: video.thumbnail || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
       duration: video.duration || '10:00',
       topicNumber: video.topicNumber || 1,
-      instructor: video.instructor || 'CSSENTIAL Faculty Lead'
+      instructor: video.instructor || 'CSSENTIAL Faculty Lead',
+      isUploadedMp4: video.isUploadedMp4 || (video.url?.endsWith('.mp4') ?? false),
+      isPracticum: true,
+      fileName: video.fileName,
+      fileSize: video.fileSize
     };
     vids.unshift(newVid);
     localStorage.setItem('cssential_cached_videos', JSON.stringify(vids));
@@ -1484,6 +1555,183 @@ export const api = {
     const filtered = vids.filter(v => v.id !== videoId);
     localStorage.setItem('cssential_cached_videos', JSON.stringify(filtered));
     return true;
+  },
+
+  // ==========================================
+  // HARDWARE OVERVIEW SLIDES MANAGEMENT
+  // ==========================================
+  async getHardwareSlides(): Promise<HardwareOverviewSlide[]> {
+    try {
+      const res = await fetch('/api/hardware-slides');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          localStorage.setItem('cssential_hardware_slides', JSON.stringify(data));
+          return data;
+        }
+      }
+    } catch {}
+
+    try {
+      const cached = localStorage.getItem('cssential_hardware_slides');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+
+    const defaultSlides: HardwareOverviewSlide[] = [
+      {
+        id: 'hw-slide-1',
+        title: 'Motherboard Component Anatomy & Sockets',
+        subtitle: 'Socket AM4/LGA1700, VRM Heatsinks, PCIe 4.0 & Chipset',
+        description: 'High-density ATX layout illustrating the central CPU socket, dual-channel DDR4/DDR5 memory channels (A2/B2), VRM thermal dissipation chokes, and PCIe x16 expansion slots.',
+        imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&auto=format&fit=crop&q=80',
+        category: 'Motherboard',
+        isCustom: false
+      },
+      {
+        id: 'hw-slide-2',
+        title: 'Chassis Internal Layout & Thermal Airflow',
+        subtitle: 'Positive Pressure Intake, GPU Clearance & Cable Management',
+        description: 'Internal chassis architecture showing front intake dust filters, liquid cooling radiator orientation, discrete GPU bracket clearance, and organized cable routing.',
+        imageUrl: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=1200&auto=format&fit=crop&q=80',
+        category: 'Assembly & Airflow',
+        isCustom: false
+      },
+      {
+        id: 'hw-slide-3',
+        title: 'Processor Seating & Thermal Interface Application',
+        subtitle: 'Pin 1 Alignment & Non-Conductive Thermal Compound',
+        description: 'Precision alignment of Pin 1 gold indicator on the processor substrate into the Zero Insertion Force (ZIF) socket, secured with retention arm and thermal paste.',
+        imageUrl: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=1200&auto=format&fit=crop&q=80',
+        category: 'Processor',
+        isCustom: false
+      },
+      {
+        id: 'hw-slide-4',
+        title: 'M.2 NVMe Solid State Storage Installation',
+        subtitle: 'PCIe Gen4 x4 Direct Bus & Thermal Armor Shielding',
+        description: 'Key-M 2280 form factor installation directly communicating with CPU PCIe lanes, featuring pre-applied silicone thermal gap pads and aluminum heatsinks.',
+        imageUrl: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=1200&auto=format&fit=crop&q=80',
+        category: 'Storage',
+        isCustom: false
+      },
+      {
+        id: 'hw-slide-5',
+        title: 'Static-Dissipative ESD Workstation Bench',
+        subtitle: 'Grounding Wrist Straps, Anti-Static Mats & Multimeter Test Leads',
+        description: 'Professional ESD-safe technical bench configuration designed to eliminate electrostatic discharge risks during sensitive integrated circuit handling.',
+        imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&auto=format&fit=crop&q=80',
+        category: 'Safety & Diagnostics',
+        isCustom: false
+      }
+    ];
+    return defaultSlides;
+  },
+
+  async uploadHardwareSlide(slideData: {
+    title: string;
+    subtitle?: string;
+    description?: string;
+    category?: string;
+    fileName: string;
+    fileData: string;
+  }): Promise<HardwareOverviewSlide> {
+    try {
+      const res = await fetch('/api/hardware-slides/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(slideData)
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body.slide) {
+          const current = await this.getHardwareSlides();
+          const updated = [body.slide, ...current.filter(s => s.id !== body.slide.id)];
+          localStorage.setItem('cssential_hardware_slides', JSON.stringify(updated));
+          return body.slide;
+        }
+      }
+    } catch (err) {
+      console.warn('Backend hardware slide upload unavailable, fallback to local storage:', err);
+    }
+
+    const slides = await this.getHardwareSlides();
+    const newSlide: HardwareOverviewSlide = {
+      id: `hw_slide_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      title: slideData.title.trim(),
+      subtitle: slideData.subtitle || 'Laboratory Hardware Demonstration',
+      description: slideData.description || 'Custom technical demonstration image.',
+      imageUrl: slideData.fileData,
+      category: slideData.category || 'Custom Hardware',
+      isCustom: true,
+      fileName: slideData.fileName,
+      created_at: new Date().toISOString()
+    };
+    slides.unshift(newSlide);
+    localStorage.setItem('cssential_hardware_slides', JSON.stringify(slides));
+    return newSlide;
+  },
+
+  async saveHardwareSlide(slide: Partial<HardwareOverviewSlide>): Promise<HardwareOverviewSlide> {
+    try {
+      const res = await fetch('/api/hardware-slides', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(slide)
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body.slide) {
+          const current = await this.getHardwareSlides();
+          const updated = [body.slide, ...current.filter(s => s.id !== body.slide.id)];
+          localStorage.setItem('cssential_hardware_slides', JSON.stringify(updated));
+          return body.slide;
+        }
+      }
+    } catch {}
+
+    const slides = await this.getHardwareSlides();
+    const newSlide: HardwareOverviewSlide = {
+      id: slide.id || `hw_slide_${Date.now()}`,
+      title: slide.title || 'Custom Slide',
+      subtitle: slide.subtitle || '',
+      description: slide.description || '',
+      imageUrl: slide.imageUrl || '',
+      category: slide.category || 'Custom Hardware',
+      isCustom: true,
+      created_at: new Date().toISOString()
+    };
+    const idx = slides.findIndex(s => s.id === newSlide.id);
+    if (idx >= 0) slides[idx] = newSlide;
+    else slides.unshift(newSlide);
+    localStorage.setItem('cssential_hardware_slides', JSON.stringify(slides));
+    return newSlide;
+  },
+
+  async deleteHardwareSlide(id: string): Promise<boolean> {
+    try {
+      await fetch(`/api/hardware-slides/${id}`, { method: 'DELETE' });
+    } catch {}
+
+    const slides = await this.getHardwareSlides();
+    const filtered = slides.filter(s => s.id !== id);
+    localStorage.setItem('cssential_hardware_slides', JSON.stringify(filtered));
+    return true;
+  },
+
+  async resetHardwareSlides(): Promise<HardwareOverviewSlide[]> {
+    try {
+      const res = await fetch('/api/hardware-slides/reset', { method: 'POST' });
+      if (res.ok) {
+        const body = await res.json();
+        if (body.slides) {
+          localStorage.setItem('cssential_hardware_slides', JSON.stringify(body.slides));
+          return body.slides;
+        }
+      }
+    } catch {}
+
+    localStorage.removeItem('cssential_hardware_slides');
+    return this.getHardwareSlides();
   },
 
   // ==========================================
@@ -1712,7 +1960,7 @@ export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = [
     badgeColor: 'blue',
     date: '2026-03-01',
     content: 'Review Lesson 2 (Installing Computer Systems). Remember that brass standoffs must be mounted only where corresponding motherboard holes exist. Extra standoffs create catastrophic short circuits on bottom traces!',
-    author: 'Jhon Wesly T. Buban'
+    author: 'CSSENTIAL Instructional Team'
   },
   {
     id: 'ann_2',

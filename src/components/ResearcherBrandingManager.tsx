@@ -509,7 +509,7 @@ export const ResearcherBrandingManager: React.FC = () => {
                         value={formName}
                         onChange={(e) => setFormName(e.target.value)}
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
-                        placeholder="e.g. Jhon Wesly T. Buban"
+                        placeholder="e.g. Lead Researcher / Author"
                       />
                     </div>
 

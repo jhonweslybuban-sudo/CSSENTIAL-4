@@ -7,7 +7,6 @@ import {
   Volume2,
   VolumeX,
   Maximize2,
-  Clock,
   Film,
   Upload,
   Link as LinkIcon,
@@ -101,11 +100,25 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   useEffect(() => {
     if (!lesson) return;
 
+    if (lesson.videoUrl && (lesson.videoUrl.startsWith('/uploads/') || lesson.videoUrl.startsWith('blob:') || lesson.videoUrl.endsWith('.mp4') || lesson.videoUrl.includes('youtube') || lesson.videoUrl.includes('vimeo'))) {
+      const isDirect = lesson.videoUrl.startsWith('/uploads/') || lesson.videoUrl.startsWith('blob:') || lesson.videoUrl.endsWith('.mp4') || lesson.videoUrl.endsWith('.webm');
+      setActiveVideo({
+        url: isDirect ? lesson.videoUrl : formatYouTubeEmbed(lesson.videoUrl),
+        title: lesson.title,
+        isCustom: true,
+        isDirectFile: isDirect
+      });
+      setShowUploadDrawer(false);
+      setUploadSuccess(null);
+      setUploadError(null);
+      return;
+    }
+
     const customMap = api.getCustomVideos();
     const custom = customMap[lesson.id];
 
     if (custom && custom.url) {
-      const isDirect = custom.url.startsWith('blob:') || custom.url.endsWith('.mp4') || custom.url.endsWith('.webm');
+      const isDirect = custom.url.startsWith('/uploads/') || custom.url.startsWith('blob:') || custom.url.endsWith('.mp4') || custom.url.endsWith('.webm');
       setActiveVideo({
         url: isDirect ? custom.url : formatYouTubeEmbed(custom.url),
         title: custom.title || `${lesson.title} (Custom Upload)`,
@@ -422,7 +435,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
           )}
         </div>
 
-        {/* Video Overview & Educational Milestones */}
+        {/* Video Overview & Demonstration Information */}
         <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
             <div>
@@ -430,7 +443,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 {lesson.title} - Laboratory Demonstration
               </h4>
               <p className="text-xs text-gray-500 mt-0.5">
-                Competency Lesson #{lesson.topicNumber} • Estimated Demonstration: {lesson.duration}
+                Competency Lesson #{lesson.topicNumber} • Laboratory Demonstration Practicum
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -454,31 +467,6 @@ export const VideoModal: React.FC<VideoModalProps> = ({
               This instructional video guides you through the practical competencies for{' '}
               <strong>{lesson.title.toLowerCase()}</strong>. Pay close attention to tool safety, component orientation markers, thermal paste application benchmarks, and diagnostic verification LED sequences.
             </p>
-          </div>
-
-          {/* Key Milestones */}
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
-            <h5 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
-              Curriculum Video Milestones:
-            </h5>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600">
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>00:00 - Tool Preparation &amp; Workspace Safety</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>02:15 - Physical Component Inspection</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>05:30 - Configuration &amp; Diagnostic Hookup</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>08:45 - POST Testing &amp; Final Checklist</span>
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">

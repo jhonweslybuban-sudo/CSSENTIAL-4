@@ -82,11 +82,17 @@ export default function App() {
     initSession();
   }, []);
 
+  const handleLogout = () => {
+    api.clearSavedStudent();
+    setStudent(null);
+    setSessionId('');
+    setCurrentPage('HOME');
+    setShowEntryModal(true);
+  };
+
   const handleStudentRegistered = (registeredStudent: StudentProfile) => {
     if (!registeredStudent.student_id) {
-      setStudent(null);
-      setSessionId('');
-      setShowEntryModal(false);
+      handleLogout();
       return;
     }
     setStudent(registeredStudent);
@@ -151,6 +157,7 @@ export default function App() {
         onOpenThemeModal={() => setShowThemeModal(true)}
         onOpenStudentModal={() => setShowEntryModal(true)}
         onOpenCertificate={() => setShowCertificateModal(true)}
+        onLogout={handleLogout}
       />
 
       {/* 2. Wireframe Navbar */}
@@ -417,9 +424,9 @@ export default function App() {
 
       {/* Student Entry / Registration Modal */}
       <StudentEntryModal
-        isOpen={showEntryModal}
+        isOpen={showEntryModal || !student}
         initialStudent={student}
-        onClose={() => setShowEntryModal(false)}
+        onClose={student ? () => setShowEntryModal(false) : undefined}
         onRegister={handleStudentRegistered}
       />
 

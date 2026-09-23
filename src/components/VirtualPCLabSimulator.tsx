@@ -757,7 +757,7 @@ export const VirtualPCLabSimulator: React.FC<VirtualPCLabSimulatorProps> = ({
                 </div>
               </div>
 
-              {/* Progress Milestones Tracker */}
+              {/* Assembly Stages Tracker */}
               <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
                 <span className="text-slate-400 font-mono text-[11px]">
                   Assembly Pipeline Progress:

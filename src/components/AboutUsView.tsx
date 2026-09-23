@@ -118,7 +118,7 @@ export const AboutUsView: React.FC = () => {
           </div>
           <h4 className="text-base font-black text-gray-900">Research Integrity</h4>
           <p className="text-xs text-gray-600 leading-relaxed">
-            Incorporates real-time telemetry logging to observe student learning metrics, duration, quiz scores, and intervention efficacy without requiring complex third-party registrations.
+            Incorporates real-time telemetry logging to observe student learning metrics, competency mastery, quiz scores, and intervention efficacy without requiring complex third-party registrations.
           </p>
         </div>
 

@@ -1,5 +1,6 @@
 import { LessonContent } from '../types';
 import { api } from './api';
+import pptxgen from 'pptxgenjs';
 
 export interface PresentationSlide {
   id: string;
@@ -835,8 +836,8 @@ export function generatePresentationHtml(
                 <div class="meta-value">\${slide.data.accreditation}</div>
               </div>
               <div class="meta-card">
-                <div class="meta-label">Expected Duration</div>
-                <div class="meta-value">\${slide.data.duration}</div>
+                <div class="meta-label">Curriculum Track</div>
+                <div class="meta-value">Core Practicum</div>
               </div>
               <div class="meta-card">
                 <div class="meta-label">Curriculum Term</div>
@@ -1111,4 +1112,484 @@ export async function downloadPresentationDeck(
     resource_name: `Topic 0${lesson.topicNumber}: ${lesson.title} Interactive Presentation Slide Deck`,
     file_type: 'HTML_SLIDES'
   });
+}
+
+/**
+ * Generates and downloads a real Microsoft PowerPoint (.pptx) file
+ * with clean academic slides, student name & section branding, and presenter notes.
+ */
+export async function downloadPowerPointPresentation(
+  lesson: LessonContent,
+  studentId?: string,
+  sessionId?: string,
+  studentName: string = 'Registered Student',
+  yearSection: string = 'General Section'
+): Promise<void> {
+  const pptx = new pptxgen();
+  // Modern 16:9 Widescreen (13.333" width x 7.5" height)
+  pptx.layout = 'LAYOUT_WIDE';
+  pptx.author = 'CSSENTIAL Portal - Technological University of the Philippines';
+  pptx.company = 'Technological University of the Philippines';
+  pptx.subject = `Computer Systems Installation & Configuration - Topic 0${lesson.topicNumber}`;
+  pptx.title = `Topic 0${lesson.topicNumber}: ${lesson.title}`;
+
+  const slidesData = buildLessonSlides(lesson);
+
+  for (const s of slidesData) {
+    const slide = pptx.addSlide();
+    // Premium deep navy dark academic background
+    slide.background = { color: '0A0F1D' };
+
+    // Top Academic Header Bar (Single unified text line)
+    slide.addText([
+      { text: 'CSSENTIAL LEARNING PORTAL ', options: { bold: true, color: '60A5FA', fontSize: 10 } },
+      { text: `•  CSIC-30${lesson.topicNumber}  •  ${s.category.toUpperCase()}`, options: { color: '94A3B8', fontSize: 10 } }
+    ], {
+      x: 0.8,
+      y: 0.35,
+      w: 11.73,
+      h: 0.35,
+      fontFace: 'Calibri',
+      valign: 'middle'
+    });
+
+    // Category Badge
+    if (s.badge) {
+      slide.addText(s.badge.toUpperCase(), {
+        x: 0.8,
+        y: 0.75,
+        w: 3.5,
+        h: 0.35,
+        fontSize: 9.5,
+        bold: true,
+        color: 'FFFFFF',
+        fill: { color: '2563EB' },
+        align: 'center',
+        valign: 'middle',
+        fontFace: 'Calibri'
+      });
+    }
+
+    if (s.type === 'title') {
+      // 1. Cover Title Slide
+      slide.addText(`Topic 0${lesson.topicNumber}: ${lesson.title}`, {
+        x: 0.8,
+        y: 1.25,
+        w: 11.73,
+        h: 1.15,
+        fontSize: 24,
+        bold: true,
+        color: 'FFFFFF',
+        fontFace: 'Calibri',
+        valign: 'middle',
+        wrap: true
+      });
+
+      slide.addText(lesson.shortDesc || lesson.description, {
+        x: 0.8,
+        y: 2.45,
+        w: 11.73,
+        h: 0.8,
+        fontSize: 13,
+        color: 'CBD5E1',
+        fontFace: 'Calibri',
+        valign: 'top',
+        wrap: true
+      });
+
+      // Two Structured Credentials Cards (Left & Right)
+      const cardY = 3.4;
+      const cardH = 3.25;
+
+      // Left: Student Registration Dossier
+      slide.addText([
+        { text: 'STUDENT REGISTRATION DOSSIER\n\n', options: { bold: true, fontSize: 11.5, color: '60A5FA' } },
+        { text: 'Candidate Name: ', options: { bold: true, fontSize: 11, color: '94A3B8' } },
+        { text: `${studentName || 'Registered Student'}\n\n`, options: { bold: true, fontSize: 13, color: 'FFFFFF' } },
+        { text: 'Class & Section: ', options: { bold: true, fontSize: 11, color: '94A3B8' } },
+        { text: `${yearSection || 'General Section'}\n\n`, options: { bold: true, fontSize: 12, color: '38BDF8' } },
+        { text: 'Academic Institution:\n', options: { bold: true, fontSize: 10, color: '94A3B8' } },
+        { text: 'Technological University of the Philippines (TUP)', options: { fontSize: 11, color: 'E2E8F0' } }
+      ], {
+        x: 0.8,
+        y: cardY,
+        w: 5.7,
+        h: cardH,
+        fill: { color: '111C33' },
+        line: { color: '3B82F6', width: 1.5 },
+        fontFace: 'Calibri',
+        valign: 'top',
+        margin: [14, 16, 14, 16],
+        wrap: true
+      });
+
+      // Right: Curriculum Specifications
+      slide.addText([
+        { text: 'CURRICULUM SPECIFICATIONS\n\n', options: { bold: true, fontSize: 11.5, color: '34D399' } },
+        { text: 'Course Alignment: ', options: { bold: true, fontSize: 11, color: '94A3B8' } },
+        { text: `CSIC-30${lesson.topicNumber} Computer Systems Servicing\n\n`, options: { fontSize: 11.5, color: 'FFFFFF' } },
+        { text: 'TESDA NC II Standard: ', options: { bold: true, fontSize: 11, color: '94A3B8' } },
+        { text: 'Core Competency Assessment\n\n', options: { fontSize: 11.5, color: 'E2E8F0' } },
+        { text: 'Assessment Format: ', options: { bold: true, fontSize: 11, color: '94A3B8' } },
+        { text: 'Interactive Hands-on Laboratory\n\n', options: { fontSize: 11.5, color: 'E2E8F0' } },
+        { text: 'Academic Evaluation Year: 2025–2026', options: { fontSize: 10, color: '64748B' } }
+      ], {
+        x: 6.83,
+        y: cardY,
+        w: 5.7,
+        h: cardH,
+        fill: { color: '111C33' },
+        line: { color: '10B981', width: 1.5 },
+        fontFace: 'Calibri',
+        valign: 'top',
+        margin: [14, 16, 14, 16],
+        wrap: true
+      });
+
+    } else {
+      // Content Slide Common Header
+      const headerY = s.badge ? 1.2 : 0.85;
+      slide.addText(s.title, {
+        x: 0.8,
+        y: headerY,
+        w: 11.73,
+        h: 0.55,
+        fontSize: 20,
+        bold: true,
+        color: 'FFFFFF',
+        fontFace: 'Calibri',
+        valign: 'top',
+        wrap: true
+      });
+
+      if (s.subtitle) {
+        slide.addText(s.subtitle, {
+          x: 0.8,
+          y: headerY + 0.55,
+          w: 11.73,
+          h: 0.35,
+          fontSize: 11.5,
+          color: '94A3B8',
+          fontFace: 'Calibri',
+          valign: 'top',
+          wrap: true
+        });
+      }
+
+      const contentY = 2.25;
+
+      if (s.type === 'objectives') {
+        const objs = s.data.objectives || [];
+        const bulletItems: any[] = [
+          { text: 'MANDATORY LEARNING OUTCOMES\n\n', options: { bold: true, fontSize: 12, color: '38BDF8' } },
+          ...objs.map((obj: string) => ({
+            text: `${obj}\n`,
+            options: { fontSize: 12, color: 'E2E8F0', bullet: true, spaceAfter: 10 }
+          }))
+        ];
+
+        slide.addText(bulletItems, {
+          x: 0.8,
+          y: contentY,
+          w: 6.8,
+          h: 4.45,
+          fill: { color: '111C33' },
+          line: { color: '334155', width: 1 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [14, 16, 14, 16],
+          wrap: true
+        });
+
+        const compTexts: any[] = [
+          { text: 'CORE COMPETENCY DOMAINS\n\n', options: { bold: true, fontSize: 12, color: '60A5FA' } },
+          ...(s.data.competencies || []).flatMap((c: any) => [
+            { text: `${c.label}\n`, options: { bold: true, fontSize: 11.5, color: 'F8FAFC' } },
+            { text: `${c.detail}\n\n`, options: { fontSize: 10.5, color: '94A3B8' } }
+          ])
+        ];
+
+        slide.addText(compTexts, {
+          x: 7.8,
+          y: contentY,
+          w: 4.73,
+          h: 4.45,
+          fill: { color: '111C33' },
+          line: { color: '3B82F6', width: 1.5 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [14, 16, 14, 16],
+          wrap: true
+        });
+
+      } else if (s.type === 'concept') {
+        // Concept Core Definition
+        slide.addText([
+          { text: 'CONCEPTUAL FOUNDATION & SPECIFICATIONS\n\n', options: { bold: true, fontSize: 11.5, color: '60A5FA' } },
+          { text: s.data.body || '', options: { fontSize: 12.5, color: 'F1F5F9' } }
+        ], {
+          x: 0.8,
+          y: contentY,
+          w: 11.73,
+          h: 1.7,
+          fill: { color: '111C33' },
+          line: { color: '3B82F6', width: 1.5 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [12, 16, 12, 16],
+          wrap: true
+        });
+
+        // Key Engineering Standards
+        const kpBullets: any[] = [
+          { text: 'KEY ENGINEERING RULES & STANDARDS\n\n', options: { bold: true, fontSize: 11.5, color: '34D399' } },
+          ...(s.data.keyPoints || []).map((kp: string) => ({
+            text: `${kp}\n`,
+            options: { fontSize: 11.5, color: 'E2E8F0', bullet: true, spaceAfter: 8 }
+          }))
+        ];
+
+        slide.addText(kpBullets, {
+          x: 0.8,
+          y: 4.15,
+          w: 11.73,
+          h: 2.55,
+          fill: { color: '111C33' },
+          line: { color: '334155', width: 1 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [12, 16, 12, 16],
+          wrap: true
+        });
+
+      } else if (s.type === 'procedure_step') {
+        const hasWarning = !!s.data.warning;
+        const hasTip = !!s.data.technicianTip;
+
+        // Step 1: Main Step Box
+        slide.addText([
+          { text: `PROCEDURAL STEP 0${s.data.stepNumber}: ${s.data.title.toUpperCase()}\n\n`, options: { bold: true, fontSize: 12.5, color: '60A5FA' } },
+          { text: s.data.details || '', options: { fontSize: 12, color: 'F1F5F9' } }
+        ], {
+          x: 0.8,
+          y: contentY,
+          w: 11.73,
+          h: 1.7,
+          fill: { color: '111C33' },
+          line: { color: '2563EB', width: 1.5 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [12, 16, 12, 16],
+          wrap: true
+        });
+
+        // Secondary cards with strict non-overlapping offsets
+        if (hasWarning && hasTip) {
+          slide.addText([
+            { text: 'CRITICAL LABORATORY SAFETY WARNING\n\n', options: { bold: true, fontSize: 11, color: 'F87171' } },
+            { text: s.data.warning, options: { fontSize: 11, color: 'FCA5A5' } }
+          ], {
+            x: 0.8,
+            y: 4.15,
+            w: 11.73,
+            h: 1.25,
+            fill: { color: '2A0808' },
+            line: { color: 'EF4444', width: 1.5 },
+            fontFace: 'Calibri',
+            valign: 'top',
+            margin: [10, 14, 10, 14],
+            wrap: true
+          });
+
+          slide.addText([
+            { text: 'TECHNICIAN WORKBENCH TIP\n\n', options: { bold: true, fontSize: 11, color: '34D399' } },
+            { text: s.data.technicianTip, options: { fontSize: 11, color: 'A7F3D0' } }
+          ], {
+            x: 0.8,
+            y: 5.55,
+            w: 11.73,
+            h: 1.15,
+            fill: { color: '06281E' },
+            line: { color: '10B981', width: 1.5 },
+            fontFace: 'Calibri',
+            valign: 'top',
+            margin: [10, 14, 10, 14],
+            wrap: true
+          });
+
+        } else if (hasWarning) {
+          slide.addText([
+            { text: 'CRITICAL LABORATORY SAFETY WARNING\n\n', options: { bold: true, fontSize: 11.5, color: 'F87171' } },
+            { text: s.data.warning, options: { fontSize: 12, color: 'FCA5A5' } }
+          ], {
+            x: 0.8,
+            y: 4.2,
+            w: 11.73,
+            h: 2.5,
+            fill: { color: '2A0808' },
+            line: { color: 'EF4444', width: 1.5 },
+            fontFace: 'Calibri',
+            valign: 'top',
+            margin: [14, 16, 14, 16],
+            wrap: true
+          });
+
+        } else if (hasTip) {
+          slide.addText([
+            { text: 'TECHNICIAN WORKBENCH TIP\n\n', options: { bold: true, fontSize: 11.5, color: '34D399' } },
+            { text: s.data.technicianTip, options: { fontSize: 12, color: 'A7F3D0' } }
+          ], {
+            x: 0.8,
+            y: 4.2,
+            w: 11.73,
+            h: 2.5,
+            fill: { color: '06281E' },
+            line: { color: '10B981', width: 1.5 },
+            fontFace: 'Calibri',
+            valign: 'top',
+            margin: [14, 16, 14, 16],
+            wrap: true
+          });
+        }
+
+      } else if (s.type === 'safety') {
+        const ppeBullets: any[] = [
+          { text: 'MANDATORY PPE & ESD PRECAUTION CHECKLIST\n\n', options: { bold: true, fontSize: 12, color: '38BDF8' } },
+          ...(s.data.ppeChecklist || []).map((p: string) => ({
+            text: `${p}\n`,
+            options: { fontSize: 11.5, color: 'E2E8F0', bullet: true, spaceAfter: 8 }
+          }))
+        ];
+
+        slide.addText(ppeBullets, {
+          x: 0.8,
+          y: contentY,
+          w: 11.73,
+          h: 2.15,
+          fill: { color: '111C33' },
+          line: { color: '38BDF8', width: 1.5 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [12, 16, 12, 16],
+          wrap: true
+        });
+
+        slide.addText([
+          { text: 'HAZARD MITIGATION & ELECTRICAL GUARDRAIL\n\n', options: { bold: true, fontSize: 12, color: 'FBBF24' } },
+          { text: s.data.hazardMitigation, options: { fontSize: 11.5, color: 'FDE68A' } }
+        ], {
+          x: 0.8,
+          y: 4.6,
+          w: 11.73,
+          h: 2.1,
+          fill: { color: '281404' },
+          line: { color: 'F59E0B', width: 1.5 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [12, 16, 12, 16],
+          wrap: true
+        });
+
+      } else if (s.type === 'troubleshooting') {
+        const flow = s.data.diagnosticFlow || [];
+        flow.slice(0, 3).forEach((item: any, fIdx: number) => {
+          const cardY = contentY + (fIdx * 1.5);
+          slide.addText([
+            { text: 'Observed Symptom: ', options: { bold: true, fontSize: 11, color: 'F87171' } },
+            { text: `${item.symptom}\n`, options: { fontSize: 11, color: 'FFFFFF', bold: true } },
+            { text: 'Probable Root Cause: ', options: { bold: true, fontSize: 11, color: 'FBBF24' } },
+            { text: `${item.cause}\n`, options: { fontSize: 11, color: 'CBD5E1' } },
+            { text: 'Standard Resolution Protocol: ', options: { bold: true, fontSize: 11, color: '34D399' } },
+            { text: `${item.resolution}`, options: { fontSize: 11, color: 'E2E8F0' } }
+          ], {
+            x: 0.8,
+            y: cardY,
+            w: 11.73,
+            h: 1.35,
+            fill: { color: '111C33' },
+            line: { color: '475569', width: 1 },
+            fontFace: 'Calibri',
+            valign: 'top',
+            margin: [10, 14, 10, 14],
+            wrap: true
+          });
+        });
+
+      } else if (s.type === 'summary') {
+        const takesBullets: any[] = [
+          { text: 'KEY TAKEAWAYS & COMPETENCY BENCHMARKS\n\n', options: { bold: true, fontSize: 12, color: '38BDF8' } },
+          ...(s.data.takeaways || []).map((t: string) => ({
+            text: `${t}\n`,
+            options: { fontSize: 11.5, color: 'E2E8F0', bullet: true, spaceAfter: 8 }
+          }))
+        ];
+
+        slide.addText(takesBullets, {
+          x: 0.8,
+          y: contentY,
+          w: 6.2,
+          h: 4.45,
+          fill: { color: '111C33' },
+          line: { color: '334155', width: 1 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [14, 16, 14, 16],
+          wrap: true
+        });
+
+        const nextStepsBullets: any[] = [
+          { text: 'MANDATORY NEXT STEPS\n\n', options: { bold: true, fontSize: 12, color: '34D399' } },
+          ...(s.data.nextSteps || []).map((step: string) => ({
+            text: `${step}\n`,
+            options: { fontSize: 11.5, color: 'E2E8F0', bullet: true, spaceAfter: 10 }
+          }))
+        ];
+
+        slide.addText(nextStepsBullets, {
+          x: 7.2,
+          y: contentY,
+          w: 5.33,
+          h: 4.45,
+          fill: { color: '111C33' },
+          line: { color: '10B981', width: 1.5 },
+          fontFace: 'Calibri',
+          valign: 'top',
+          margin: [14, 16, 14, 16],
+          wrap: true
+        });
+      }
+    }
+
+    // Presenter Notes
+    if (s.presenterNotes) {
+      slide.addNotes(s.presenterNotes);
+    }
+
+    // Slide Footer (Clean academic citation & slide count)
+    slide.addText([
+      { text: `CSSENTIAL  •  Topic 0${lesson.topicNumber}: ${lesson.title}  •  `, options: { color: '64748B', fontSize: 9 } },
+      { text: `Slide ${s.slideNumber} of ${s.totalSlides}`, options: { color: '94A3B8', fontSize: 9, bold: true } }
+    ], {
+      x: 0.8,
+      y: 6.95,
+      w: 11.73,
+      h: 0.3,
+      fontFace: 'Calibri',
+      valign: 'middle'
+    });
+  }
+
+  const safeTitle = lesson.title.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileName = `CSSENTIAL_Topic_0${lesson.topicNumber}_${safeTitle}_Presentation.pptx`;
+
+  await pptx.writeFile({ fileName });
+
+  if (studentId && sessionId) {
+    await api.recordDownload({
+      student_id: studentId,
+      session_id: sessionId,
+      resource_name: `Topic 0${lesson.topicNumber}: ${lesson.title} PowerPoint Presentation (.pptx)`,
+      file_type: 'PPTX'
+    });
+  }
 }

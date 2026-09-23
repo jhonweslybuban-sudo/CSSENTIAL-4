@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, Download, Play, FileText, CheckCircle2, Film, Award, Printer, Plus, Upload, Trash2, ExternalLink, X, Video, GraduationCap } from 'lucide-react';
+import { Monitor, Download, Play, FileText, CheckCircle2, Film, Award, Printer, Plus, Upload, Trash2, ExternalLink, X, Video, GraduationCap, FileVideo, HardDrive, Sparkles, Link as LinkIcon, Info, FolderDown } from 'lucide-react';
 import { LESSONS_DATA } from '../data/curriculum';
 import { LessonContent, CollectionVideo, TeacherMaterial } from '../types';
 import { LessonViewerModal } from './LessonViewerModal';
 import { VideoModal } from './VideoModal';
 import { AcademicPrintModal } from './AcademicPrintModal';
 import { generateDocxBlob } from '../services/academicDocument';
-import { downloadPresentationDeck } from '../services/presentationService';
+import {
+  downloadPowerPointPresentation,
+  downloadPresentationDeck
+} from '../services/presentationService';
 import { api } from '../services/api';
 
 interface CollectionViewProps {
@@ -36,6 +39,11 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
   // Videos collection state
   const [videos, setVideos] = useState<CollectionVideo[]>([]);
   const [showAddVideoModal, setShowAddVideoModal] = useState(false);
+  const [videoModalTab, setVideoModalTab] = useState<'upload_mp4' | 'embed_url'>('upload_mp4');
+  const [selectedMp4File, setSelectedMp4File] = useState<File | null>(null);
+  const [selectedMp4Base64, setSelectedMp4Base64] = useState<string | null>(null);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [videoModalError, setVideoModalError] = useState<string | null>(null);
   const [newVideoTitle, setNewVideoTitle] = useState('');
   const [newVideoTopic, setNewVideoTopic] = useState(1);
   const [newVideoUrl, setNewVideoUrl] = useState('');
@@ -58,8 +66,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
     try {
       const vids = await api.getCollectionVideos();
       const filtered = (vids || []).filter(v => 
-        !['vid-1', 'vid-2', 'vid-3'].includes(v.id) &&
-        ![2, 4, 6].includes(Number(v.topicNumber))
+        !['vid-1', 'vid-2', 'vid-3'].includes(v.id)
       );
       setVideos(filtered);
     } catch (err) {
@@ -81,41 +88,117 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
     loadTeacherMaterials();
   }, []);
 
+  const handleMp4FileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('video/') && !file.name.endsWith('.mp4') && !file.name.endsWith('.webm')) {
+      setVideoModalError('Please choose a valid video file (.mp4 or .webm format).');
+      return;
+    }
+
+    setVideoModalError(null);
+    setSelectedMp4File(file);
+
+    // Auto populate video title if empty
+    if (!newVideoTitle.trim()) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      setNewVideoTitle(cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
+    }
+
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      setSelectedMp4Base64(loadEvt.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveNewVideo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVideoTitle.trim() || !newVideoUrl.trim()) return;
+    setVideoModalError(null);
 
-    let cleanUrl = newVideoUrl.trim();
-    // Auto convert standard YouTube watch URL to embed URL if needed
-    if (cleanUrl.includes('youtube.com/watch?v=')) {
-      const vidId = cleanUrl.split('watch?v=')[1]?.split('&')[0];
-      if (vidId) cleanUrl = `https://www.youtube-nocookie.com/embed/${vidId}`;
-    } else if (cleanUrl.includes('youtu.be/')) {
-      const vidId = cleanUrl.split('youtu.be/')[1]?.split('?')[0];
-      if (vidId) cleanUrl = `https://www.youtube-nocookie.com/embed/${vidId}`;
+    if (videoModalTab === 'upload_mp4') {
+      if (!selectedMp4File || !selectedMp4Base64) {
+        setVideoModalError('Please choose an MP4 video file to upload.');
+        return;
+      }
+      if (!newVideoTitle.trim()) {
+        setVideoModalError('Please provide a title for the video demonstration.');
+        return;
+      }
+
+      setIsUploadingVideo(true);
+      try {
+        const saved = await api.uploadCollectionVideo({
+          title: newVideoTitle.trim(),
+          description: newVideoDesc.trim() || 'Laboratory practicum video demonstration.',
+          fileName: selectedMp4File.name,
+          fileData: selectedMp4Base64,
+          topicNumber: Number(newVideoTopic),
+          duration: newVideoDuration.trim() || '10:00',
+          instructor: newVideoInstructor.trim() || 'CSSENTIAL Faculty Lead'
+        });
+
+        setVideos(prev => [saved, ...prev.filter(v => v.id !== saved.id)]);
+        setShowAddVideoModal(false);
+        resetVideoForm();
+        setDownloadNotice(`Successfully uploaded practicum MP4: "${saved.title}"`);
+        setTimeout(() => setDownloadNotice(null), 4000);
+      } catch (err) {
+        console.error('Error uploading video:', err);
+        setVideoModalError('Failed to upload video file. Please try again.');
+      } finally {
+        setIsUploadingVideo(false);
+      }
+
+    } else {
+      // Embed URL Tab
+      if (!newVideoTitle.trim() || !newVideoUrl.trim()) {
+        setVideoModalError('Please provide both video title and URL.');
+        return;
+      }
+
+      let cleanUrl = newVideoUrl.trim();
+      if (cleanUrl.includes('youtube.com/watch?v=')) {
+        const vidId = cleanUrl.split('watch?v=')[1]?.split('&')[0];
+        if (vidId) cleanUrl = `https://www.youtube-nocookie.com/embed/${vidId}`;
+      } else if (cleanUrl.includes('youtu.be/')) {
+        const vidId = cleanUrl.split('youtu.be/')[1]?.split('?')[0];
+        if (vidId) cleanUrl = `https://www.youtube-nocookie.com/embed/${vidId}`;
+      }
+
+      try {
+        const saved = await api.saveCollectionVideo({
+          title: newVideoTitle.trim(),
+          topicNumber: Number(newVideoTopic),
+          url: cleanUrl,
+          duration: newVideoDuration.trim() || '10:00',
+          instructor: newVideoInstructor.trim() || 'CSSENTIAL Faculty Lead',
+          description: newVideoDesc.trim() || 'Laboratory practicum video demonstration.',
+          thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+          isUploadedMp4: cleanUrl.endsWith('.mp4') || cleanUrl.startsWith('/uploads/')
+        });
+
+        setVideos(prev => [saved, ...prev.filter(v => v.id !== saved.id)]);
+        setShowAddVideoModal(false);
+        resetVideoForm();
+        setDownloadNotice(`Added video demonstration: "${saved.title}"`);
+        setTimeout(() => setDownloadNotice(null), 3500);
+      } catch (err) {
+        console.error('Error saving video:', err);
+        setVideoModalError('Failed to save video link.');
+      }
     }
+  };
 
-    try {
-      const saved = await api.saveCollectionVideo({
-        title: newVideoTitle.trim(),
-        topicNumber: Number(newVideoTopic),
-        url: cleanUrl,
-        duration: newVideoDuration.trim() || '10:00',
-        instructor: newVideoInstructor.trim() || 'CSSENTIAL Faculty Lead',
-        description: newVideoDesc.trim() || 'Laboratory practicum video demonstration.',
-        thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80'
-      });
-
-      setVideos(prev => [saved, ...prev]);
-      setShowAddVideoModal(false);
-      setNewVideoTitle('');
-      setNewVideoUrl('');
-      setNewVideoDesc('');
-      setDownloadNotice(`Added new video demonstration: "${saved.title}"`);
-      setTimeout(() => setDownloadNotice(null), 3500);
-    } catch (err) {
-      console.error('Error saving video:', err);
-    }
+  const resetVideoForm = () => {
+    setSelectedMp4File(null);
+    setSelectedMp4Base64(null);
+    setNewVideoTitle('');
+    setNewVideoUrl('');
+    setNewVideoDesc('');
+    setVideoModalError(null);
+    setIsUploadingVideo(false);
   };
 
   const handleDeleteVideo = async (vidId: string) => {
@@ -198,11 +281,21 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
     }
   };
 
+  const handleDownloadPptx = async (lesson: LessonContent) => {
+    try {
+      await downloadPowerPointPresentation(lesson, studentId, sessionId, studentName, yearSection);
+      setDownloadNotice(`Downloaded PowerPoint (.pptx) Presentation for Topic 0${lesson.topicNumber}: "${lesson.title}"`);
+      setTimeout(() => setDownloadNotice(null), 4000);
+    } catch (err) {
+      console.error('PPTX download error:', err);
+    }
+  };
+
   const handleDownloadSlides = async (lesson: LessonContent) => {
     try {
-      await downloadPresentationDeck(lesson, studentId, sessionId, studentName);
-      setDownloadNotice(`Downloaded Standalone Presentation Slides (.html) for Topic ${lesson.topicNumber}: "${lesson.title}"`);
-      setTimeout(() => setDownloadNotice(null), 3500);
+      await downloadPowerPointPresentation(lesson, studentId, sessionId, studentName, yearSection);
+      setDownloadNotice(`Downloaded PowerPoint (.pptx) Presentation for Topic 0${lesson.topicNumber}: "${lesson.title}"`);
+      setTimeout(() => setDownloadNotice(null), 4000);
     } catch (err) {
       console.error('Slide download error:', err);
     }
@@ -295,7 +388,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                       <button
                         id={`present-btn-${lesson.id}`}
                         onClick={() => setSelectedLessonForPresentation(lesson)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white font-black text-xs rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
                         title="Launch Interactive Slide Deck Presentation"
                       >
                         <Monitor className="w-3.5 h-3.5" />
@@ -303,12 +396,12 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                       </button>
                       <button
                         id={`download-slides-${lesson.id}`}
-                        onClick={() => handleDownloadSlides(lesson)}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 hover:text-blue-900 transition-colors cursor-pointer mt-1.5"
-                        title="Directly Download Standalone Slide Deck (.html)"
+                        onClick={() => handleDownloadPptx(lesson)}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 mt-1.5 text-[10px] font-black text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-md transition-colors cursor-pointer"
+                        title="Download official Microsoft PowerPoint (.pptx) presentation"
                       >
-                        <Download className="w-3 h-3 text-blue-600" />
-                        <span>Slides (.html)</span>
+                        <Download className="w-3 h-3 text-amber-600" />
+                        <span>PowerPoint (.pptx)</span>
                       </button>
                     </div>
                   </td>
@@ -459,89 +552,135 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
           </div>
 
           <button
-            onClick={() => setShowAddVideoModal(true)}
+            onClick={() => {
+              resetVideoForm();
+              setShowAddVideoModal(true);
+            }}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>Upload / Add Video Material</span>
+            <span>Upload MP4 / Add Video</span>
           </button>
+        </div>
+
+        {/* Faculty & Researcher Dashboard Notice */}
+        <div className="bg-linear-to-r from-slate-900 to-indigo-950 p-4 rounded-2xl border border-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center shrink-0">
+              <FileVideo className="w-4.5 h-4.5 text-blue-400" />
+            </div>
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
+                <span>Practicum Video Demonstration Repository</span>
+                <span className="px-1.5 py-0.5 bg-blue-500/30 text-[10px] rounded text-blue-200 font-mono">MP4 SUPPORT</span>
+              </h4>
+              <p className="text-[11px] text-gray-300">
+                Upload local MP4 demonstration recordings or stream institutional videos. Authorized instructors and researchers can also audit, manage, and curate the full collection in the Researcher Telemetry Dashboard.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Video Grid */}
         {videos.length === 0 ? (
           <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-8 sm:p-12 text-center shadow-xs">
             <Film className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-bold text-gray-700">No videos in the collection yet</p>
-            <p className="text-xs text-gray-500 mt-1">Click "Upload / Add Video Material" above to embed or upload technical demonstration videos.</p>
+            <p className="text-sm font-bold text-gray-700">No videos in the practicum collection yet</p>
+            <p className="text-xs text-gray-500 mt-1">Click "Upload MP4 / Add Video" above to upload an MP4 recording or embed a video demonstration.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {videos.map((vid) => (
-              <div
-                key={vid.id}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col group"
-              >
-                {/* Thumbnail / Video Preview Header */}
-                <div className="relative aspect-video bg-slate-950 overflow-hidden">
-                  <img
-                    src={vid.thumbnail || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80'}
-                    alt={vid.title}
-                    className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-300"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex items-end p-3 justify-between">
-                    <span className="px-2 py-0.5 bg-blue-600/90 text-white rounded-md text-[10px] font-black uppercase tracking-wider">
-                      Topic {vid.topicNumber}
-                    </span>
-                    <span className="px-2 py-0.5 bg-black/70 text-white rounded-md text-[10px] font-mono font-bold">
-                      {vid.duration}
-                    </span>
+            {videos.map((vid) => {
+              const isMp4 = vid.isUploadedMp4 || vid.url?.endsWith('.mp4') || vid.url?.startsWith('/uploads/');
+              return (
+                <div
+                  key={vid.id}
+                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col group"
+                >
+                  {/* Thumbnail / Video Preview Header */}
+                  <div className="relative aspect-video bg-slate-950 overflow-hidden">
+                    <img
+                      src={vid.thumbnail || 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80'}
+                      alt={vid.title}
+                      className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent flex items-end p-3 justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 bg-blue-600/90 text-white rounded-md text-[10px] font-black uppercase tracking-wider">
+                          Topic 0{vid.topicNumber}
+                        </span>
+                        {isMp4 && (
+                          <span className="px-2 py-0.5 bg-purple-600/90 text-white rounded-md text-[10px] font-bold flex items-center gap-1">
+                            <FileVideo className="w-3 h-3" />
+                            MP4
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {vid.fileSize && (
+                          <span className="px-1.5 py-0.5 bg-slate-800/90 text-gray-300 rounded text-[10px] font-mono">
+                            {vid.fileSize}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Video Info */}
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1.5">
-                    <h4 className="font-bold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-700 transition-colors">
-                      {vid.title}
-                    </h4>
-                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                      {vid.description}
-                    </p>
-                  </div>
+                  {/* Video Info */}
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                    <div className="space-y-1.5">
+                      <h4 className="font-bold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                        {vid.title}
+                      </h4>
+                      <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                        {vid.description}
+                      </p>
+                    </div>
 
-                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-[11px] text-gray-400 truncate max-w-[150px]">
-                      {vid.instructor || 'Faculty Lead'}
-                    </span>
+                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-[11px] text-gray-400 truncate max-w-[140px]" title={vid.instructor || 'Faculty Lead'}>
+                        {vid.instructor || 'Faculty Lead'}
+                      </span>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          const matchingLesson = LESSONS_DATA.find(l => l.topicNumber === vid.topicNumber) || LESSONS_DATA[0];
-                          setSelectedLessonForVideo({
-                            ...matchingLesson,
-                            title: vid.title,
-                            videoUrl: vid.url
-                          });
-                        }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        <Play className="w-3 h-3 fill-white" />
-                        <span>Watch</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteVideo(vid.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                        title="Delete video"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {isMp4 && vid.url && (
+                          <a
+                            href={vid.url}
+                            download={vid.fileName || `${vid.title}.mp4`}
+                            className="p-1.5 text-gray-500 hover:text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
+                            title="Download MP4 file"
+                          >
+                            <FolderDown className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            const matchingLesson = LESSONS_DATA.find(l => l.topicNumber === vid.topicNumber) || LESSONS_DATA[0];
+                            setSelectedLessonForVideo({
+                              ...matchingLesson,
+                              title: vid.title,
+                              videoUrl: vid.url
+                            });
+                          }}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          <Play className="w-3 h-3 fill-white" />
+                          <span>Watch</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVideo(vid.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Delete video"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -553,19 +692,109 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
             <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
               <h3 className="text-base font-black flex items-center gap-2">
                 <Upload className="w-5 h-5 text-blue-400" />
-                <span>Upload / Embed Video Material</span>
+                <span>Laboratory Practicum Video Submission</span>
               </h3>
               <button
-                onClick={() => setShowAddVideoModal(false)}
+                onClick={() => {
+                  resetVideoForm();
+                  setShowAddVideoModal(false);
+                }}
                 className="text-slate-400 hover:text-white cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
+            {/* Mode Switcher: MP4 Upload vs URL Embed */}
+            <div className="flex border-b border-gray-200 bg-gray-50 px-6 pt-3 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoModalTab('upload_mp4');
+                  setVideoModalError(null);
+                }}
+                className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  videoModalTab === 'upload_mp4'
+                    ? 'border-blue-600 text-blue-700 bg-white rounded-t-lg'
+                    : 'border-transparent text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                <FileVideo className="w-3.5 h-3.5" />
+                <span>Upload MP4 Video File</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoModalTab('embed_url');
+                  setVideoModalError(null);
+                }}
+                className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  videoModalTab === 'embed_url'
+                    ? 'border-blue-600 text-blue-700 bg-white rounded-t-lg'
+                    : 'border-transparent text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                <span>Video Link / Embed URL</span>
+              </button>
+            </div>
+
+            {videoModalError && (
+              <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 font-semibold">
+                {videoModalError}
+              </div>
+            )}
+
             <form onSubmit={handleSaveNewVideo} className="p-6 space-y-4">
+              {videoModalTab === 'upload_mp4' ? (
+                /* MP4 File Selector */
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                    <span>Select MP4 Video File *</span>
+                    {selectedMp4File && (
+                      <span className="text-[11px] font-mono text-blue-600">
+                        {(selectedMp4File.size / (1024 * 1024)).toFixed(2)} MB
+                      </span>
+                    )}
+                  </label>
+                  <label className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer bg-slate-50 hover:bg-blue-50/50 transition-colors">
+                    <FileVideo className="w-8 h-8 text-blue-600" />
+                    <div className="text-center">
+                      <span className="text-xs font-bold text-gray-800">
+                        {selectedMp4File ? selectedMp4File.name : 'Click to choose or drop MP4 video'}
+                      </span>
+                      <p className="text-[10px] text-gray-500 mt-0.5">
+                        Accepts MP4 and WebM video recordings from laboratory practicum sessions
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm"
+                      onChange={handleMp4FileSelected}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              ) : (
+                /* URL Input */
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-700">Video Link / Embed URL *</label>
+                  <input
+                    type="url"
+                    required
+                    value={newVideoUrl}
+                    onChange={(e) => setNewVideoUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=... or direct MP4 link"
+                    className="w-full px-3.5 py-2 border rounded-xl text-xs font-mono focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-[10px] text-gray-500">
+                    YouTube links, Vimeo, or web-hosted MP4 links.
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Video Title *</label>
+                <label className="text-xs font-bold text-gray-700">Demonstration Title *</label>
                 <input
                   type="text"
                   required
@@ -594,45 +823,19 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Estimated Duration</label>
+                  <label className="text-xs font-bold text-gray-700">Instructor / Author Name</label>
                   <input
                     type="text"
-                    value={newVideoDuration}
-                    onChange={(e) => setNewVideoDuration(e.target.value)}
-                    placeholder="e.g. 14:20"
-                    className="w-full px-3.5 py-2 border rounded-xl text-xs font-mono"
+                    value={newVideoInstructor}
+                    onChange={(e) => setNewVideoInstructor(e.target.value)}
+                    placeholder="e.g. Lead Course Instructor"
+                    className="w-full px-3.5 py-2 border rounded-xl text-xs"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Video Link / Embed URL *</label>
-                <input
-                  type="url"
-                  required
-                  value={newVideoUrl}
-                  onChange={(e) => setNewVideoUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=... or MP4 URL"
-                  className="w-full px-3.5 py-2 border rounded-xl text-xs font-mono focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-[10px] text-gray-500">
-                  YouTube links, Vimeo, or direct MP4 URLs will be embedded securely.
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Instructor / Author Name</label>
-                <input
-                  type="text"
-                  value={newVideoInstructor}
-                  onChange={(e) => setNewVideoInstructor(e.target.value)}
-                  placeholder="e.g. Engr. Jhon Wesly Buban"
-                  className="w-full px-3.5 py-2 border rounded-xl text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Description</label>
+                <label className="text-xs font-bold text-gray-700">Practicum Notes / Description</label>
                 <textarea
                   rows={2}
                   value={newVideoDesc}
@@ -645,16 +848,28 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
               <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => setShowAddVideoModal(false)}
-                  className="px-4 py-2 border rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    resetVideoForm();
+                    setShowAddVideoModal(false);
+                  }}
+                  disabled={isUploadingVideo}
+                  className="px-4 py-2 border rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs"
+                  disabled={isUploadingVideo}
+                  className="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs disabled:opacity-60 flex items-center gap-1.5"
                 >
-                  Save & Embed Video
+                  {isUploadingVideo ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Uploading MP4...</span>
+                    </>
+                  ) : (
+                    <span>{videoModalTab === 'upload_mp4' ? 'Upload MP4 Video' : 'Save & Embed Video'}</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -823,7 +1038,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                     type="text"
                     value={newMatInstructor}
                     onChange={(e) => setNewMatInstructor(e.target.value)}
-                    placeholder="e.g. Prof. Jhon Wesly Buban"
+                    placeholder="e.g. Faculty Course Instructor"
                     className="w-full px-3 py-2 border rounded-xl text-xs focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>

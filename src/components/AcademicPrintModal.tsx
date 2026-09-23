@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Printer, Download, X, Award, FileText, CheckCircle } from 'lucide-react';
 import { LessonContent } from '../types';
 import { generateAcademicHTML, generateDocxBlob } from '../services/academicDocument';
@@ -25,6 +25,12 @@ export const AcademicPrintModal: React.FC<AcademicPrintModalProps> = ({
   const [currentName, setCurrentName] = useState(studentName);
   const [currentSection, setCurrentSection] = useState(yearSection);
   const [currentId, setCurrentId] = useState(studentId);
+
+  useEffect(() => {
+    if (studentName) setCurrentName(studentName);
+    if (yearSection) setCurrentSection(yearSection);
+    if (studentId) setCurrentId(studentId);
+  }, [studentName, yearSection, studentId]);
 
   if (!isOpen || !lesson) return null;
 

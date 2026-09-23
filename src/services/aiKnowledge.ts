@@ -212,7 +212,7 @@ The **Games Hub** provides 9 specialized educational games designed to reinforce
 1. **Sort & Configure**: Fast-paced category classification.
 2. **Code Cracker**: Terminal decryption via technical diagnostic Q&A.
 3. **Troubleshooting Search**: Interactive motherboard fault locator.
-4. **Installation Sequence**: Chronological PC assembly milestone ordering.
+4. **Installation Sequence**: Chronological PC assembly step ordering.
 5. **Technical Flashcards**: Hardware acronyms, ports, and vocabulary mastery.
 6. **Memory Match**: Hardware-to-function card pair matching.
 7. **Drag & Drop PC Parts**: Socket and chassis assembly puzzle.
@@ -260,8 +260,8 @@ CSSENTIAL is developed as a "One-Click Multi-Intervention Learning Platform for 
 
 The **Researcher Dashboard** is an administrative and instructor console accessible via password (**CSSENTIAL2026**):
 • **Student Roster & Profiles**: Real-time list of all registered student technicians with last-active timestamps.
-• **Activity Attempts & Transcripts**: Detailed records of scores, durations, and percentage achievements across all modules.
-• **Quiz & Game Telemetry**: Score distributions, time per round, and level progression data.
+• **Activity Attempts & Transcripts**: Detailed records of scores and percentage achievements across all modules.
+• **Quiz & Game Telemetry**: Score distributions, accuracy, and level progression data.
 • **Audit Action Log**: Sequential timeline of student actions (downloads, views, games played).
 • **Demonstration Videos Studio**: Upload custom MP4/WebM class demonstration videos or embed YouTube/Vimeo links for each of the 6 competencies.
 • **Data Retention & Cleanup**: Automated tools to prune old records (7, 14, 30, 60, 90 days), wipe inactive guest records, or reset test data for a new academic semester.`
@@ -346,7 +346,7 @@ CSSENTIAL is organized into clear, purposeful sections:
         source: 'game-guide-sequence',
         reply: `🎮 **How to Play: Installation Sequence**
 
-• **Objective**: Order the milestone steps of building and configuring a computer into their exact chronological sequence.
+• **Objective**: Order the procedural steps of building and configuring a computer into their exact chronological sequence.
 • **How to Play**:
   1. Review the shuffled procedural cards (e.g., "Wear ESD wrist strap", "Install brass standoffs", "Insert CPU into socket", "Mount cooler", "Connect 24-pin ATX", "First boot to UEFI BIOS").
   2. Drag cards or tap the up/down arrows to position them in logical assembly order.

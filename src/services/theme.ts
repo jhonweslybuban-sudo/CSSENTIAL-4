@@ -763,6 +763,21 @@ export function getSavedCustomSettings(): CustomThemeSettings {
   };
 }
 
+export function isDarkTheme(paletteId: ThemePaletteId): boolean {
+  if (
+    paletteId === 'solid-dark-charcoal' ||
+    paletteId === 'gradient-cyber-night' ||
+    paletteId === 'gradient-emerald-matrix'
+  ) {
+    return true;
+  }
+  if (paletteId === 'custom') {
+    const custom = getSavedCustomSettings();
+    return custom.surfaceMode === 'dark';
+  }
+  return false;
+}
+
 export function applyThemePalette(paletteId: ThemePaletteId): void {
   const root = document.documentElement;
 
@@ -773,8 +788,15 @@ export function applyThemePalette(paletteId: ThemePaletteId): void {
   }
 
   const palette = THEME_PALETTES[paletteId] || THEME_PALETTES[DEFAULT_PALETTE_ID];
+  const isDark = isDarkTheme(paletteId);
 
   root.setAttribute('data-theme', palette.id);
+  root.setAttribute('data-theme-mode', isDark ? 'dark' : 'light');
+  if (isDark) {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
 
   Object.entries(palette.cssVars).forEach(([key, val]) => {
     root.style.setProperty(key, val);
@@ -790,11 +812,18 @@ export function applyCustomTheme(settings: CustomThemeSettings): void {
   root.setAttribute('data-theme', 'custom');
 
   const isDark = settings.surfaceMode === 'dark';
+  root.setAttribute('data-theme-mode', isDark ? 'dark' : 'light');
+  if (isDark) {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
+
   const surface = isDark ? '#1E293B' : '#FFFFFF';
   const surfaceAlt = isDark ? '#334155' : '#F1F5F9';
   const border = isDark ? '#475569' : '#CBD5E1';
   const titleText = isDark ? '#F8FAFC' : '#0F172A';
-  const bodyText = isDark ? '#E2E8F0' : '#334155';
+  const bodyText = isDark ? '#F1F5F9' : '#334155';
   const mutedText = isDark ? '#94A3B8' : '#64748B';
 
   let bg = settings.solidColor;

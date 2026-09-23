@@ -40,6 +40,7 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
   // Student Sign Up Fields
   const [studentName, setStudentName] = useState('');
   const [studentTupId, setStudentTupId] = useState('');
+  const [studentYearSection, setStudentYearSection] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
 
   // Instructor Sign Up Fields
@@ -50,12 +51,15 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
   // Log In Fields
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [loginSection, setLoginSection] = useState('');
 
   // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditingSection, setIsEditingSection] = useState(false);
+  const [updatedSectionInput, setUpdatedSectionInput] = useState('');
 
   useEffect(() => {
     if (initialStudent) {
@@ -67,6 +71,8 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
         setRole('STUDENT');
         setStudentName(initialStudent.name || '');
         setStudentTupId(initialStudent.tup_id || initialStudent.student_id || '');
+        setStudentYearSection(initialStudent.year_section || '');
+        setUpdatedSectionInput(initialStudent.year_section || '');
       }
     }
   }, [initialStudent]);
@@ -91,6 +97,7 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
 
     const cleanName = studentName.trim();
     const cleanTupId = studentTupId.trim().toUpperCase();
+    const cleanSection = studentYearSection.trim();
     const cleanPass = studentPassword.trim();
 
     if (!cleanName) {
@@ -99,6 +106,10 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
     }
     if (!cleanTupId) {
       setError('Please enter your TUP ID (e.g., TUPM-21-1234).');
+      return;
+    }
+    if (!cleanSection) {
+      setError('Please enter your Year & Section (e.g., BSIT-3A, Section 1).');
       return;
     }
     if (!cleanPass) {
@@ -116,6 +127,7 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
         role: 'STUDENT',
         name: cleanName,
         tup_id: cleanTupId,
+        year_section: cleanSection,
         password: cleanPass
       });
 
@@ -219,6 +231,11 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
         password: cleanPass
       });
 
+      if (role === 'STUDENT' && loginSection.trim()) {
+        userProfile.year_section = loginSection.trim();
+        api.saveStudent(userProfile);
+      }
+
       setSuccessMessage(`Logged in successfully as ${userProfile.name}!`);
       await api.logAction(
         userProfile.student_id,
@@ -248,6 +265,7 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
         created_at: ''
       });
     }
+    setMode('LOGIN');
     setLoginIdentifier('');
     setLoginPassword('');
     setStudentName('');
@@ -257,15 +275,15 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
     setInstructorDept('');
     setInstructorPassword('');
     setError('');
-    setSuccessMessage('Logged out successfully.');
+    setSuccessMessage('Logged out successfully. Please log in or sign up to enter the CSSENTIAL PORTAL.');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200 relative flex flex-col max-h-[92vh]">
         
-        {/* Close Button */}
-        {onClose && (
+        {/* Close Button - Only show when a valid session is active so logged out users remain on the entry portal */}
+        {onClose && initialStudent && initialStudent.student_id && (
           <button
             onClick={onClose}
             className="absolute right-4 top-4 z-20 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer"
@@ -316,22 +334,78 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
 
         {/* Active Session Notice if already logged in */}
         {initialStudent && initialStudent.name && (
-          <div className="bg-slate-50 border-b border-slate-200 px-5 py-2.5 flex items-center justify-between text-xs text-slate-700">
-            <div className="flex items-center gap-2 truncate mr-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-              <span className="truncate">
-                Currently logged in as <strong className="text-slate-900 font-bold">{initialStudent.name}</strong> ({initialStudent.role === 'INSTRUCTOR' ? 'Instructor' : initialStudent.tup_id || 'Student'})
-              </span>
+          <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 text-xs text-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 truncate mr-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                <span className="truncate">
+                  Logged in as <strong className="text-slate-900 font-bold">{initialStudent.name}</strong> ({initialStudent.role === 'INSTRUCTOR' ? 'Instructor' : initialStudent.tup_id || 'Student'})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer shrink-0"
+                title="Log out from this account"
+              >
+                <LogOut className="w-3 h-3" />
+                <span>Log Out</span>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer shrink-0"
-              title="Log out from this account"
-            >
-              <LogOut className="w-3 h-3" />
-              <span>Log Out</span>
-            </button>
+            {initialStudent.role !== 'INSTRUCTOR' && (
+              <div className="mt-2 pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <span className="font-semibold text-slate-800">Assigned Section:</span>
+                  <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200 font-bold">
+                    {initialStudent.year_section || 'General Section'}
+                  </span>
+                </div>
+                {!isEditingSection ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingSection(true);
+                      setUpdatedSectionInput(initialStudent.year_section || '');
+                    }}
+                    className="text-[11px] text-blue-700 font-bold hover:underline cursor-pointer"
+                  >
+                    Change Section
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={updatedSectionInput}
+                      onChange={(e) => setUpdatedSectionInput(e.target.value)}
+                      placeholder="e.g. BSIT-3A"
+                      className="px-2 py-1 text-xs border border-blue-300 rounded-md outline-hidden text-slate-900 font-bold w-28 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const newSec = updatedSectionInput.trim() || 'General Section';
+                        const updated = { ...initialStudent, year_section: newSec };
+                        api.saveStudent(updated);
+                        if (onRegister) onRegister(updated);
+                        setIsEditingSection(false);
+                        setSuccessMessage(`Section updated to ${newSec}!`);
+                        setTimeout(() => setSuccessMessage(''), 2500);
+                      }}
+                      className="px-2 py-1 bg-blue-700 text-white rounded-md text-[11px] font-bold cursor-pointer hover:bg-blue-800"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingSection(false)}
+                      className="text-[11px] text-gray-500 hover:text-gray-700 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -435,6 +509,29 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
                     />
                     <p className="text-[11px] text-gray-500">
                       Your official Technological University of the Philippines ID (e.g., TUPM-21-1234).
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="student-signup-section" className="block text-xs font-black uppercase tracking-wider text-gray-700">
+                        Year &amp; Section <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[11px] font-semibold text-blue-600">e.g., BSIT-3A, Section 1</span>
+                    </div>
+                    <input
+                      id="student-signup-section"
+                      type="text"
+                      value={studentYearSection}
+                      onChange={(e) => {
+                        setStudentYearSection(e.target.value);
+                        if (error) setError('');
+                      }}
+                      placeholder="e.g., BSIT-3A, BET-COET 2B, Section 1"
+                      className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-hidden transition-all text-gray-900 placeholder:text-gray-400 font-medium"
+                    />
+                    <p className="text-[11px] text-gray-500">
+                      Input your official course section for classroom tracking and lab competency records.
                     </p>
                   </div>
 
@@ -617,6 +714,29 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
                 </div>
               </div>
 
+              {/* Student Section (Login Option) */}
+              {role === 'STUDENT' && (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="login-section-input" className="block text-xs font-black uppercase tracking-wider text-gray-700">
+                      Year &amp; Section <span className="text-gray-400 font-normal lowercase">(optional update)</span>
+                    </label>
+                    <span className="text-[10px] text-blue-600 font-semibold">e.g. BSIT-3A</span>
+                  </div>
+                  <input
+                    id="login-section-input"
+                    type="text"
+                    value={loginSection}
+                    onChange={(e) => setLoginSection(e.target.value)}
+                    placeholder="e.g., BSIT-3A or Section 1"
+                    className="w-full px-3.5 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-hidden transition-all text-gray-900 placeholder:text-gray-400 font-medium"
+                  />
+                  <p className="text-[11px] text-gray-500">
+                    Leave blank to keep current section, or enter your new class section.
+                  </p>
+                </div>
+              )}
+
               <div className="pt-2">
                 <button
                   id="login-submit-btn"
@@ -666,14 +786,6 @@ export const StudentEntryModal: React.FC<StudentEntryModalProps> = ({
                 </button>
               </p>
             )}
-          </div>
-
-          {/* Privacy & Academic Telemetry Note */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-600 flex items-start gap-2">
-            <Shield className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
-            <div className="leading-tight">
-              <span className="font-bold text-slate-800">Technological University of the Philippines:</span> Authorized academic telemetry logs lab activity attempts, quiz results, and competency progress.
-            </div>
           </div>
 
         </div>

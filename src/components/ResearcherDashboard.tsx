@@ -41,6 +41,7 @@ import { ResearcherRecordManager } from './ResearcherRecordManager';
 import { ResearcherAnnouncementManager } from './ResearcherAnnouncementManager';
 import { ResearcherBrandingManager } from './ResearcherBrandingManager';
 import { TeacherContentManager } from './TeacherContentManager';
+import { ResearcherHardwareSlideManager } from './ResearcherHardwareSlideManager';
 
 interface ResearcherDashboardProps {
   onBackToHome: () => void;
@@ -51,7 +52,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
 }) => {
   const [stats, setStats] = useState<ResearcherStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'TEACHER_CMS' | 'ANNOUNCEMENTS' | 'MANAGE_BRANDING' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STUDENTS' | 'ACTIVITIES' | 'QUIZZES' | 'GAMES' | 'LOGS' | 'TEACHER_CMS' | 'ANNOUNCEMENTS' | 'MANAGE_BRANDING' | 'MANAGE_VIDEOS' | 'MANAGE_RECORDS' | 'HARDWARE_SLIDES'>('OVERVIEW');
   
   // Password Protection Gate (Password: CSSENTIAL2026)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -535,7 +536,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
               Student Activity &amp; Diagnostics Dashboard
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-3xl">
-              Track real-time student performance, exact completion timestamps, answering duration, quiz scores, and educational game engagement across Computer System Installation &amp; Configuration modules.
+              Track real-time student performance, exact completion timestamps, quiz scores, and educational game engagement across Computer System Installation &amp; Configuration modules.
             </p>
           </div>
 
@@ -749,6 +750,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             { id: 'ANNOUNCEMENTS', label: '📢 Announcements & Notices' },
             { id: 'MANAGE_BRANDING', label: '🎨 Logo & Researcher Profiles' },
             { id: 'MANAGE_VIDEOS', label: 'Demonstration Videos' },
+            { id: 'HARDWARE_SLIDES', label: '🖥️ Hardware Overview Slides' },
             { id: 'MANAGE_RECORDS', label: 'Data Retention & Cleanup' }
           ].map(tab => (
             <button
@@ -805,7 +807,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             <option value="NEWEST">Sort: Newest</option>
             <option value="OLDEST">Sort: Oldest</option>
             <option value="SCORE_HIGH">Sort: Highest Score</option>
-            <option value="DURATION_HIGH">Sort: Longest Duration</option>
+            <option value="DURATION_HIGH">Sort: Highest Engagement</option>
           </select>
         </div>
 
@@ -876,7 +878,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                               {student.combinedScore}%
                             </div>
                             <div className="text-[10px] text-gray-400 font-mono">
-                              {student.totalActivities} acts • {formatDuration(student.totalDurationSecs)}
+                              {student.totalActivities} completed
                             </div>
                           </div>
                           <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-600" />
@@ -893,7 +895,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                       <h4 className="text-sm font-black text-gray-900">
                         Latest Activity Completions
                       </h4>
-                      <p className="text-xs text-gray-500">Live answer duration and scores</p>
+                      <p className="text-xs text-gray-500">Live answer scores and timestamps</p>
                     </div>
                     <button
                       onClick={() => setActiveTab('ACTIVITIES')}
@@ -922,9 +924,6 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                               <span className="inline-block px-2 py-0.5 text-xs font-black rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
                                 {attempt.percentage}%
                               </span>
-                              <div className="text-[10px] text-gray-400 font-mono mt-0.5">
-                                took {formatDuration(attempt.duration_seconds)}
-                              </div>
                             </div>
                           </div>
                         </div>
@@ -949,7 +948,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                     <th className="py-3.5 px-4">Section</th>
                     <th className="py-3.5 px-4 text-center">Activities Completed</th>
                     <th className="py-3.5 px-4 text-center">Average Score</th>
-                    <th className="py-3.5 px-4 text-center">Total Answering Time</th>
+                    <th className="py-3.5 px-4 text-center">Competency Status</th>
                     <th className="py-3.5 px-4">Last Active</th>
                     <th className="py-3.5 px-4 text-right">Action</th>
                   </tr>
@@ -996,8 +995,8 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                           {student.combinedScore}%
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-center font-mono text-gray-600 font-bold">
-                        {formatDuration(student.totalDurationSecs)}
+                      <td className="py-3.5 px-4 text-center font-bold text-gray-600 text-[11px]">
+                        {student.combinedScore >= 75 ? 'Qualified' : 'In Progress'}
                       </td>
                       <td className="py-3.5 px-4 text-gray-500 font-mono text-[11px]">
                         {student.lastActiveFormatted}
@@ -1078,11 +1077,8 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                           {attempt.percentage}%
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-center font-mono font-bold text-gray-700">
-                        <div className="flex items-center justify-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-gray-400" />
-                          <span>{formatDuration(attempt.duration_seconds)}</span>
-                        </div>
+                      <td className="py-3.5 px-4 text-center font-bold text-gray-700 text-[11px]">
+                        {attempt.percentage >= 75 ? 'Mastered' : 'Needs Review'}
                       </td>
                       <td className="py-3.5 px-4 font-mono text-gray-500 text-[11px]">
                         {formatDateTime(attempt.end_time)}
@@ -1120,7 +1116,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                     <th className="py-3.5 px-4">Quiz Title</th>
                     <th className="py-3.5 px-4 text-center">Score</th>
                     <th className="py-3.5 px-4 text-center">Percentage</th>
-                    <th className="py-3.5 px-4 text-center">Answering Duration</th>
+                    <th className="py-3.5 px-4 text-center">Status</th>
                     <th className="py-3.5 px-4">Date &amp; Time Completed</th>
                     <th className="py-3.5 px-4 text-right">Action</th>
                   </tr>
@@ -1145,8 +1141,8 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                             {q.percentage}%
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-center font-mono font-bold text-gray-700">
-                          {formatDuration(q.duration_seconds)}
+                        <td className="py-3.5 px-4 text-center font-bold text-gray-700 text-[11px]">
+                          {q.percentage >= 75 ? 'Passed' : 'Needs Review'}
                         </td>
                         <td className="py-3.5 px-4 font-mono text-gray-500 text-[11px]">
                           {formatDateTime(q.end_time)}
@@ -1185,7 +1181,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                     <th className="py-3.5 px-4">Game Name</th>
                     <th className="py-3.5 px-4 text-center">Score</th>
                     <th className="py-3.5 px-4 text-center">Level / Stage</th>
-                    <th className="py-3.5 px-4 text-center">Duration</th>
+                    <th className="py-3.5 px-4 text-center">Status</th>
                     <th className="py-3.5 px-4">When Played</th>
                     <th className="py-3.5 px-4 text-right">Action</th>
                   </tr>
@@ -1208,8 +1204,8 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                         <td className="py-3.5 px-4 text-center font-mono">
                           Level {g.level}
                         </td>
-                        <td className="py-3.5 px-4 text-center font-mono text-gray-600 font-bold">
-                          {formatDuration(g.duration_seconds)}
+                        <td className="py-3.5 px-4 text-center font-bold text-emerald-700 text-[11px]">
+                          Completed
                         </td>
                         <td className="py-3.5 px-4 font-mono text-gray-500 text-[11px]">
                           {formatDateTime(g.end_time)}
@@ -1344,6 +1340,13 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             </div>
           )}
 
+          {/* TAB 10: HARDWARE OVERVIEW SLIDES MANAGEMENT */}
+          {activeTab === 'HARDWARE_SLIDES' && (
+            <div className="p-6">
+              <ResearcherHardwareSlideManager />
+            </div>
+          )}
+
           {/* TAB 8: DATA RETENTION & CLEANUP */}
           {activeTab === 'MANAGE_RECORDS' && (
             <div className="p-6">
@@ -1411,9 +1414,9 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                 </div>
 
                 <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                  <div className="text-[10px] font-bold uppercase text-amber-700">Time Answering</div>
+                  <div className="text-[10px] font-bold uppercase text-amber-700">Games Played</div>
                   <div className="text-xl font-black text-amber-950 mt-0.5">
-                    {formatDuration(selectedStudentDossier.metrics?.totalDurationSecs || 0)}
+                    {selectedStudentDossier.games.length}
                   </div>
                 </div>
               </div>
@@ -1436,9 +1439,6 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                         <span className="font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                           {attempt.score}/{attempt.total_items} ({attempt.percentage}%)
                         </span>
-                        <div className="text-[10px] text-gray-400 font-mono mt-0.5">
-                          Duration: {formatDuration(attempt.duration_seconds)}
-                        </div>
                       </div>
                     </div>
                   ))}
@@ -1466,9 +1466,6 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                         <span className="font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
                           {quiz.score}/{quiz.total_questions} ({quiz.percentage}%)
                         </span>
-                        <div className="text-[10px] text-gray-400 font-mono mt-0.5">
-                          Duration: {formatDuration(quiz.duration_seconds)}
-                        </div>
                       </div>
                     </div>
                   ))}
@@ -1496,9 +1493,6 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
                         <span className="font-black text-purple-700 font-mono">
                           {game.score} pts (Lvl {game.level})
                         </span>
-                        <div className="text-[10px] text-gray-400 font-mono mt-0.5">
-                          {formatDuration(game.duration_seconds)}
-                        </div>
                       </div>
                     </div>
                   ))}

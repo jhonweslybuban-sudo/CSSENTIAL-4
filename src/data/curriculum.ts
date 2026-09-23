@@ -534,6 +534,5 @@ export { ACTIVITIES_DATA, type ActivityDefinition, type ActivityItem } from './a
 
 export const LESSONS_DATA: LessonContent[] = LESSONS.map(lesson => ({
   ...lesson,
-  description: lesson.shortDesc,
-  duration: '12:45'
+  description: lesson.shortDesc
 }));

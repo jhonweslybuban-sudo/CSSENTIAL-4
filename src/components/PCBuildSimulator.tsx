@@ -358,7 +358,7 @@ export const PCBuildSimulator: React.FC<PCBuildSimulatorProps> = ({
               <div className="space-y-2 pt-2 text-xs font-semibold text-gray-600">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Interactive chronological milestones</span>
+                  <span>Interactive chronological assembly procedures</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />

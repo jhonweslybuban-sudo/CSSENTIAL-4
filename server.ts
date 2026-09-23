@@ -23,10 +23,16 @@ function generateUniqueId(prefix: string): string {
 // Database storage setup
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'database.json');
+const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 interface DatabaseSchema {
   students: any[];
@@ -44,6 +50,7 @@ interface DatabaseSchema {
   teacher_activities?: any[];
   teacher_materials?: any[];
   collection_videos?: any[];
+  hardware_slides?: any[];
   users?: any[];
 }
 
@@ -107,9 +114,9 @@ function cleanDummyData(data: DatabaseSchema): DatabaseSchema {
     teacher_activities: data.teacher_activities || [],
     teacher_materials: data.teacher_materials || [],
     collection_videos: (data.collection_videos || []).filter(v => 
-      !['vid-1', 'vid-2', 'vid-3'].includes(v.id) && 
-      ![2, 4, 6].includes(Number(v.topicNumber))
+      !['vid-1', 'vid-2', 'vid-3'].includes(v.id)
     ),
+    hardware_slides: data.hardware_slides || [],
     users: data.users || []
   };
 }
@@ -134,8 +141,8 @@ function loadDatabase(): DatabaseSchema {
         {
           id: 'msg_welcome_1',
           student_id: 'inst_faculty_1',
-          student_name: 'Engr. Jhon Wesly Buban',
-          year_section: 'Faculty / Lead Architect',
+          student_name: 'Lead Instructor / Faculty Lead',
+          year_section: 'Faculty / System Architect',
           text: 'Welcome to the CSSENTIAL Community Forum! Feel free to ask questions about Computer System Installation and Configuration, share lab discoveries, and assist your fellow classmates.',
           timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
           is_instructor: true,
@@ -198,7 +205,7 @@ app.get('/api/health', (req, res) => {
 
 // AUTHENTICATION: SIGN UP & LOG IN (STUDENT & INSTRUCTOR)
 app.post('/api/auth/register', (req, res) => {
-  const { role, name, tup_id, department, password } = req.body;
+  const { role, name, tup_id, department, year_section, section, password } = req.body;
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ error: 'Full name is required' });
   }
@@ -209,6 +216,7 @@ app.post('/api/auth/register', (req, res) => {
   const cleanName = name.trim();
   const cleanRole = role === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT';
   const cleanPassword = password.trim();
+  const cleanYearSection = (year_section || section || '').toString().trim();
 
   const db = loadDatabase();
   db.users = db.users || [];
@@ -230,6 +238,7 @@ app.post('/api/auth/register', (req, res) => {
       role: 'STUDENT',
       name: cleanName,
       tup_id: cleanTupId,
+      year_section: cleanYearSection || 'General Section',
       password: cleanPassword,
       created_at: now,
       last_active: now
@@ -242,7 +251,7 @@ app.post('/api/auth/register', (req, res) => {
       student = {
         student_id: cleanTupId,
         student_name: cleanName,
-        year_section: 'TUP Student',
+        year_section: cleanYearSection || 'General Section',
         created_at: now,
         last_active: now,
         referral_source: 'Sign Up',
@@ -252,6 +261,7 @@ app.post('/api/auth/register', (req, res) => {
     } else {
       student.student_id = cleanTupId;
       student.student_name = cleanName;
+      if (cleanYearSection) student.year_section = cleanYearSection;
       student.last_active = now;
     }
     saveDatabase(db);
@@ -263,7 +273,7 @@ app.post('/api/auth/register', (req, res) => {
         name: cleanName,
         role: 'STUDENT',
         tup_id: cleanTupId,
-        year_section: student.year_section || 'TUP Student',
+        year_section: cleanYearSection || student.year_section || 'General Section',
         created_at: newUser.created_at,
         last_active: newUser.last_active
       }
@@ -285,6 +295,7 @@ app.post('/api/auth/register', (req, res) => {
       role: 'INSTRUCTOR',
       name: cleanName,
       department: cleanDept,
+      year_section: cleanDept,
       password: cleanPassword,
       created_at: now,
       last_active: now
@@ -355,6 +366,8 @@ app.post('/api/auth/login', (req, res) => {
   user.last_active = new Date().toISOString();
   saveDatabase(db);
 
+  const studentRecord = db.students?.find(s => s.student_id === (user.tup_id || user.id));
+
   return res.json({
     success: true,
     user: {
@@ -363,7 +376,7 @@ app.post('/api/auth/login', (req, res) => {
       role: user.role,
       tup_id: user.tup_id,
       department: user.department,
-      year_section: user.department || 'TUP Student',
+      year_section: user.year_section || studentRecord?.year_section || (user.role === 'INSTRUCTOR' ? user.department : 'General Section'),
       created_at: user.created_at,
       last_active: user.last_active
     }
@@ -828,6 +841,56 @@ app.get('/api/videos', (req, res) => {
   res.json(db.collection_videos || []);
 });
 
+// Upload direct MP4 file for Laboratory Practicum Video Collection
+app.post('/api/videos/upload', (req, res) => {
+  try {
+    const { title, description, fileName, fileData, topicNumber, duration, instructor } = req.body;
+    if (!fileData || !fileName) {
+      return res.status(400).json({ error: 'Video fileData and fileName are required' });
+    }
+
+    const base64Content = fileData.includes('base64,') ? fileData.split('base64,')[1] : fileData;
+    const buffer = Buffer.from(base64Content, 'base64');
+
+    const ext = path.extname(fileName) || '.mp4';
+    const cleanBase = path.basename(fileName, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const uniqueFileName = `practicum_${Date.now()}_${cleanBase}${ext}`;
+    const targetPath = path.join(UPLOADS_DIR, uniqueFileName);
+
+    fs.writeFileSync(targetPath, buffer);
+
+    const sizeInMB = (buffer.length / (1024 * 1024)).toFixed(2);
+    const fileSizeStr = `${sizeInMB} MB`;
+
+    const db = loadDatabase();
+    if (!db.collection_videos) db.collection_videos = [];
+
+    const newVideo = {
+      id: `vid_mp4_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      title: (title || cleanBase).trim(),
+      description: (description || 'Laboratory practicum video demonstration.').trim(),
+      url: `/uploads/${uniqueFileName}`,
+      thumbnail: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+      duration: duration || '10:00',
+      topicNumber: topicNumber ? Number(topicNumber) : 1,
+      instructor: instructor || 'CSSENTIAL Faculty Lead',
+      isUploadedMp4: true,
+      isPracticum: true,
+      fileName: fileName,
+      fileSize: fileSizeStr,
+      created_at: new Date().toISOString()
+    };
+
+    db.collection_videos.unshift(newVideo);
+    saveDatabase(db);
+
+    res.json({ success: true, video: newVideo });
+  } catch (err: any) {
+    console.error('Error handling video upload:', err);
+    res.status(500).json({ error: 'Failed to process video file upload' });
+  }
+});
+
 app.post('/api/videos', (req, res) => {
   const { title, description, url, thumbnail, duration, topicNumber, instructor } = req.body;
   if (!title || !url) {
@@ -835,6 +898,8 @@ app.post('/api/videos', (req, res) => {
   }
   const db = loadDatabase();
   if (!db.collection_videos) db.collection_videos = [];
+
+  const isDirectMp4 = url.endsWith('.mp4') || url.startsWith('/uploads/');
 
   const newVideo = {
     id: req.body.id || `vid_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
@@ -845,6 +910,10 @@ app.post('/api/videos', (req, res) => {
     duration: duration || '10:00',
     topicNumber: topicNumber ? Number(topicNumber) : 1,
     instructor: instructor || 'CSSENTIAL Instructor',
+    isUploadedMp4: isDirectMp4 || !!req.body.isUploadedMp4,
+    isPracticum: true,
+    fileSize: req.body.fileSize,
+    fileName: req.body.fileName,
     created_at: new Date().toISOString()
   };
 
@@ -863,10 +932,189 @@ app.delete('/api/videos/:id', (req, res) => {
   const { id } = req.params;
   const db = loadDatabase();
   if (db.collection_videos) {
+    const target = db.collection_videos.find(v => v.id === id);
+    if (target && target.url && target.url.startsWith('/uploads/')) {
+      const fileName = path.basename(target.url);
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch {}
+      }
+    }
     db.collection_videos = db.collection_videos.filter(v => v.id !== id);
     saveDatabase(db);
   }
   res.json({ success: true, deletedId: id });
+});
+
+// ==========================================
+// 1.5. HARDWARE OVERVIEW SLIDES MANAGEMENT
+// ==========================================
+const DEFAULT_HARDWARE_SLIDES = [
+  {
+    id: 'hw-slide-1',
+    title: 'Motherboard Component Anatomy & Sockets',
+    subtitle: 'Socket AM4/LGA1700, VRM Heatsinks, PCIe 4.0 & Chipset',
+    description: 'High-density ATX layout illustrating the central CPU socket, dual-channel DDR4/DDR5 memory channels (A2/B2), VRM thermal dissipation chokes, and PCIe x16 expansion slots.',
+    imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&auto=format&fit=crop&q=80',
+    category: 'Motherboard',
+    isCustom: false
+  },
+  {
+    id: 'hw-slide-2',
+    title: 'Chassis Internal Layout & Thermal Airflow',
+    subtitle: 'Positive Pressure Intake, GPU Clearance & Cable Management',
+    description: 'Internal chassis architecture showing front intake dust filters, liquid cooling radiator orientation, discrete GPU bracket clearance, and organized cable routing.',
+    imageUrl: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=1200&auto=format&fit=crop&q=80',
+    category: 'Assembly & Airflow',
+    isCustom: false
+  },
+  {
+    id: 'hw-slide-3',
+    title: 'Processor Seating & Thermal Interface Application',
+    subtitle: 'Pin 1 Alignment & Non-Conductive Thermal Compound',
+    description: 'Precision alignment of Pin 1 gold indicator on the processor substrate into the Zero Insertion Force (ZIF) socket, secured with retention arm and thermal paste.',
+    imageUrl: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=1200&auto=format&fit=crop&q=80',
+    category: 'Processor',
+    isCustom: false
+  },
+  {
+    id: 'hw-slide-4',
+    title: 'M.2 NVMe Solid State Storage Installation',
+    subtitle: 'PCIe Gen4 x4 Direct Bus & Thermal Armor Shielding',
+    description: 'Key-M 2280 form factor installation directly communicating with CPU PCIe lanes, featuring pre-applied silicone thermal gap pads and aluminum heatsinks.',
+    imageUrl: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=1200&auto=format&fit=crop&q=80',
+    category: 'Storage',
+    isCustom: false
+  },
+  {
+    id: 'hw-slide-5',
+    title: 'Static-Dissipative ESD Workstation Bench',
+    subtitle: 'Grounding Wrist Straps, Anti-Static Mats & Multimeter Test Leads',
+    description: 'Professional ESD-safe technical bench configuration designed to eliminate electrostatic discharge risks during sensitive integrated circuit handling.',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&auto=format&fit=crop&q=80',
+    category: 'Safety & Diagnostics',
+    isCustom: false
+  }
+];
+
+app.get('/api/hardware-slides', (req, res) => {
+  const db = loadDatabase();
+  if (!db.hardware_slides || db.hardware_slides.length === 0) {
+    db.hardware_slides = [...DEFAULT_HARDWARE_SLIDES];
+    saveDatabase(db);
+  }
+  res.json(db.hardware_slides);
+});
+
+// Upload image file for hardware overview slider
+app.post('/api/hardware-slides/upload', (req, res) => {
+  try {
+    const { title, subtitle, description, category, fileName, fileData } = req.body;
+    if (!fileData || !fileName) {
+      return res.status(400).json({ error: 'Image fileData and fileName are required' });
+    }
+
+    const base64Content = fileData.includes('base64,') ? fileData.split('base64,')[1] : fileData;
+    const buffer = Buffer.from(base64Content, 'base64');
+
+    const ext = path.extname(fileName) || '.jpg';
+    const cleanBase = path.basename(fileName, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const uniqueFileName = `hw_slide_${Date.now()}_${cleanBase}${ext}`;
+    const targetPath = path.join(UPLOADS_DIR, uniqueFileName);
+
+    fs.writeFileSync(targetPath, buffer);
+
+    const sizeInKB = Math.round(buffer.length / 1024);
+    const fileSizeStr = sizeInKB > 1024 ? `${(sizeInKB / 1024).toFixed(2)} MB` : `${sizeInKB} KB`;
+
+    const db = loadDatabase();
+    if (!db.hardware_slides) db.hardware_slides = [...DEFAULT_HARDWARE_SLIDES];
+
+    const newSlide = {
+      id: `hw_slide_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      title: (title || cleanBase.replace(/[-_]/g, ' ')).trim(),
+      subtitle: (subtitle || 'Laboratory Hardware Demonstration').trim(),
+      description: (description || 'Custom technical demonstration image uploaded by laboratory faculty.').trim(),
+      imageUrl: `/uploads/${uniqueFileName}`,
+      category: (category || 'Custom Hardware').trim(),
+      isCustom: true,
+      fileName,
+      fileSize: fileSizeStr,
+      created_at: new Date().toISOString()
+    };
+
+    // Prepend user slide
+    db.hardware_slides.unshift(newSlide);
+    saveDatabase(db);
+
+    res.json({ success: true, slide: newSlide });
+  } catch (err: any) {
+    console.error('Error handling hardware slide upload:', err);
+    res.status(500).json({ error: 'Failed to process hardware image upload' });
+  }
+});
+
+// Save or update hardware slide
+app.post('/api/hardware-slides', (req, res) => {
+  const { id, title, subtitle, description, imageUrl, category, isCustom } = req.body;
+  if (!title || !imageUrl) {
+    return res.status(400).json({ error: 'Title and Image URL are required' });
+  }
+
+  const db = loadDatabase();
+  if (!db.hardware_slides) db.hardware_slides = [...DEFAULT_HARDWARE_SLIDES];
+
+  const slide = {
+    id: id || `hw_slide_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    title: title.trim(),
+    subtitle: (subtitle || '').trim(),
+    description: (description || '').trim(),
+    imageUrl: imageUrl.trim(),
+    category: (category || 'Hardware Overview').trim(),
+    isCustom: isCustom !== undefined ? Boolean(isCustom) : true,
+    created_at: new Date().toISOString()
+  };
+
+  const existingIdx = db.hardware_slides.findIndex(s => s.id === slide.id);
+  if (existingIdx >= 0) {
+    db.hardware_slides[existingIdx] = { ...db.hardware_slides[existingIdx], ...slide };
+  } else {
+    db.hardware_slides.unshift(slide);
+  }
+
+  saveDatabase(db);
+  res.json({ success: true, slide });
+});
+
+// Delete hardware slide
+app.delete('/api/hardware-slides/:id', (req, res) => {
+  const { id } = req.params;
+  const db = loadDatabase();
+  if (db.hardware_slides) {
+    const target = db.hardware_slides.find(s => s.id === id);
+    if (target && target.imageUrl && target.imageUrl.startsWith('/uploads/')) {
+      const fileName = path.basename(target.imageUrl);
+      const filePath = path.join(UPLOADS_DIR, fileName);
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch {}
+      }
+    }
+    db.hardware_slides = db.hardware_slides.filter(s => s.id !== id);
+    // If empty after delete, keep default slides available
+    if (db.hardware_slides.length === 0) {
+      db.hardware_slides = [...DEFAULT_HARDWARE_SLIDES];
+    }
+    saveDatabase(db);
+  }
+  res.json({ success: true, deletedId: id });
+});
+
+// Reset hardware slides to default
+app.post('/api/hardware-slides/reset', (req, res) => {
+  const db = loadDatabase();
+  db.hardware_slides = [...DEFAULT_HARDWARE_SLIDES];
+  saveDatabase(db);
+  res.json({ success: true, slides: db.hardware_slides });
 });
 
 // ==========================================
@@ -945,7 +1193,7 @@ app.get('/api/teacher/activities', (req, res) => {
         category: 'Hardware Diagnostic',
         difficulty: 'Intermediate',
         is_published: true,
-        created_by: 'Engr. Jhon Wesly T. Buban (Lead Researcher)',
+        created_by: 'CSSENTIAL Faculty Lead',
         created_at: new Date().toISOString(),
         questions: [
           {

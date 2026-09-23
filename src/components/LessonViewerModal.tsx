@@ -24,7 +24,12 @@ import {
 } from 'lucide-react';
 import { LessonContent } from '../types';
 import { api } from '../services/api';
-import { buildLessonSlides, downloadPresentationDeck, PresentationSlide } from '../services/presentationService';
+import {
+  buildLessonSlides,
+  downloadPresentationDeck,
+  downloadPowerPointPresentation,
+  PresentationSlide
+} from '../services/presentationService';
 import { generateDocxBlob } from '../services/academicDocument';
 
 interface LessonViewerModalProps {
@@ -56,6 +61,8 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
 
   const modalRef = useRef<HTMLDivElement>(null);
   const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   // Generate slides for this lesson
   const slides: PresentationSlide[] = lesson ? buildLessonSlides(lesson) : [];
@@ -63,7 +70,51 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
   useEffect(() => {
     setCurrentSlideIndex(0);
     setIsAutoPlay(false);
-  }, [lesson]);
+  }, [lesson?.id]);
+
+  // Touch gesture swiping on mobile phones
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+
+    // Detect horizontal swipe if deltaX is significant and greater than vertical motion
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+      if (deltaX > 0) {
+        // Swipe Right -> Prev
+        setCurrentSlideIndex((prev) => Math.max(0, prev - 1));
+      } else {
+        // Swipe Left -> Next
+        setCurrentSlideIndex((prev) => Math.min(slides.length - 1, prev + 1));
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  const handleDownloadPowerPoint = async () => {
+    if (!lesson) return;
+    try {
+      await downloadPowerPointPresentation(
+        lesson,
+        studentId,
+        sessionId,
+        studentName,
+        yearSection
+      );
+      setDownloadNotice(
+        `Downloaded PowerPoint Presentation (.pptx) for Topic 0${lesson.topicNumber}!`
+      );
+      setTimeout(() => setDownloadNotice(null), 4000);
+    } catch (err) {
+      console.error('PowerPoint download error:', err);
+    }
+  };
 
   // Handle Autoplay timer
   useEffect(() => {
@@ -180,52 +231,52 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
     <div
       ref={modalRef}
       id="lesson-presentation-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-2 sm:p-4 overflow-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm p-0 sm:p-4 overflow-hidden"
     >
-      <div className="w-full max-w-6xl h-[92vh] max-h-[950px] bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
+      <div className="w-full sm:max-w-6xl h-full sm:h-[92vh] sm:max-h-[950px] bg-slate-900 border-0 sm:border sm:border-slate-700/80 rounded-none sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100">
         
         {/* Top Presentation Bar */}
-        <div className="bg-slate-950 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between shrink-0">
+        <div className="bg-slate-950 border-b border-slate-800 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between shrink-0">
           
           {/* Brand & Topic Info */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center font-black text-sm shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center font-black text-xs sm:text-sm shrink-0">
               0{lesson.topicNumber}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold tracking-widest text-blue-400 uppercase">
+                <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-blue-400 uppercase truncate">
                   SLIDE PRESENTATION • CSIC-30{lesson.topicNumber}
                 </span>
                 <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-800 text-slate-400">
                   Slide {currentSlideIndex + 1} of {slides.length}
                 </span>
               </div>
-              <h2 className="text-sm sm:text-base font-extrabold text-white truncate">
+              <h2 className="text-xs sm:text-base font-extrabold text-white truncate">
                 {lesson.title}
               </h2>
             </div>
           </div>
 
           {/* Action and Download Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Download Presentation Deck (HTML) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Primary Download: PowerPoint (.pptx) */}
             <button
-              id="download-presentation-html-btn"
-              onClick={handleDownloadSlidesHtml}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all cursor-pointer"
-              title="Download Standalone Offline Presentation Slides (.html)"
+              id="download-presentation-pptx-btn"
+              onClick={handleDownloadPowerPoint}
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-black text-xs rounded-lg shadow-sm transition-all cursor-pointer whitespace-nowrap"
+              title="Download official Microsoft PowerPoint Presentation (.pptx)"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Download Slides (.html)</span>
-              <span className="md:hidden">Slides</span>
+              <span className="hidden sm:inline">PowerPoint (.pptx)</span>
+              <span className="sm:hidden">PPTX</span>
             </button>
 
             {/* Print / Save as PDF */}
             <button
               id="print-presentation-slides-btn"
               onClick={handlePrintSlideDeck}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-lg transition-colors cursor-pointer"
+              className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-lg transition-colors cursor-pointer"
               title="Print or Save Presentation as PDF"
             >
               <Printer className="w-3.5 h-3.5 text-slate-300" />
@@ -236,7 +287,7 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
             <button
               id="download-handout-btn"
               onClick={handleDownloadDocxHandout}
-              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-lg transition-colors cursor-pointer"
+              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-lg transition-colors cursor-pointer"
               title="Download Academic Slide Notes in Word (.doc)"
             >
               <FileText className="w-3.5 h-3.5 text-blue-400" />
@@ -246,20 +297,20 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
             {/* Fullscreen Toggle */}
             <button
               onClick={toggleFullscreen}
-              className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
               title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen (F)'}
             >
-              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </button>
 
             {/* Close */}
             <button
               id="close-presentation-btn"
               onClick={handleClose}
-              className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-300 flex items-center justify-center transition-colors cursor-pointer ml-1"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-300 flex items-center justify-center transition-colors cursor-pointer ml-0.5 sm:ml-1"
               title="Close Presentation (Esc)"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
@@ -280,42 +331,50 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
           </div>
         )}
 
-        {/* Main 16:9 Presentation Stage */}
-        <div className="flex-1 bg-gradient-to-b from-slate-900 via-slate-950 to-black p-4 sm:p-6 lg:p-8 flex items-center justify-center overflow-hidden relative">
-          
-          {/* Slide Frame with 16:9 ratio feel */}
-          <div className="w-full max-w-5xl aspect-[16/9.2] bg-slate-900/90 border border-slate-700/60 rounded-2xl shadow-2xl flex flex-col overflow-hidden relative backdrop-blur-md">
+        {/* Main Presentation Stage with Touch Swipe on Mobile */}
+        <div
+          className="flex-1 bg-gradient-to-b from-slate-900 via-slate-950 to-black p-2 sm:p-5 lg:p-7 flex items-center justify-center overflow-hidden relative min-h-0 select-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Mobile slide swipe helper indicator */}
+          <div className="sm:hidden absolute top-2 right-3 z-20 pointer-events-none text-[10px] font-mono font-bold text-slate-300 bg-slate-950/85 px-2 py-0.5 rounded border border-slate-700">
+            Slide {currentSlideIndex + 1} of {slides.length} • Swipe ↔
+          </div>
+
+          {/* Slide Frame: Fluid, clean and uncompressed on mobile phone */}
+          <div className="w-full max-w-5xl h-full sm:h-auto sm:aspect-[16/9.2] sm:max-h-[660px] bg-slate-900/95 border border-slate-700/60 rounded-xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden relative backdrop-blur-md">
             
             {/* Slide Header (Except for title slide) */}
             {currentSlide.type !== 'title' && (
-              <div className="px-6 py-4 border-b border-slate-800/80 bg-slate-950/40 flex items-start justify-between shrink-0">
+              <div className="px-4 py-2.5 sm:px-6 sm:py-4 border-b border-slate-800/80 bg-slate-950/40 flex items-start justify-between shrink-0">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/30">
                       {currentSlide.badge}
                     </span>
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                       {currentSlide.category}
                     </span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white mt-1 leading-tight tracking-tight">
+                  <h3 className="text-base sm:text-xl lg:text-2xl font-black text-white mt-1 leading-tight tracking-tight">
                     {currentSlide.title}
                   </h3>
                   {currentSlide.subtitle && (
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 sm:line-clamp-none">
                       {currentSlide.subtitle}
                     </p>
                   )}
                 </div>
 
-                <div className="px-2.5 py-1 rounded-md bg-slate-800/60 border border-slate-700/50 text-slate-300 font-mono text-xs font-bold shrink-0">
+                <div className="hidden sm:block px-2.5 py-1 rounded-md bg-slate-800/60 border border-slate-700/50 text-slate-300 font-mono text-xs font-bold shrink-0">
                   {currentSlideIndex + 1} / {slides.length}
                 </div>
               </div>
             )}
 
             {/* Slide Body Content */}
-            <div className="flex-1 p-6 sm:p-8 overflow-y-auto flex flex-col justify-center">
+            <div className="flex-1 p-3 sm:p-6 md:p-8 overflow-y-auto flex flex-col justify-start sm:justify-center min-h-0">
               
               {/* 1. TITLE / COVER SLIDE */}
               {currentSlide.type === 'title' && (
@@ -351,8 +410,8 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
                       </div>
                     </div>
                     <div className="p-3 bg-slate-800/50 border border-slate-700/50 rounded-xl">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estimated Lab</div>
-                      <div className="text-xs font-black text-slate-200 mt-0.5">{currentSlide.data.duration}</div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Curriculum Module</div>
+                      <div className="text-xs font-black text-slate-200 mt-0.5">Core Laboratory</div>
                     </div>
                     <div className="p-3 bg-slate-800/50 border border-slate-700/50 rounded-xl">
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Curriculum Year</div>
@@ -658,7 +717,7 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
         )}
 
         {/* Bottom Slide Controller Bar */}
-        <div className="bg-slate-950 border-t border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between shrink-0">
+        <div className="bg-slate-950 border-t border-slate-800 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between shrink-0">
           
           {/* Navigation Arrows */}
           <div className="flex items-center gap-2">
@@ -666,7 +725,7 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
               id="prev-slide-btn"
               disabled={currentSlideIndex === 0}
               onClick={() => setCurrentSlideIndex((prev) => Math.max(0, prev - 1))}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1 px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all ${
                 currentSlideIndex === 0
                   ? 'bg-slate-800/40 text-slate-600 cursor-not-allowed'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer active:scale-95'
@@ -674,10 +733,10 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
               title="Previous Slide (←)"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Previous</span>
+              <span className="inline">Prev</span>
             </button>
 
-            <span className="text-xs font-mono font-bold text-slate-300 px-2">
+            <span className="text-xs font-mono font-bold text-slate-300 px-1 sm:px-2">
               {currentSlideIndex + 1} / {slides.length}
             </span>
 
@@ -685,14 +744,14 @@ export const LessonViewerModal: React.FC<LessonViewerModalProps> = ({
               id="next-slide-btn"
               disabled={currentSlideIndex === slides.length - 1}
               onClick={() => setCurrentSlideIndex((prev) => Math.min(slides.length - 1, prev + 1))}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1 px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all ${
                 currentSlideIndex === slides.length - 1
                   ? 'bg-slate-800/40 text-slate-600 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer active:scale-95 shadow-sm'
               }`}
               title="Next Slide (→)"
             >
-              <span className="hidden sm:inline">Next</span>
+              <span className="inline">Next</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

@@ -296,7 +296,7 @@ export const ResearcherRecordManager: React.FC<ResearcherRecordManagerProps> = (
                 <Archive className="w-4 h-4 text-amber-700" />
               </div>
               <p className="text-[11px] text-amber-800/80">
-                Removes all scores, answering durations, quiz submissions, and activity action logs, but retains the enrolled student directory.
+                Removes all scores, quiz submissions, and activity action logs, but retains the enrolled student directory.
               </p>
               <button
                 onClick={() => {

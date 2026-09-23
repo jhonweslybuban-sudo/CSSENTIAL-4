@@ -270,6 +270,10 @@ export interface CollectionVideo {
   topicNumber: number;
   instructor?: string;
   created_at?: string;
+  isUploadedMp4?: boolean;
+  isPracticum?: boolean;
+  fileName?: string;
+  fileSize?: string;
 }
 
 export interface CertificateInfo {
@@ -288,5 +292,18 @@ export interface CertificateInfo {
     minScoreRequired?: number;
   };
   certificate_id: string;
+}
+
+export interface HardwareOverviewSlide {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description: string;
+  imageUrl: string;
+  category?: string;
+  isCustom?: boolean;
+  fileName?: string;
+  fileSize?: string;
+  created_at?: string;
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Monitor, ArrowLeft, User, ShieldCheck, Palette, Award, GraduationCap, Settings, ChevronDown, Sparkles } from 'lucide-react';
+import { Monitor, ArrowLeft, User, ShieldCheck, Palette, Award, GraduationCap, Settings, ChevronDown, Sparkles, LogOut } from 'lucide-react';
 import { PageView, BrandingSettings } from '../types';
 import { api } from '../services/api';
 
@@ -15,6 +15,7 @@ interface HeaderProps {
   onOpenThemeModal?: () => void;
   onOpenStudentModal?: () => void;
   onOpenCertificate?: () => void;
+  onLogout?: () => void;
   sessionTimeFormatted?: string;
 }
 
@@ -28,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenThemeModal,
   onOpenStudentModal,
   onOpenCertificate,
+  onLogout,
   sessionTimeFormatted = '00:00'
 }) => {
   const [branding, setBranding] = useState<BrandingSettings>(() => api.getBranding());
@@ -113,19 +115,30 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Right Action Controls: Clean & Uncluttered layout */}
           <div className="flex items-center gap-2 self-end sm:self-center">
             
-            {/* User Session Info / Switcher */}
+            {/* User Session Info / Switcher & Log Out */}
             {studentName ? (
-              <button
-                id="header-user-profile-btn"
-                onClick={onOpenStudentModal}
-                title="Click to view or switch account"
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50/70 border border-blue-200 rounded-lg text-xs text-gray-700 hover:bg-blue-100/70 transition-colors cursor-pointer"
-              >
-                <User className="w-3.5 h-3.5 text-blue-600" />
-                <span className="font-bold text-gray-900 max-w-[120px] truncate">{studentName}</span>
-                <span className="text-gray-300">|</span>
-                <span className="text-gray-500 font-mono text-[11px]">{sessionTimeFormatted}</span>
-              </button>
+              <div className="hidden sm:flex items-center gap-1.5">
+                <button
+                  id="header-user-profile-btn"
+                  onClick={onOpenStudentModal}
+                  title="Click to view profile or switch account"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-50/70 border border-blue-200 rounded-lg text-xs text-gray-700 hover:bg-blue-100/70 transition-colors cursor-pointer"
+                >
+                  <User className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="font-bold text-gray-900 max-w-[150px] truncate">{studentName}</span>
+                </button>
+                {onLogout && (
+                  <button
+                    id="header-logout-btn"
+                    onClick={onLogout}
+                    title="Log Out of CSSENTIAL PORTAL"
+                    className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 hover:bg-red-100/80 border border-red-200 text-red-600 hover:text-red-700 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Log Out</span>
+                  </button>
+                )}
+              </div>
             ) : (
               <button
                 id="header-login-signup-btn"
@@ -281,17 +294,31 @@ export const Header: React.FC<HeaderProps> = ({
                         {studentName ? `Active: ${studentName}` : 'Guest Session'}
                       </span>
                     </div>
-                    {onOpenStudentModal && (
-                      <button
-                        onClick={() => {
-                          setIsSettingsOpen(false);
-                          onOpenStudentModal();
-                        }}
-                        className="text-[11px] font-bold text-blue-700 hover:text-blue-900 transition-colors cursor-pointer shrink-0 ml-2"
-                      >
-                        {studentName ? 'Switch Profile' : 'Log In / Register'}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      {onOpenStudentModal && (
+                        <button
+                          onClick={() => {
+                            setIsSettingsOpen(false);
+                            onOpenStudentModal();
+                          }}
+                          className="text-[11px] font-bold text-blue-700 hover:text-blue-900 transition-colors cursor-pointer"
+                        >
+                          {studentName ? 'Profile' : 'Log In / Register'}
+                        </button>
+                      )}
+                      {studentName && onLogout && (
+                        <button
+                          onClick={() => {
+                            setIsSettingsOpen(false);
+                            onLogout();
+                          }}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-800 transition-colors cursor-pointer"
+                        >
+                          <LogOut className="w-3 h-3" />
+                          <span>Log Out</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

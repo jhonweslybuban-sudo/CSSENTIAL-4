@@ -26,6 +26,28 @@
   --app-accent-btn-text: #2C3531;
 }
 
+/* Base Root Font Scaling for Enhanced Readability Across the Entire Platform */
+html {
+  font-size: 17.5px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+/* Ensure smaller badge and subtext labels remain crisp and readable */
+.text-\[9px\], .text-\[10px\], .text-\[10\.5px\] {
+  font-size: 11.5px !important;
+}
+
+.text-\[11px\] {
+  font-size: 12.5px !important;
+}
+
 /* Base Body & App Container Theming */
 html,
 body,
@@ -208,6 +230,150 @@ footer,
 .theme-container footer {
   background-color: var(--app-surface) !important;
   border-top: 2px solid var(--app-border) !important;
+}
+
+/* =========================================================================
+   HIGH-CONTRAST DARK PALETTE OVERRIDES
+   Ensures crystal-clear readability of all text, instructions, steps, and
+   letters when dark palettes (Charcoal, Cyber Night, Matrix Obsidian, Custom Dark)
+   are activated.
+   ========================================================================= */
+html[data-theme-mode="dark"],
+html.dark,
+[data-theme-mode="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme-mode="dark"] body,
+[data-theme-mode="dark"] .theme-container {
+  color: #F1F5F9 !important;
+}
+
+/* Headings & Major Labels in Dark Themes */
+[data-theme-mode="dark"] h1,
+[data-theme-mode="dark"] h2,
+[data-theme-mode="dark"] h3,
+[data-theme-mode="dark"] h4,
+[data-theme-mode="dark"] h5,
+[data-theme-mode="dark"] h6,
+[data-theme-mode="dark"] .theme-text-title,
+[data-theme-mode="dark"] .text-gray-900,
+[data-theme-mode="dark"] .text-slate-900,
+[data-theme-mode="dark"] .text-zinc-900,
+[data-theme-mode="dark"] .text-gray-800,
+[data-theme-mode="dark"] .text-slate-800,
+[data-theme-mode="dark"] .text-zinc-800 {
+  color: #F8FAFC !important;
+}
+
+/* Instructions, Procedure Steps, Body Text & Explanations in Dark Themes */
+[data-theme-mode="dark"] p,
+[data-theme-mode="dark"] li,
+[data-theme-mode="dark"] .text-gray-700,
+[data-theme-mode="dark"] .text-slate-700,
+[data-theme-mode="dark"] .text-zinc-700,
+[data-theme-mode="dark"] .text-gray-600,
+[data-theme-mode="dark"] .text-slate-600,
+[data-theme-mode="dark"] .text-zinc-600 {
+  color: #E2E8F0 !important;
+}
+
+/* Secondary Details & Metas in Dark Themes */
+[data-theme-mode="dark"] .text-gray-500,
+[data-theme-mode="dark"] .text-slate-500,
+[data-theme-mode="dark"] .text-gray-400,
+[data-theme-mode="dark"] .text-slate-400 {
+  color: #94A3B8 !important;
+}
+
+/* Form labels in Dark Themes */
+[data-theme-mode="dark"] label {
+  color: #E2E8F0 !important;
+}
+
+/* White cards and containers in Dark Themes */
+[data-theme-mode="dark"] .bg-white,
+[data-theme-mode="dark"] .theme-container .bg-white,
+[data-theme-mode="dark"] .theme-card {
+  background-color: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: #F1F5F9 !important;
+}
+
+/* Secondary surface cards (gray-50, slate-50) */
+[data-theme-mode="dark"] .bg-gray-50,
+[data-theme-mode="dark"] .bg-slate-50,
+[data-theme-mode="dark"] .bg-zinc-50,
+[data-theme-mode="dark"] .bg-gray-100,
+[data-theme-mode="dark"] .bg-slate-100 {
+  background-color: var(--app-surface-alt) !important;
+  border-color: var(--app-border) !important;
+  color: #F1F5F9 !important;
+}
+
+/* Table styling for dark palettes */
+[data-theme-mode="dark"] table {
+  background-color: var(--app-surface) !important;
+}
+
+[data-theme-mode="dark"] tbody tr {
+  border-color: var(--app-border) !important;
+}
+
+[data-theme-mode="dark"] tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme-mode="dark"] td {
+  color: #E2E8F0 !important;
+}
+
+[data-theme-mode="dark"] .divide-gray-200,
+[data-theme-mode="dark"] .divide-slate-200 {
+  border-color: var(--app-border) !important;
+}
+
+/* Input fields, selects and textareas in Dark Themes */
+[data-theme-mode="dark"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme-mode="dark"] select,
+[data-theme-mode="dark"] textarea {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border-color: var(--app-border) !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme-mode="dark"] input::placeholder,
+[data-theme-mode="dark"] textarea::placeholder {
+  color: #64748B !important;
+}
+
+/* Badges with light backgrounds adapted for dark mode */
+[data-theme-mode="dark"] .bg-blue-50,
+[data-theme-mode="dark"] .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+  color: #93C5FD !important;
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+[data-theme-mode="dark"] .bg-emerald-50,
+[data-theme-mode="dark"] .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.18) !important;
+  color: #6EE7B7 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+[data-theme-mode="dark"] .bg-amber-50,
+[data-theme-mode="dark"] .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+  color: #FCD34D !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+[data-theme-mode="dark"] .bg-red-50,
+[data-theme-mode="dark"] .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.18) !important;
+  color: #FCA5A5 !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
 }
 
 /* Media Print Styling for Academic Laboratory Handouts & Landscape Certificates */

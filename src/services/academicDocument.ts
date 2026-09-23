@@ -29,7 +29,7 @@ export function generateAcademicHTML(
         <div style="display: flex; justify-content: space-between; font-size: 9pt; font-family: monospace; color: #374151; margin-top: 8px; border-top: 1px solid #e5e7eb; padding-top: 6px;">
           <span>DOCUMENT REF: <strong>CSS-LAB-M0${lesson.topicNumber}-REV4</strong></span>
           <span>COURSE CODE: <strong>CSIC-301</strong></span>
-          <span>ESTIMATED DURATION: <strong>${lesson.duration}</strong></span>
+          <span>ACADEMIC TERM: <strong>AY 2024-2025</strong></span>
         </div>
       </div>
 
@@ -38,13 +38,13 @@ export function generateAcademicHTML(
         <tbody>
           <tr style="background-color: #f3f4f6;">
             <td style="padding: 6px 10px; border: 1px solid #9ca3af; width: 18%; font-weight: bold;">STUDENT NAME:</td>
-            <td style="padding: 6px 10px; border: 1px solid #9ca3af; width: 32%; font-family: sans-serif; font-weight: 600;">${studentName}</td>
+            <td style="padding: 6px 10px; border: 1px solid #9ca3af; width: 32%; font-family: sans-serif; font-weight: 600;">${studentName || '[ Candidate Trainee ]'}</td>
             <td style="padding: 6px 10px; border: 1px solid #9ca3af; width: 18%; font-weight: bold;">STUDENT ID:</td>
-            <td style="padding: 6px 10px; border: 1px solid #9ca3af; width: 32%; font-family: monospace;">${studentId}</td>
+            <td style="padding: 6px 10px; border: 1px solid #9ca3af; width: 32%; font-family: monospace;">${studentId || '[ Unassigned ]'}</td>
           </tr>
           <tr>
             <td style="padding: 6px 10px; border: 1px solid #9ca3af; font-weight: bold;">YEAR &amp; SECTION:</td>
-            <td style="padding: 6px 10px; border: 1px solid #9ca3af; font-family: sans-serif;">${yearSection}</td>
+            <td style="padding: 6px 10px; border: 1px solid #9ca3af; font-family: sans-serif;">${yearSection || '[ Section ]'}</td>
             <td style="padding: 6px 10px; border: 1px solid #9ca3af; font-weight: bold;">DATE PERFORMED:</td>
             <td style="padding: 6px 10px; border: 1px solid #9ca3af;">${dateStr}</td>
           </tr>
@@ -99,7 +99,7 @@ export function generateAcademicHTML(
           <thead>
             <tr style="background-color: #1f2937; color: #ffffff; text-align: left;">
               <th style="padding: 8px 10px; border: 1px solid #374151; width: 8%; text-align: center;">STEP</th>
-              <th style="padding: 8px 10px; border: 1px solid #374151; width: 32%;">PROCEDURE MILESTONE</th>
+              <th style="padding: 8px 10px; border: 1px solid #374151; width: 32%;">PROCEDURE BENCHMARK</th>
               <th style="padding: 8px 10px; border: 1px solid #374151; width: 42%;">OPERATIONAL DETAILS</th>
               <th style="padding: 8px 10px; border: 1px solid #374151; width: 18%; text-align: center;">VERIFIED</th>
             </tr>
@@ -224,13 +224,13 @@ export function generateAcademicHTML(
         <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 9.5pt;">
           <div style="width: 45%; text-align: center;">
             <div style="border-bottom: 1px solid #374151; height: 35px;"></div>
-            <div style="margin-top: 4px; font-weight: bold;">${studentName}</div>
+            <div style="margin-top: 4px; font-weight: bold;">${studentName || 'Student / Trainee Signature'}</div>
             <div style="font-size: 8.5pt; color: #4b5563;">Technician Trainee / Student Signature</div>
           </div>
           <div style="width: 45%; text-align: center;">
             <div style="border-bottom: 1px solid #374151; height: 35px;"></div>
-            <div style="margin-top: 4px; font-weight: bold;">Laboratory Faculty / Certifying Assessor</div>
-            <div style="font-size: 8.5pt; color: #4b5563;">Assessor Verification &amp; Date</div>
+            <div style="margin-top: 4px; font-weight: bold;">Laboratory Faculty Assessor</div>
+            <div style="font-size: 8.5pt; color: #4b5563;">Date &amp; Rating Verification</div>
           </div>
         </div>
 

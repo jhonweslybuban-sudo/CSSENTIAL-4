@@ -384,7 +384,7 @@ export const ActivityPlayer: React.FC<ActivityPlayerProps> = ({
               All {activity.items.length} of {activity.items.length} Questions Finished!
             </p>
             <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
-              Your completion record, answering duration, question responses, and final score have been permanently recorded in the researcher telemetry database.
+              Your completion record, question responses, and final score have been permanently recorded in the researcher telemetry database.
             </p>
           </div>
 
