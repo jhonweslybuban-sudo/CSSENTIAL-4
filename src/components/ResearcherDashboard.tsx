@@ -749,7 +749,7 @@ export const ResearcherDashboard: React.FC<ResearcherDashboardProps> = ({
             { id: 'TEACHER_CMS', label: '🎓 Faculty CMS: Activities & Curriculum Materials' },
             { id: 'ANNOUNCEMENTS', label: '📢 Announcements & Notices' },
             { id: 'MANAGE_BRANDING', label: '🎨 Logo & Researcher Profiles' },
-            { id: 'MANAGE_VIDEOS', label: 'Demonstration Videos' },
+            { id: 'MANAGE_VIDEOS', label: '🎬 Demonstration Videos (Watch Button)' },
             { id: 'HARDWARE_SLIDES', label: '🖥️ Hardware Overview Slides' },
             { id: 'MANAGE_RECORDS', label: 'Data Retention & Cleanup' }
           ].map(tab => (

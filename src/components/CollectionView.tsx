@@ -139,10 +139,19 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
           instructor: newVideoInstructor.trim() || 'CSSENTIAL Faculty Lead'
         });
 
+        // Also activate immediately for the lesson WATCH button
+        api.saveCustomVideo(`lesson-${newVideoTopic}`, {
+          url: saved.url,
+          title: saved.title,
+          type: 'video',
+          fileName: selectedMp4File.name,
+          isUploadedMp4: true
+        });
+
         setVideos(prev => [saved, ...prev.filter(v => v.id !== saved.id)]);
         setShowAddVideoModal(false);
         resetVideoForm();
-        setDownloadNotice(`Successfully uploaded practicum MP4: "${saved.title}"`);
+        setDownloadNotice(`Successfully uploaded MP4 and updated Topic ${newVideoTopic} [WATCH] button: "${saved.title}"`);
         setTimeout(() => setDownloadNotice(null), 4000);
       } catch (err) {
         console.error('Error uploading video:', err);
@@ -179,10 +188,18 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
           isUploadedMp4: cleanUrl.endsWith('.mp4') || cleanUrl.startsWith('/uploads/')
         });
 
+        // Also activate immediately for the lesson WATCH button
+        api.saveCustomVideo(`lesson-${newVideoTopic}`, {
+          url: cleanUrl,
+          title: saved.title,
+          type: saved.isUploadedMp4 ? 'video' : 'embed',
+          isUploadedMp4: saved.isUploadedMp4
+        });
+
         setVideos(prev => [saved, ...prev.filter(v => v.id !== saved.id)]);
         setShowAddVideoModal(false);
         resetVideoForm();
-        setDownloadNotice(`Added video demonstration: "${saved.title}"`);
+        setDownloadNotice(`Added video and updated Topic ${newVideoTopic} [WATCH] button: "${saved.title}"`);
         setTimeout(() => setDownloadNotice(null), 3500);
       } catch (err) {
         console.error('Error saving video:', err);

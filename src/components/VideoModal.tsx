@@ -100,20 +100,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   useEffect(() => {
     if (!lesson) return;
 
-    if (lesson.videoUrl && (lesson.videoUrl.startsWith('/uploads/') || lesson.videoUrl.startsWith('blob:') || lesson.videoUrl.endsWith('.mp4') || lesson.videoUrl.includes('youtube') || lesson.videoUrl.includes('vimeo'))) {
-      const isDirect = lesson.videoUrl.startsWith('/uploads/') || lesson.videoUrl.startsWith('blob:') || lesson.videoUrl.endsWith('.mp4') || lesson.videoUrl.endsWith('.webm');
-      setActiveVideo({
-        url: isDirect ? lesson.videoUrl : formatYouTubeEmbed(lesson.videoUrl),
-        title: lesson.title,
-        isCustom: true,
-        isDirectFile: isDirect
-      });
-      setShowUploadDrawer(false);
-      setUploadSuccess(null);
-      setUploadError(null);
-      return;
-    }
-
+    // Check custom instructor overrides FIRST
     const customMap = api.getCustomVideos();
     const custom = customMap[lesson.id];
 
@@ -125,19 +112,38 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         isCustom: true,
         isDirectFile: isDirect
       });
-    } else {
-      const curated = CURATED_VIDEOS[lesson.id] || {
-        embedUrl: lesson.videoUrl || 'https://www.youtube-nocookie.com/embed/0X6vY1-8g68',
-        title: `${lesson.title} Laboratory Video Demonstration`,
-        duration: lesson.duration || '12:00'
-      };
-      setActiveVideo({
-        url: formatYouTubeEmbed(curated.embedUrl),
-        title: curated.title,
-        isCustom: false,
-        isDirectFile: false
-      });
+      setShowUploadDrawer(false);
+      setUploadSuccess(null);
+      setUploadError(null);
+      return;
     }
+
+    // Next check if lesson has an explicit custom / direct video file attached
+    if (lesson.videoUrl && (lesson.videoUrl.startsWith('/uploads/') || lesson.videoUrl.startsWith('blob:') || lesson.videoUrl.endsWith('.mp4') || lesson.videoUrl.endsWith('.webm'))) {
+      setActiveVideo({
+        url: lesson.videoUrl,
+        title: lesson.title,
+        isCustom: true,
+        isDirectFile: true
+      });
+      setShowUploadDrawer(false);
+      setUploadSuccess(null);
+      setUploadError(null);
+      return;
+    }
+
+    // Fallback to standard curated curriculum demonstration video
+    const curated = CURATED_VIDEOS[lesson.id] || {
+      embedUrl: lesson.videoUrl || 'https://www.youtube-nocookie.com/embed/0X6vY1-8g68',
+      title: `${lesson.title} Laboratory Video Demonstration`,
+      duration: lesson.duration || '12:00'
+    };
+    setActiveVideo({
+      url: formatYouTubeEmbed(curated.embedUrl),
+      title: curated.title,
+      isCustom: false,
+      isDirectFile: false
+    });
     setShowUploadDrawer(false);
     setUploadSuccess(null);
     setUploadError(null);
