@@ -1090,7 +1090,7 @@ export const api = {
   },
 
   // Custom Video Configuration
-  getCustomVideos(): Record<string, { url: string; title?: string; type: 'video' | 'embed' }> {
+  getCustomVideos(): Record<string, { url: string; title?: string; type: 'video' | 'embed'; fileName?: string; isUploadedMp4?: boolean }> {
     try {
       const raw = localStorage.getItem('cssential_custom_videos');
       return raw ? JSON.parse(raw) : {};
@@ -1099,7 +1099,7 @@ export const api = {
     }
   },
 
-  saveCustomVideo(topicId: string, videoData: { url: string; title?: string; type: 'video' | 'embed' }): void {
+  saveCustomVideo(topicId: string, videoData: { url: string; title?: string; type: 'video' | 'embed'; fileName?: string; isUploadedMp4?: boolean }): void {
     try {
       const videos = this.getCustomVideos();
       videos[topicId] = videoData;

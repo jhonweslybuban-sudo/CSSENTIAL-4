@@ -813,12 +813,11 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                     onChange={(e) => setNewVideoTopic(Number(e.target.value))}
                     className="w-full px-3 py-2 border rounded-xl text-xs font-semibold"
                   >
-                    <option value={1}>Lesson 1: Planning & Prep</option>
-                    <option value={2}>Lesson 2: Hardware Assembly</option>
-                    <option value={3}>Lesson 3: OS & Drivers</option>
-                    <option value={4}>Lesson 4: Applications & Security</option>
-                    <option value={5}>Lesson 5: System Testing</option>
-                    <option value={6}>Lesson 6: Troubleshooting</option>
+                    {LESSONS_DATA.map((l) => (
+                      <option key={l.topicNumber} value={l.topicNumber}>
+                        Topic {l.topicNumber}: {l.title}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
